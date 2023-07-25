@@ -1,6 +1,6 @@
-package com.my.currency.shared_data
+package com.my.dor_metagraph.shared_data
 
-import com.my.currency.shared_data.Data.{DorUpdate, State}
+import MainData.{DeviceUpdate, State}
 import io.circe.parser
 import io.circe.syntax.EncoderOps
 
@@ -18,7 +18,7 @@ object Utils {
     }
   }
 
-  def customUpdateSerialization(update: DorUpdate): Array[Byte] = {
+  def customUpdateSerialization(update: DeviceUpdate): Array[Byte] = {
     println("Serialize UPDATE event received")
     println(update.asJson.deepDropNullValues.noSpaces)
     update.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
@@ -36,9 +36,9 @@ object Utils {
     }
   }
 
-  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DorUpdate] = {
+  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceUpdate] = {
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[DorUpdate]
+      json.as[DeviceUpdate]
     }
   }
 }

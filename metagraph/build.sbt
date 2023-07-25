@@ -1,7 +1,7 @@
 import Dependencies._
 import sbt._
 
-ThisBuild / organization := "com.my.currency"
+ThisBuild / organization := "com.my.dor_metagraph"
 ThisBuild / scalaVersion := "2.13.10"
 ThisBuild / evictionErrorLevel := Level.Warn
 
@@ -16,7 +16,7 @@ ThisBuild / assemblyMergeStrategy := {
 
 lazy val root = (project in file(".")).
   settings(
-    name := "currency"
+    name := "dor_metagraph"
   ).aggregate(sharedData, currencyL0, currencyL1, dataL1)
 
 lazy val sharedData = (project in file("modules/shared_data"))
@@ -24,10 +24,10 @@ lazy val sharedData = (project in file("modules/shared_data"))
   .enablePlugins(BuildInfoPlugin)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    name := "currency-shared_data",
+    name := "dor_metagraph-shared_data",
     scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info", "-language:reflectiveCalls"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "com.my.currency.shared_data",
+    buildInfoPackage := "com.my.dor_metagraph.shared_data",
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
@@ -48,10 +48,10 @@ lazy val currencyL1 = (project in file("modules/l1"))
   .enablePlugins(BuildInfoPlugin)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    name := "currency-currency-l1",
+    name := "dor_metagraph-currency-l1",
     scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info", "-language:reflectiveCalls"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "com.my.currency.l1",
+    buildInfoPackage := "com.my.dor_metagraph.l1",
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
@@ -72,10 +72,10 @@ lazy val currencyL0 = (project in file("modules/l0"))
   .enablePlugins(JavaAppPackaging)
   .dependsOn(sharedData)
   .settings(
-    name := "currency-currency-l0",
+    name := "dor_metagraph-currency-l0",
     scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info", "-language:reflectiveCalls"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "com.my.currency.l0",
+    buildInfoPackage := "com.my.dor_metagraph.l0",
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
@@ -101,10 +101,10 @@ lazy val dataL1 = (project in file("modules/data_l1"))
   .enablePlugins(JavaAppPackaging)
   .dependsOn(sharedData)
   .settings(
-    name := "currency-data_l1",
+    name := "dor_metagraph-data_l1",
     scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info", "-language:reflectiveCalls"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "com.my.currency.data_l1",
+    buildInfoPackage := "com.my.dor_metagraph.data_l1",
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,

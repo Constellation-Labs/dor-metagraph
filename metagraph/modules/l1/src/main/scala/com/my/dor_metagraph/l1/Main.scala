@@ -1,4 +1,4 @@
-package com.my.currency.l1
+package com.my.dor_metagraph.l1
 
 import java.util.UUID
 import org.tessellation.BuildInfo
