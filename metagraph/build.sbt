@@ -40,7 +40,8 @@ lazy val sharedData = (project in file("modules/shared_data"))
       Libraries.tessellationShared,
       Libraries.tessellationCurrencyL1,
       Libraries.borerCore,
-      Libraries.borerDerivation
+      Libraries.borerDerivation,
+      Libraries.requests
     )
   )
 lazy val currencyL1 = (project in file("modules/l1"))

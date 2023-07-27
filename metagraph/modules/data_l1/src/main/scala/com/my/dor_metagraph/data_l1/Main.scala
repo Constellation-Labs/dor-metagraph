@@ -3,8 +3,8 @@ package com.my.dor_metagraph.data_l1
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
-import com.my.dor_metagraph.shared_data.MainData
-import com.my.dor_metagraph.shared_data.MainData.{DeviceUpdate, State}
+import com.my.dor_metagraph.shared_data.Data
+import com.my.dor_metagraph.shared_data.Data.{DeviceUpdate, State}
 import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.tessellation.BuildInfo
@@ -25,17 +25,17 @@ object Main
   ) {
   override def dataApplication: Option[BaseDataApplicationL1Service[IO]] = Option(BaseDataApplicationL1Service(new DataApplicationL1Service[IO, DeviceUpdate, State] {
 
-    override def serializeState(state: State): IO[Array[Byte]] = MainData.serializeState(state)
+    override def serializeState(state: State): IO[Array[Byte]] = Data.serializeState(state)
 
-    override def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, State]] = MainData.deserializeState(bytes)
+    override def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, State]] = Data.deserializeState(bytes)
 
-    override def serializeUpdate(update: DeviceUpdate): IO[Array[Byte]] = MainData.serializeUpdate(update)
+    override def serializeUpdate(update: DeviceUpdate): IO[Array[Byte]] = Data.serializeUpdate(update)
 
-    override def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceUpdate]] = MainData.deserializeUpdate(bytes)
+    override def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceUpdate]] = Data.deserializeUpdate(bytes)
 
-    override def dataEncoder: Encoder[DeviceUpdate] = MainData.dataEncoder
+    override def dataEncoder: Encoder[DeviceUpdate] = Data.dataEncoder
 
-    override def dataDecoder: Decoder[DeviceUpdate] = MainData.dataDecoder
+    override def dataDecoder: Decoder[DeviceUpdate] = Data.dataDecoder
 
     override def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceUpdate]])(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 

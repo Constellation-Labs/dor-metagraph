@@ -10,24 +10,35 @@ import org.tessellation.currency.dataApplication.{DataState, DataUpdate, L0NodeC
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
 import Combiners.combineDeviceCheckin
+import com.my.dor_metagraph.shared_data.Bounties.Bounty
+import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
 import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs._
 import org.tessellation.schema.address.Address
 
-object MainData {
-  implicit val dorCodec: Codec[DeviceCheckin] = deriveCodec[DeviceCheckin]
+object Data {
+  implicit val dorCodec: Codec[DeviceCheckInRaw] = deriveCodec[DeviceCheckInRaw]
 
   @derive(decoder, encoder)
-  case class DeviceCheckin(ac: List[Long], dts: Long, e: List[List[Long]])
+  case class DeviceCheckInRaw(ac: List[Long], dts: Long, e: List[List[Long]])
 
   @derive(decoder, encoder)
-  case class DeviceCheckinWithEpochProgress(ac: List[Long], dts: Long, e: List[List[Long]], epochProgress: Long)
+  case class FootTraffic(timestamp: Long, direction: Long)
+
+  @derive(decoder, encoder)
+  case class CheckInRef(ordinal: Long, hash: String)
+
+  @derive(decoder, encoder)
+  case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic], checkInRef: CheckInRef)
+
+  @derive(decoder, encoder)
+  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, publicKey: String, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse)
 
   @derive(decoder, encoder)
   case class DeviceUpdate(data: String) extends DataUpdate
 
   @derive(decoder, encoder)
-  case class State(devices: Map[Address, DeviceCheckinWithEpochProgress]) extends DataState
+  case class State(devices: Map[Address, DeviceInfo]) extends DataState
 
   def combine(oldState: State, updates: NonEmptyList[Signed[DeviceUpdate]])(implicit context: L0NodeContext[IO]): IO[State] = {
     updates.foldLeftM(oldState) { (acc, signedUpdate) =>

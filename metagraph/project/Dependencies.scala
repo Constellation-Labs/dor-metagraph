@@ -25,6 +25,7 @@ object Dependencies {
     val declineRefined = decline("refined")
     val borerCore = "io.bullet" %% "borer-core" % "1.8.0"
     val borerDerivation = "io.bullet" %% "borer-derivation" % "1.8.0"
+    val requests = "com.lihaoyi" %% "requests" % "0.8.0"
   }
 
 

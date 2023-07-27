@@ -2,11 +2,13 @@
   {
     "linkedToStore": false,
     "storeType": null,
-    "publicKey": "e75a6011eaa38d7b0a1cb41810c655cdc89c6c5ffd207cbab9d18fd49cbf2729e262b5387a4687a23a163d14bc0dff8ef6539e2a73932e77d2de6b1895facd99"
+    "publicKey": "e75a6011eaa38d7b0a1cb41810c655cdc89c6c5ffd207cbab9d18fd49cbf2729e262b5387a4687a23a163d14bc0dff8ef6539e2a73932e77d2de6b1895facd99",
+    "rewardAddress": "DAG2YYfPzDz3Lhwc3YFbEfWV9XdvS2pE75LdAykx"
   },
   {
     "linkedToStore": true,
     "storeType": "Retail",
-    "publicKey": "22f97a140b17556e582efa667489bc0097eae9349707790630b0d5133d3b01db67ce0e6adb65e154096036ce5619b5fbdd116dbb07c12f9c68c2306f9830dbc6"
+    "publicKey": "22f97a140b17556e582efa667489bc0097eae9349707790630b0d5133d3b01db67ce0e6adb65e154096036ce5619b5fbdd116dbb07c12f9c68c2306f9830dbc6",
+    "rewardAddress": "DAG1pM92gQeMS7atLawKbB67NZbG2EJU4BuwCAZc"
   }
 ]

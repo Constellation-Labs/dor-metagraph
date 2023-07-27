@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
-import MainData.{DeviceUpdate, State}
+import Data.{DeviceUpdate, State}
 import io.circe.parser
 import io.circe.syntax.EncoderOps
 
