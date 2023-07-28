@@ -30,7 +30,7 @@ object Main
     Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, DeviceUpdate, State] {
       override def genesis: State = State(Map.empty)
 
-      override def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
+      override def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(oldState, updates)
 
       override def validateUpdate(update: DeviceUpdate)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 

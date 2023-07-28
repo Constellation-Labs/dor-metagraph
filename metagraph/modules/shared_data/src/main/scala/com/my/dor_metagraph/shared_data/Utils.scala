@@ -41,4 +41,8 @@ object Utils {
       json.as[DeviceUpdate]
     }
   }
+
+  def toTokenAmountFormat(balance: Double): Long = {
+    (balance * 10e7).toLong
+  }
 }

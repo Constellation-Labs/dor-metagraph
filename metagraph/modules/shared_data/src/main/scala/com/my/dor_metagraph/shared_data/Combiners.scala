@@ -15,7 +15,7 @@ import org.tessellation.security.signature.Signed
 import org.tessellation.security.hash.Hash
 
 object Combiners {
-  private def combine(acc: State, address: Address, deviceCheckIn: DeviceCheckInRaw, publicKey: String, snapshotOrdinal: SnapshotOrdinal, checkInHash: String): State = {
+  private def combine(acc: State, address: Address, deviceCheckIn: DeviceCheckInRaw, publicKey: String, snapshotOrdinal: SnapshotOrdinal, checkInHash: String, epochProgress: Long): State = {
     val state = acc.devices.get(address)
     fetchDeviceInfo(publicKey) match {
       case Some(deviceInfo) =>
@@ -25,13 +25,13 @@ object Combiners {
 
         val newState = state match {
           case Some(current) =>
-            DeviceInfo(checkInFormatted, publicKey, current.bounties, deviceInfo)
+            DeviceInfo(checkInFormatted, publicKey, current.bounties, deviceInfo, epochProgress)
           case None =>
             val bounties = List(
               UnitDeployedBounty("UnitDeployed"),
               CommercialLocationBounty("CommercialLocation")
             )
-            DeviceInfo(checkInFormatted, publicKey, bounties, deviceInfo)
+            DeviceInfo(checkInFormatted, publicKey, bounties, deviceInfo, epochProgress)
         }
 
         acc.focus(_.devices).modify(_.updated(address, newState))
@@ -39,7 +39,7 @@ object Combiners {
     }
   }
 
-  def combineDeviceCheckin(acc: State, signedUpdate: Signed[DeviceUpdate])(implicit context: L0NodeContext[IO]): IO[State] = {
+  def combineDeviceCheckIn(acc: State, signedUpdate: Signed[DeviceUpdate])(implicit context: L0NodeContext[IO]): IO[State] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
 
     val cborData = Utils.toCBORHex(signedUpdate.value.data)
@@ -49,12 +49,13 @@ object Combiners {
     val publicKey = signedUpdate.proofs.head.id.hex.value
 
     val ordinalIO = context.getLastCurrencySnapshot.map(_.get.ordinal)
+    val epochProgress = 10L // Should be replaced
     val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
 
     for {
       ordinal <- ordinalIO
       address <- addressIO
     } yield
-      combine(acc, address, deviceCheckIn, publicKey, ordinal, checkInHash)
+      combine(acc, address, deviceCheckIn, publicKey, ordinal, checkInHash, epochProgress)
   }
 }
