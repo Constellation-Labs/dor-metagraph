@@ -14,6 +14,16 @@ ThisBuild / assemblyMergeStrategy := {
     oldStrategy(x)
 }
 
+lazy val commonTestSettings = Seq(
+  testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+  libraryDependencies ++= Seq(
+    Libraries.weaverCats,
+    Libraries.weaverDiscipline,
+    Libraries.weaverScalaCheck,
+    Libraries.catsEffectTestkit
+  ).map(_ % Test)
+)
+
 lazy val root = (project in file(".")).
   settings(
     name := "dor_metagraph"
@@ -31,6 +41,7 @@ lazy val sharedData = (project in file("modules/shared_data"))
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
+    commonTestSettings,
     libraryDependencies ++= Seq(
       CompilerPlugin.kindProjector,
       CompilerPlugin.betterMonadicFor,
@@ -56,6 +67,7 @@ lazy val currencyL1 = (project in file("modules/l1"))
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
+    commonTestSettings,
     libraryDependencies ++= Seq(
       CompilerPlugin.kindProjector,
       CompilerPlugin.betterMonadicFor,
@@ -80,6 +92,7 @@ lazy val currencyL0 = (project in file("modules/l0"))
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
+    commonTestSettings,
     libraryDependencies ++= Seq(
       CompilerPlugin.kindProjector,
       CompilerPlugin.betterMonadicFor,
@@ -109,6 +122,7 @@ lazy val dataL1 = (project in file("modules/data_l1"))
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,
+    commonTestSettings,
     libraryDependencies ++= Seq(
       CompilerPlugin.kindProjector,
       CompilerPlugin.betterMonadicFor,
