@@ -31,8 +31,8 @@ object Rewards {
 
   private val EPOCH_PROGRESS_1_DAY: Long = 60 * 24
 
-  private def getCurrentEpochProgress: Long = {
-    1440L
+  private def getCurrentEpochProgress(lastArtifact: Signed[CurrencyIncrementalSnapshot]): Long = {
+    lastArtifact.epochProgress.value.value
   }
 
   private def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long) = {
@@ -46,7 +46,7 @@ object Rewards {
             deviceTotalRewards += bounty.getBountyRewardAmount(device.deviceApiResponse)
           }
         case bounty: CommercialLocationBounty =>
-          if (epochModulus == 0L) {
+          if (epochModulus == 1L) {
             deviceTotalRewards += bounty.getBountyRewardAmount(device.deviceApiResponse)
           }
       }
@@ -120,9 +120,9 @@ object Rewards {
     validatorNodesRewards.toList
   }
 
-  private def buildRewards[F[_] : Async : SecurityProvider](state: State, lastBalances: SortedMap[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
+  private def buildRewards[F[_] : Async : SecurityProvider](state: State, lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
     val allRewards = new ListBuffer[RewardTransaction]()
-    val currentEpochProgress = getCurrentEpochProgress
+    val currentEpochProgress = getCurrentEpochProgress(lastArtifact)
     var taxesToValidatorNodes = 0L
 
     state.devices.map { case (_, value) =>
@@ -169,7 +169,7 @@ object Rewards {
       case Some(state) =>
         state match {
           case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure[F]
-          case Right(state) => buildRewards(state, lastBalances, facilitatorsToReward)
+          case Right(state) => buildRewards(state, lastArtifact, lastBalances, facilitatorsToReward)
         }
       case None => SortedSet.empty[transaction.RewardTransaction].pure[F]
     }

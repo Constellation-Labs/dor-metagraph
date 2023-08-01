@@ -65,14 +65,15 @@ object Combiners {
       val publicKey = signedUpdate.proofs.head.id.hex.value
 
       val ordinalIO = context.getLastCurrencySnapshot.map(_.get.ordinal)
-      val epochProgress = 1440L // Should be replaced
+      val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress) // Should be replaced
       val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
       fetchDeviceInfo(publicKey) match {
         case Some(deviceInfo) =>
           for {
             ordinal <- ordinalIO
             address <- addressIO
-          } yield combine(acc, address, deviceCheckIn, publicKey, ordinal.value.value, checkInHash, epochProgress, deviceInfo)
+            epochProgress <- epochProgressIO
+          } yield combine(acc, address, deviceCheckIn, publicKey, ordinal.value.value, checkInHash, epochProgress.value.value, deviceInfo)
         case None => acc.pure[IO]
       }
     } catch {
