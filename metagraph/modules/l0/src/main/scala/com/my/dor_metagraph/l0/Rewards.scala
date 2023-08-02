@@ -20,9 +20,9 @@ import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.collection.mutable.ListBuffer
 
 object Rewards {
-  private val COLLATERAL_50K = 50000
-  private val COLLATERAL_100K = 100000
-  private val COLLATERAL_200K = 200000
+  private val COLLATERAL_50K = toTokenAmountFormat(50000)
+  private val COLLATERAL_100K = toTokenAmountFormat(100000)
+  private val COLLATERAL_200K = toTokenAmountFormat(200000)
 
   private val COLLATERAL_LESS_THAN_50K_MULTIPLIER: Double = 1
   private val COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER: Double = 1.05
@@ -31,11 +31,7 @@ object Rewards {
 
   private val EPOCH_PROGRESS_1_DAY: Long = 60 * 24
 
-  private def getCurrentEpochProgress(lastArtifact: Signed[CurrencyIncrementalSnapshot]): Long = {
-    lastArtifact.epochProgress.value.value
-  }
-
-  private def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long) = {
+  def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
     var deviceTotalRewards = 0L
 
@@ -43,10 +39,12 @@ object Rewards {
       bounty match {
         case bounty: UnitDeployedBounty =>
           if (epochModulus == 0L) {
+            println(s"Bounty: ${bounty.name}")
             deviceTotalRewards += bounty.getBountyRewardAmount(device.deviceApiResponse)
           }
         case bounty: CommercialLocationBounty =>
           if (epochModulus == 1L) {
+            println(s"Bounty: ${bounty.name}")
             deviceTotalRewards += bounty.getBountyRewardAmount(device.deviceApiResponse)
           }
       }
@@ -55,7 +53,7 @@ object Rewards {
     toTokenAmountFormat(deviceTotalRewards.toDouble)
   }
 
-  private def calculateBountiesRewardsWithCollateral(lastBalances: SortedMap[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
+  def calculateBountiesRewardsWithCollateral(lastBalances: Map[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
     val updatedBalance = lastBalances.get(rewardAddress) match {
       case Some(rewardAddressBalance) =>
         val balance = rewardAddressBalance.value.value
@@ -74,11 +72,11 @@ object Rewards {
     updatedBalance.toLong
   }
 
-  private def getTaxesToValidatorNodes(deviceTotalRewards: Long): Long = {
+  def getTaxesToValidatorNodes(deviceTotalRewards: Long): Long = {
     (deviceTotalRewards * 0.1).toLong
   }
 
-  private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: SortedMap[Address, Balance]): Long = {
+  private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
     val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
 
     calculateBountiesRewardsWithCollateral(lastBalances, device.deviceApiResponse.rewardAddress, deviceBountiesRewardsAmount)
@@ -101,7 +99,7 @@ object Rewards {
     validatorNodesRewards.toList
   }
 
-  private def buildValidatorNodesRewards(validatorNodesL0: List[Address], validatorNodesL1: List[Address], taxesToValidatorNodes: Long): List[RewardTransaction] = {
+  def buildValidatorNodesRewards(validatorNodesL0: List[Address], validatorNodesL1: List[Address], taxesToValidatorNodes: Long): List[RewardTransaction] = {
     val validatorNodesRewards = new ListBuffer[RewardTransaction]()
     val taxToEachLayer = taxesToValidatorNodes / 2
 
@@ -120,13 +118,12 @@ object Rewards {
     validatorNodesRewards.toList
   }
 
-  private def buildRewards[F[_] : Async : SecurityProvider](state: State, lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
+  def buildRewards[F[_] : Async : SecurityProvider](state: State, currentEpochProgress: Long, lastBalances: Map[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
     val allRewards = new ListBuffer[RewardTransaction]()
-    val currentEpochProgress = getCurrentEpochProgress(lastArtifact)
     var taxesToValidatorNodes = 0L
 
     state.devices.map { case (_, value) =>
-      if(currentEpochProgress - value.lastCheckInEpochProgress > EPOCH_PROGRESS_1_DAY){
+      if (currentEpochProgress - value.lastCheckInEpochProgress > EPOCH_PROGRESS_1_DAY) {
         println(s"Device ${value.publicKey} didn't make a check in in the last 24 hours")
       } else {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
@@ -153,7 +150,7 @@ object Rewards {
         validatorNodesL1Addresses <- validatorNodesL1
       } yield buildValidatorNodesRewards(validatorNodesL0Addresses, validatorNodesL1Addresses, taxesToValidatorNodes)
 
-      rewardTransactions.map{ rewardTransactions =>
+      rewardTransactions.map { rewardTransactions =>
         allRewards ++= rewardTransactions
         SortedSet(allRewards.toList: _*)
       }
@@ -169,7 +166,7 @@ object Rewards {
       case Some(state) =>
         state match {
           case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure[F]
-          case Right(state) => buildRewards(state, lastArtifact, lastBalances, facilitatorsToReward)
+          case Right(state) => buildRewards(state, lastArtifact.epochProgress.value.value, lastBalances, facilitatorsToReward)
         }
       case None => SortedSet.empty[transaction.RewardTransaction].pure[F]
     }
