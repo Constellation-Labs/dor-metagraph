@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
 import cats.effect.IO
-import Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInRaw, DeviceInfo, DeviceUpdate, FootTraffic, State}
+import Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, DeviceCheckInRawUpdate, FootTraffic, State}
 import cats.implicits.catsSyntaxApplicativeId
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.DorApi.{DeviceInfoAPIResponse, fetchDeviceInfo}
@@ -18,7 +18,7 @@ object Combiners {
   def combine(
                acc: State,
                address: Address,
-               deviceCheckIn: DeviceCheckInRaw,
+               deviceCheckIn: DeviceCheckInRawUpdate,
                publicKey: String,
                snapshotOrdinal: Long,
                checkInHash: String,
@@ -44,10 +44,10 @@ object Combiners {
     acc.focus(_.devices).modify(_.updated(address, newState))
   }
 
-  def getDeviceCheckInFromCBOR(data: String): DeviceCheckInRaw = {
+  def getDeviceCheckInFromCBOR(data: String): DeviceCheckInWithSignature = {
     try {
       val cborData = Utils.toCBORHex(data)
-      Cbor.decode(cborData).to[DeviceCheckInRaw].value
+      Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
     } catch {
       case e: Exception =>
         println(s"Error parsing data on check in. Data: $data")
@@ -55,12 +55,12 @@ object Combiners {
     }
   }
 
-  def getCheckInHash(update: DeviceUpdate): String = Hash.fromBytes(customUpdateSerialization(update)).toString
+  def getCheckInHash(update: DeviceCheckInRawUpdate): String = Hash.fromBytes(customUpdateSerialization(update)).toString
 
-  def combineDeviceCheckIn(acc: State, signedUpdate: Signed[DeviceUpdate])(implicit context: L0NodeContext[IO]): IO[State] = {
+  def combineDeviceCheckIn(acc: State, signedUpdate: Signed[DeviceCheckInRawUpdate])(implicit context: L0NodeContext[IO]): IO[State] = {
     try {
       implicit val sp: SecurityProvider[IO] = context.securityProvider
-      val deviceCheckIn = getDeviceCheckInFromCBOR(signedUpdate.value.data)
+      val deviceCheckIn = signedUpdate.value
       val checkInHash = getCheckInHash(signedUpdate.value)
       val publicKey = signedUpdate.proofs.head.id.hex.value
 

@@ -1,10 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
-import cats.effect.IO
-import cats.implicits.catsSyntaxValidatedIdBinCompat0
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.Combiners.{combine, getCheckInHash, getDeviceCheckInFromCBOR}
-import com.my.dor_metagraph.shared_data.Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInRaw, DeviceInfo, DeviceUpdate, FootTraffic, State}
+import com.my.dor_metagraph.shared_data.Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInRawUpdate, DeviceInfo, FootTraffic, State}
 import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
 import com.my.dor_metagraph.shared_data.TypeValidators.validateCheckInTimestamp
 import org.tessellation.schema.address.Address
@@ -15,7 +12,7 @@ object TypeValidatorsTest extends SimpleIOSuite {
   pureTest("Return update valid - Check timestamp") {
     val oldState = State(Map.empty)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val checkInRaw = DeviceCheckInRaw(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1)))
+    val checkInRaw = DeviceCheckInRawUpdate(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1)))
 
     val validation = validateCheckInTimestamp(oldState, checkInRaw, address)
 
@@ -33,7 +30,7 @@ object TypeValidatorsTest extends SimpleIOSuite {
     val currentCheckInRaw = DeviceCheckInFormatted(List(1, 2, 3), 123456, List(FootTraffic(12345, 1), FootTraffic(12345, 1)), CheckInRef(currentSnapshotOrdinal, currentCheckInHash))
     val oldState = State(Map(currentAddress -> DeviceInfo(currentCheckInRaw, currentPublicKey, currentBounties, currentDeviceInfoAPIResponse, currentEpochProgress)))
 
-    val checkInRaw = DeviceCheckInRaw(List(1, 2, 3), 1, List(List(12345, 1), List(6789, -1)))
+    val checkInRaw = DeviceCheckInRawUpdate(List(1, 2, 3), 1, List(List(12345, 1), List(6789, -1)))
     val validation = validateCheckInTimestamp(oldState, checkInRaw, currentAddress)
 
     expect.eql(false, validation.isValid)

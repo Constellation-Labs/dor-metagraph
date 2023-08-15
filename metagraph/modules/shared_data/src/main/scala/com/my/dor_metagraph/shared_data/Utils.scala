@@ -1,10 +1,17 @@
 package com.my.dor_metagraph.shared_data
 
-import Data.{DeviceUpdate, State}
+import Data.{DeviceCheckInRawUpdate, DeviceCheckInWithSignature, State}
+import cats.data.NonEmptySet
+import io.bullet.borer.Cbor
 import io.circe.parser
 import io.circe.syntax.EncoderOps
+import org.tessellation.schema.ID.Id
+import org.tessellation.security.hex.Hex
+import org.tessellation.security.signature.Signed
+import org.tessellation.security.signature.signature.{Signature, SignatureProof}
 
 import java.nio.charset.StandardCharsets
+import scala.collection.immutable.SortedSet
 import scala.util.control.NonFatal
 
 object Utils {
@@ -18,7 +25,7 @@ object Utils {
     }
   }
 
-  def customUpdateSerialization(update: DeviceUpdate): Array[Byte] = {
+  def customUpdateSerialization(update: DeviceCheckInRawUpdate): Array[Byte] = {
     println("Serialize UPDATE event received")
     println(update.asJson.deepDropNullValues.noSpaces)
     update.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
@@ -36,13 +43,28 @@ object Utils {
     }
   }
 
-  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceUpdate] = {
+  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInRawUpdate] = {
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[DeviceUpdate]
+      json.as[DeviceCheckInRawUpdate]
     }
   }
 
   def toTokenAmountFormat(balance: Double): Long = {
     (balance * 10e7).toLong
+  }
+
+  def buildSignedUpdate(text: String): Signed[DeviceCheckInRawUpdate] = {
+    val cborData = Utils.toCBORHex(text)
+    val decodedCheckIn = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
+
+    val deviceUpdate = DeviceCheckInRawUpdate(decodedCheckIn.ac, decodedCheckIn.dts, decodedCheckIn.e)
+
+    val hexId = Hex(decodedCheckIn.id)
+    val hexSignature = Hex(decodedCheckIn.signature)
+
+    val signatureProof = SignatureProof(Id(hexId), Signature(hexSignature))
+    val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
+
+    Signed(deviceUpdate, proofs)
   }
 }

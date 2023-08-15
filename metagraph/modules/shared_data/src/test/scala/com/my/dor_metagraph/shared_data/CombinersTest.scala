@@ -3,7 +3,7 @@ package com.my.dor_metagraph.shared_data
 import cats.effect.IO
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.Combiners.{combine, getCheckInHash, getDeviceCheckInFromCBOR}
-import com.my.dor_metagraph.shared_data.Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInRaw, DeviceInfo, DeviceUpdate, FootTraffic, State}
+import com.my.dor_metagraph.shared_data.Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInRawUpdate, DeviceCheckInWithSignature, DeviceInfo, FootTraffic, State}
 import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
 import org.tessellation.schema.address.Address
 import weaver.SimpleIOSuite
@@ -11,7 +11,7 @@ import weaver.SimpleIOSuite
 object CombinersTest extends SimpleIOSuite {
 
   pureTest("Get correctly device check in from CBOR ") {
-    val cborString = "A362616383188F38B43925B8636474731A63875B2461658A821B00000184A0C9AF5E01821B00000194A0CD649601821B00000184A0CE04BF01821B00000184A0D0CF9801821B00000184A0D3254101821B00000184A0D3968A01821B00000184A0D3C95301821B00000184A0D3F06401821B00000184A0D47D0501821B00000184A0D48CA601"
+    val cborString = "A562616383188F38B43925B8636474731A63875B2461658A821B00000184A0C9AF5E01821B00000194A0CD649601821B00000184A0CE08A701821B00000184A0D0CF9801821B00000184A0D3254101821B00000184A0D3968A01821B00000184A0D3C95301821B00000184A0D3F06401821B00000184A0D47D0501821B00000184A0D48CA60162696478803664333832383661363632306436373534343864653833363861616438646165656538373539306336666661356466363139656535323562323734373237623662656539323235376166373133363935363330346630643437356339623034326137353835393137353435643132356434396261666338386435336662636365697369676E6174757265788E33303435303232313030646463623366353935633565306534323534346138376534303661326439303136653430333031623061376133656530656664326235333562306537633230323032323034386231633464666236623132396238343064346139646231666233383564366631323164303435626262616363393261616363333038373735623636313133"
     val checkIn = getDeviceCheckInFromCBOR(cborString)
 
     expect.eql(3, checkIn.ac.size) &&
@@ -26,7 +26,7 @@ object CombinersTest extends SimpleIOSuite {
   test("Fail with invalid body") {
     val cborString = "A36261638318aa8F38B43925B8636474731A63875B2461658A821B00000184A0C9AF5E01821B00000194A0CD649601821B00000184A0CE04BF01821B00000184A0D0CF9801821B00000184A0D3254101821B00000184A0D3968A01821B00000184A0D3C95301821B00000184A0D3F06401821B00000184A0D47D0501821B00000184A0D48CA601"
     for {
-      error <- IO[DeviceCheckInRaw](getDeviceCheckInFromCBOR(cborString)).attempt
+      error <- IO[DeviceCheckInWithSignature](getDeviceCheckInFromCBOR(cborString)).attempt
     } yield {
       val errorMessage = error.left.map(_.getMessage())
       expect(errorMessage == Left("Expected Long but got Array Header (15) (input position 7)"))
@@ -34,16 +34,15 @@ object CombinersTest extends SimpleIOSuite {
   }
 
   pureTest("Get check in hash successfully") {
-    val cborString = "A362616383188F38B43925B8636474731A63875B2461658A821B00000184A0C9AF5E01821B00000194A0CD649601821B00000184A0CE04BF01821B00000184A0D0CF9801821B00000184A0D3254101821B00000184A0D3968A01821B00000184A0D3C95301821B00000184A0D3F06401821B00000184A0D47D0501821B00000184A0D48CA601"
-    val checkIn = getCheckInHash(DeviceUpdate(cborString))
+    val checkIn = getCheckInHash(DeviceCheckInRawUpdate(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1))))
 
-    expect.eql("99dc7d3f955a5edef7356e25a46bcb9ce9cd1bee7084832bf70c2903cd9cf6d0", checkIn)
+    expect.eql("f8c0e15b38981a882790e7d4f70eb7ea2ea28309769cf24af61f5f1dd29ad597", checkIn)
   }
 
   pureTest("Create a new check in on state") {
     val oldState = State(Map.empty)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val checkInRaw = DeviceCheckInRaw(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1)))
+    val checkInRaw = DeviceCheckInRawUpdate(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1)))
     val publicKey = "22f97a140b17556e582efa667489bc0097eae9349707790630b0d5133d3b01db67ce0e6adb65e154096036ce5619b5fbdd116dbb07c12f9c68c2306f9830dbc6"
     val snapshotOrdinal = 10L
     val checkInHash = "e12345"
@@ -82,7 +81,7 @@ object CombinersTest extends SimpleIOSuite {
 
     val oldState = State(Map(currentAddress -> DeviceInfo(currentCheckInRaw, currentPublicKey, currentBounties, currentDeviceInfoAPIResponse, currentEpochProgress)))
 
-    val checkInRaw = DeviceCheckInRaw(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1)))
+    val checkInRaw = DeviceCheckInRawUpdate(List(1, 2, 3), 123456, List(List(12345, 1), List(6789, -1)))
     val allCheckIns = combine(oldState, currentAddress, checkInRaw, currentPublicKey, 20L, "e123410", 2880L, currentDeviceInfoAPIResponse)
 
     allCheckIns.devices.get(currentAddress) match {

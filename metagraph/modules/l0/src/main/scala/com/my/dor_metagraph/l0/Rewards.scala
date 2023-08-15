@@ -4,10 +4,10 @@ import cats.effect.Async
 import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.Data.{DeviceInfo, State}
-import org.tessellation.currency.schema.currency.{CurrencyBlock, CurrencyIncrementalSnapshot, CurrencySnapshotStateProof, CurrencyTransaction}
+import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
+import org.tessellation.schema.transaction.{RewardTransaction, Transaction, TransactionAmount}
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
@@ -159,7 +159,7 @@ object Rewards {
     }
   }
 
-  def distributeRewards[F[_] : Async : SecurityProvider]: Rewards[F, CurrencyTransaction, CurrencyBlock, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], acceptedTransactions: SortedSet[Signed[CurrencyTransaction]], trigger: ConsensusTrigger) => {
+  def distributeRewards[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], acceptedTransactions: SortedSet[Signed[Transaction]], trigger: ConsensusTrigger) => {
     val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
 
     lastArtifact.data.map(data => customStateDeserialization(data)) match {

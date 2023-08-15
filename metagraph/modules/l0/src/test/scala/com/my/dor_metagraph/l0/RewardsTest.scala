@@ -3,7 +3,6 @@ package com.my.dor_metagraph.l0
 import cats.effect.{IO, Resource}
 import com.my.dor_metagraph.l0.Rewards.{buildRewards, buildValidatorNodesRewards, calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.CombinersTest.{expect, forEach}
 import com.my.dor_metagraph.shared_data.Data.{CheckInRef, DeviceCheckInFormatted, DeviceInfo, FootTraffic, State}
 import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat

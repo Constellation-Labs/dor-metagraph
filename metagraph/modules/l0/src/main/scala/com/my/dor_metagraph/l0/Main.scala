@@ -4,9 +4,9 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
 import com.my.dor_metagraph.shared_data.Data
-import com.my.dor_metagraph.shared_data.Data.{DeviceUpdate, State}
+import com.my.dor_metagraph.shared_data.Data.{DeviceCheckInRawUpdate, State}
 import io.circe.{Decoder, Encoder}
-import org.http4s.HttpRoutes
+import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.currency.dataApplication.{BaseDataApplicationL0Service, DataApplicationL0Service, L0NodeContext}
@@ -27,32 +27,33 @@ object Main
     version = BuildInfo.version
   ) {
   def dataApplication: Option[BaseDataApplicationL0Service[IO]] =
-    Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, DeviceUpdate, State] {
+    Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, DeviceCheckInRawUpdate, State] {
       override def genesis: State = State(Map.empty)
 
-      override def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(oldState, updates)
+      override def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInRawUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(oldState, updates)
 
-      override def validateUpdate(update: DeviceUpdate)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
+      override def validateUpdate(update: DeviceCheckInRawUpdate)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 
-      override def combine(oldState: State, updates: NonEmptyList[Signed[DeviceUpdate]])(implicit context: L0NodeContext[IO]): IO[State] = Data.combine(oldState, updates)
+      override def combine(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInRawUpdate]])(implicit context: L0NodeContext[IO]): IO[State] = Data.combine(oldState, updates)
 
       override def serializeState(state: State): IO[Array[Byte]] = Data.serializeState(state)
 
       override def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, State]] = Data.deserializeState(bytes)
 
-      override def serializeUpdate(update: DeviceUpdate): IO[Array[Byte]] = Data.serializeUpdate(update)
+      override def serializeUpdate(update: DeviceCheckInRawUpdate): IO[Array[Byte]] = Data.serializeUpdate(update)
 
-      override def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceUpdate]] = Data.deserializeUpdate(bytes)
+      override def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInRawUpdate]] = Data.deserializeUpdate(bytes)
 
-      override def dataEncoder: Encoder[DeviceUpdate] = Data.dataEncoder
+      override def dataEncoder: Encoder[DeviceCheckInRawUpdate] = Data.dataEncoder
 
-      override def dataDecoder: Decoder[DeviceUpdate] = Data.dataDecoder
+      override def dataDecoder: Decoder[DeviceCheckInRawUpdate] = Data.dataDecoder
 
       override def routes(implicit context: L0NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.empty
 
+      override def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInRawUpdate]] = Data.signedDataEntityDecoder
     }))
 
-  def rewards(implicit sp: SecurityProvider[IO]): Some[Rewards[IO, currency.CurrencyTransaction, currency.CurrencyBlock, currency.CurrencySnapshotStateProof, currency.CurrencyIncrementalSnapshot]] = Some(
+  def rewards(implicit sp: SecurityProvider[IO]): Some[Rewards[IO, currency.CurrencySnapshotStateProof, currency.CurrencyIncrementalSnapshot]] = Some(
     Rewards.distributeRewards[IO]
   )
 }
