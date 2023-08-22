@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
 import com.my.dor_metagraph.shared_data.Data
-import com.my.dor_metagraph.shared_data.Data.{DeviceCheckInWithSignature, State}
+import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, CheckInState}
 import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
@@ -27,18 +27,18 @@ object Main
     version = BuildInfo.version
   ) {
   def dataApplication: Option[BaseDataApplicationL0Service[IO]] =
-    Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, DeviceCheckInWithSignature, State] {
-      override def genesis: State = State(Map.empty)
+    Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, DeviceCheckInWithSignature, CheckInState] {
+      override def genesis: CheckInState = CheckInState(Map.empty, Map.empty, Map.empty, Map.empty)
 
-      override def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(oldState, updates)
+      override def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(oldState, updates)
 
       override def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 
-      override def combine(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[State] = Data.combine(oldState, updates)
+      override def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = Data.combine(oldState, updates)
 
-      override def serializeState(state: State): IO[Array[Byte]] = Data.serializeState(state)
+      override def serializeState(state: CheckInState): IO[Array[Byte]] = Data.serializeState(state)
 
-      override def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, State]] = Data.deserializeState(bytes)
+      override def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = Data.deserializeState(bytes)
 
       override def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = Data.serializeUpdate(update)
 

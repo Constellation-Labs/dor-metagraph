@@ -2,47 +2,22 @@ package com.my.dor_metagraph.shared_data
 
 import cats.data.NonEmptyList
 import cats.effect.IO
-import derevo.circe.magnolia.{decoder, encoder}
-import derevo.derive
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
-import org.tessellation.currency.dataApplication.{DataState, DataUpdate, L0NodeContext}
+import org.tessellation.currency.dataApplication.L0NodeContext
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
 import Combiners.combineDeviceCheckIn
-import com.my.dor_metagraph.shared_data.Bounties.Bounty
-import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
+import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, CheckInState}
 import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.Validations.deviceCheckInValidations
 import fs2.Compiler.Target.forSync
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
-import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
 
 object Data {
-  @derive(decoder, encoder)
-  case class FootTraffic(timestamp: Long, direction: Long)
-
-  @derive(decoder, encoder)
-  case class CheckInRef(ordinal: Long, hash: String)
-
-  @derive(decoder, encoder)
-  case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic], checkInRef: CheckInRef)
-
-  @derive(decoder, encoder)
-  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, publicKey: String, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, lastCheckInEpochProgress: Long)
-
-  @derive(decoder, encoder)
-  case class DeviceCheckInWithSignature(cbor: String, id: String, sig: String) extends DataUpdate
-
-  @derive(decoder, encoder)
-  case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
-
-  @derive(decoder, encoder)
-  case class State(devices: Map[Address, DeviceInfo]) extends DataState
-
-  def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+  def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     updates.traverse { signedUpdate =>
       val checkInInfo = getDeviceCheckInInfo(signedUpdate.value.cbor)
@@ -51,17 +26,26 @@ object Data {
   }
 
 
-  def combine(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[State] = {
+  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+    implicit val sp: SecurityProvider[IO] = context.securityProvider
+    val ordinalIO = context.getLastCurrencySnapshot.map(_.get.ordinal)
+    val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
+
     updates.foldLeftM(oldState) { (acc, signedUpdate) =>
-      combineDeviceCheckIn(acc, signedUpdate)
+      val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
+      for{
+        ordinal <- ordinalIO
+        epochProgress <- epochProgressIO
+        address <- addressIO
+      } yield combineDeviceCheckIn(acc, signedUpdate, ordinal.value.value + 1, epochProgress.value.value, address)
     }
   }
 
-  def serializeState(state: State): IO[Array[Byte]] = IO {
+  def serializeState(state: CheckInState): IO[Array[Byte]] = IO {
     Utils.customStateSerialization(state)
   }
 
-  def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, State]] = IO {
+  def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = IO {
     Utils.customStateDeserialization(bytes)
   }
 

@@ -3,7 +3,7 @@ package com.my.dor_metagraph.l0
 import cats.effect.Async
 import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.Data.{DeviceInfo, State}
+import com.my.dor_metagraph.shared_data.Types.{DeviceInfo, CheckInState}
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
@@ -118,7 +118,7 @@ object Rewards {
     validatorNodesRewards.toList
   }
 
-  def buildRewards[F[_] : Async](state: State, currentEpochProgress: Long, lastBalances: Map[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
+  def buildRewards[F[_] : Async](state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
     val allRewards = new ListBuffer[RewardTransaction]()
     var taxesToValidatorNodes = 0L
 

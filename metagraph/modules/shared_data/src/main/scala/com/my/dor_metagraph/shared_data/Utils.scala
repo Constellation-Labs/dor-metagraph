@@ -1,12 +1,13 @@
 package com.my.dor_metagraph.shared_data
 
 import Codecs._
-import Data.{DeviceCheckInInfo, DeviceCheckInWithSignature, State}
+import Types.{DeviceCheckInInfo, DeviceCheckInWithSignature, CheckInState}
 import cats.data.NonEmptySet
 import io.bullet.borer.Cbor
 import io.circe.parser
 import io.circe.syntax.EncoderOps
 import org.tessellation.schema.ID.Id
+import org.tessellation.security.hash.Hash
 import org.tessellation.security.hex.Hex
 import org.tessellation.security.signature.Signed
 import org.tessellation.security.signature.signature.{Signature, SignatureProof}
@@ -26,6 +27,8 @@ object Utils {
     }
   }
 
+  def getCheckInHash(update: DeviceCheckInWithSignature): String = Hash.fromBytes(customUpdateSerialization(update)).toString
+
   def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
     println("Serialize UPDATE event received")
     val cborBytes = toCBORHex(update.cbor)
@@ -41,15 +44,15 @@ object Utils {
     }
   }
 
-  def customStateSerialization(state: State): Array[Byte] = {
+  def customStateSerialization(state: CheckInState): Array[Byte] = {
     println("Serialize STATE event received")
     println(state.asJson.deepDropNullValues.noSpaces)
     state.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
   }
 
-  def customStateDeserialization(bytes: Array[Byte]): Either[Throwable, State] = {
+  def customStateDeserialization(bytes: Array[Byte]): Either[Throwable, CheckInState] = {
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[State]
+      json.as[CheckInState]
     }
   }
 
@@ -75,8 +78,8 @@ object Utils {
   def buildSignedUpdate(cborData: Array[Byte]): Signed[DeviceCheckInWithSignature] = {
     val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
 
-    val hexId = Hex(decodedCheckInWithSignature.id)
-    val hexSignature = Hex(decodedCheckInWithSignature.sig)
+    val hexId = Hex("e75a6011eaa38d7b0a1cb41810c655cdc89c6c5ffd207cbab9d18fd49cbf2729e262b5387a4687a23a163d14bc0dff8ef6539e2a73932e77d2de6b1895facd99")
+    val hexSignature = Hex("3044022075d21ce2bc7b247ba987bae12709a35b079c146d9eed2e028c5d96c1e07f9a0b02202689e4f625602b77723698ef3f9bc852dfdcb2f6a90ba562de090dfafbc1237d")
 
     val signatureProof = SignatureProof(Id(hexId), Signature(hexSignature))
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
