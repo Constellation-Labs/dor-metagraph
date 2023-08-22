@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
-import cats.data.{NonEmptyList, NonEmptySet}
+import cats.data.NonEmptyList
 import cats.effect.IO
 import derevo.circe.magnolia.{decoder, encoder}
 import derevo.derive
@@ -12,27 +12,15 @@ import cats.syntax.all._
 import Combiners.combineDeviceCheckIn
 import com.my.dor_metagraph.shared_data.Bounties.Bounty
 import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
-import com.my.dor_metagraph.shared_data.Utils.buildSignedUpdate
+import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.Validations.deviceCheckInValidations
 import fs2.Compiler.Target.forSync
-import io.bullet.borer.{Cbor, Codec}
-import io.bullet.borer.derivation.MapBasedCodecs._
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
-import org.tessellation.schema.ID.Id
 import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
-import org.tessellation.security.hex.Hex
-import org.tessellation.security.signature.signature.{Signature, SignatureProof}
-
-import java.nio.charset.StandardCharsets
-import scala.collection.immutable.SortedSet
 
 object Data {
-  implicit val dorCodec: Codec[DeviceCheckInWithSignature] = deriveCodec[DeviceCheckInWithSignature]
-  @derive(decoder, encoder)
-  case class DeviceCheckInWithSignature(ac: List[Long], dts: Long, e: List[List[Long]], id: String, signature: String)
-
   @derive(decoder, encoder)
   case class FootTraffic(timestamp: Long, direction: Long)
 
@@ -46,20 +34,24 @@ object Data {
   case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, publicKey: String, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, lastCheckInEpochProgress: Long)
 
   @derive(decoder, encoder)
-  case class DeviceCheckInRawUpdate(ac: List[Long], dts: Long, e: List[List[Long]]) extends DataUpdate
+  case class DeviceCheckInWithSignature(cbor: String, id: String, sig: String) extends DataUpdate
+
+  @derive(decoder, encoder)
+  case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
 
   @derive(decoder, encoder)
   case class State(devices: Map[Address, DeviceInfo]) extends DataState
 
-  def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInRawUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+  def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     updates.traverse { signedUpdate =>
-      deviceCheckInValidations(signedUpdate, oldState)
+      val checkInInfo = getDeviceCheckInInfo(signedUpdate.value.cbor)
+      deviceCheckInValidations(checkInInfo, signedUpdate.proofs, oldState)
     }.map(_.reduce)
   }
 
 
-  def combine(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInRawUpdate]])(implicit context: L0NodeContext[IO]): IO[State] = {
+  def combine(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[State] = {
     updates.foldLeftM(oldState) { (acc, signedUpdate) =>
       combineDeviceCheckIn(acc, signedUpdate)
     }
@@ -73,22 +65,29 @@ object Data {
     Utils.customStateDeserialization(bytes)
   }
 
-  def serializeUpdate(update: DeviceCheckInRawUpdate): IO[Array[Byte]] = IO {
+  def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = IO {
     Utils.customUpdateSerialization(update)
   }
 
-  def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInRawUpdate]] = IO {
+  def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = IO {
     Utils.customUpdateDeserialization(bytes)
   }
 
-  def dataEncoder: Encoder[DeviceCheckInRawUpdate] = deriveEncoder
+  def dataEncoder: Encoder[DeviceCheckInWithSignature] = deriveEncoder
 
-  def dataDecoder: Decoder[DeviceCheckInRawUpdate] = deriveDecoder
+  def dataDecoder: Decoder[DeviceCheckInWithSignature] = deriveDecoder
 
-  def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInRawUpdate]] = {
+  def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
       val rawText = msg.as[String]
-      val signed = rawText.flatMap(buildSignedUpdate(_).pure[IO])
+      val signed = rawText.flatMap { text =>
+        val byteArray = if (text.contains(',')) {
+          text.split(',').map(byteAsString => Integer.decode(byteAsString.trim).toByte)
+        } else {
+          text.split(' ').map(byteAsString => Integer.decode(byteAsString.trim).toByte)
+        }
+        buildSignedUpdate(byteArray).pure[IO]
+      }
       DecodeResult.success(signed)
     }
   }

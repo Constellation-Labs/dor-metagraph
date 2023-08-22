@@ -118,7 +118,7 @@ object Rewards {
     validatorNodesRewards.toList
   }
 
-  def buildRewards[F[_] : Async : SecurityProvider](state: State, currentEpochProgress: Long, lastBalances: Map[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
+  def buildRewards[F[_] : Async](state: State, currentEpochProgress: Long, lastBalances: Map[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
     val allRewards = new ListBuffer[RewardTransaction]()
     var taxesToValidatorNodes = 0L
 
@@ -159,7 +159,7 @@ object Rewards {
     }
   }
 
-  def distributeRewards[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], acceptedTransactions: SortedSet[Signed[Transaction]], trigger: ConsensusTrigger) => {
+  def distributeRewards[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], _: ConsensusTrigger) => {
     val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
 
     lastArtifact.data.map(data => customStateDeserialization(data)) match {

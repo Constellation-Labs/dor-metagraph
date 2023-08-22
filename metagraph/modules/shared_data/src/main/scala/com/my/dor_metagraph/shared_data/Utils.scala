@@ -1,6 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
-import Data.{DeviceCheckInRawUpdate, DeviceCheckInWithSignature, State}
+import Codecs._
+import Data.{DeviceCheckInInfo, DeviceCheckInWithSignature, State}
 import cats.data.NonEmptySet
 import io.bullet.borer.Cbor
 import io.circe.parser
@@ -15,7 +16,7 @@ import scala.collection.immutable.SortedSet
 import scala.util.control.NonFatal
 
 object Utils {
-  def toCBORHex(hexString: String): Array[Byte] = {
+  private def toCBORHex(hexString: String): Array[Byte] = {
     try {
       if ((hexString.length & 1) != 0) sys.error("string length is not even")
       hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
@@ -25,10 +26,19 @@ object Utils {
     }
   }
 
-  def customUpdateSerialization(update: DeviceCheckInRawUpdate): Array[Byte] = {
+  def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
     println("Serialize UPDATE event received")
-    println(update.asJson.deepDropNullValues.noSpaces)
-    update.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
+    val cborBytes = toCBORHex(update.cbor)
+    println(cborBytes.mkString("Array(", ", ", ")"))
+    cborBytes
+  }
+
+  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInWithSignature] = {
+    parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
+      println("KAKAKA")
+      println(json)
+      json.as[DeviceCheckInWithSignature]
+    }
   }
 
   def customStateSerialization(state: State): Array[Byte] = {
@@ -43,28 +53,34 @@ object Utils {
     }
   }
 
-  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInRawUpdate] = {
-    parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[DeviceCheckInRawUpdate]
-    }
-  }
-
   def toTokenAmountFormat(balance: Double): Long = {
     (balance * 10e7).toLong
   }
 
-  def buildSignedUpdate(text: String): Signed[DeviceCheckInRawUpdate] = {
-    val cborData = Utils.toCBORHex(text)
-    val decodedCheckIn = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
+  def getDeviceCheckInInfo(cborData: String): DeviceCheckInInfo = {
+    val checkInCborData = Utils.toCBORHex(cborData)
+    val decodedCheckIn = Cbor.decode(checkInCborData).to[DeviceCheckInInfo].value
 
-    val deviceUpdate = DeviceCheckInRawUpdate(decodedCheckIn.ac, decodedCheckIn.dts, decodedCheckIn.e)
+    decodedCheckIn
+  }
 
-    val hexId = Hex(decodedCheckIn.id)
-    val hexSignature = Hex(decodedCheckIn.signature)
+  def convertBytesToHex(bytes: Array[Byte]): String = {
+    val sb = new StringBuilder
+    for (b <- bytes) {
+      sb.append(String.format("%02x", Byte.box(b)))
+    }
+    sb.toString
+  }
+
+  def buildSignedUpdate(cborData: Array[Byte]): Signed[DeviceCheckInWithSignature] = {
+    val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
+
+    val hexId = Hex(decodedCheckInWithSignature.id)
+    val hexSignature = Hex(decodedCheckInWithSignature.sig)
 
     val signatureProof = SignatureProof(Id(hexId), Signature(hexSignature))
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
 
-    Signed(deviceUpdate, proofs)
+    Signed(decodedCheckInWithSignature, proofs)
   }
 }

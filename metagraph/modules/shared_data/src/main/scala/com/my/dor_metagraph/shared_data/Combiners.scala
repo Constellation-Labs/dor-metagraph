@@ -1,12 +1,11 @@
 package com.my.dor_metagraph.shared_data
 
 import cats.effect.IO
-import Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, DeviceCheckInRawUpdate, FootTraffic, State}
+import Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, FootTraffic, State}
 import cats.implicits.catsSyntaxApplicativeId
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.DorApi.{DeviceInfoAPIResponse, fetchDeviceInfo}
-import com.my.dor_metagraph.shared_data.Utils.customUpdateSerialization
-import io.bullet.borer.Cbor
+import com.my.dor_metagraph.shared_data.Utils.{customUpdateSerialization, getDeviceCheckInInfo}
 import monocle.Monocle.toAppliedFocusOps
 import org.tessellation.currency.dataApplication.L0NodeContext
 import org.tessellation.schema.address.Address
@@ -18,7 +17,7 @@ object Combiners {
   def combine(
                acc: State,
                address: Address,
-               deviceCheckIn: DeviceCheckInRawUpdate,
+               deviceCheckIn: DeviceCheckInWithSignature,
                publicKey: String,
                snapshotOrdinal: Long,
                checkInHash: String,
@@ -26,9 +25,10 @@ object Combiners {
                deviceInfo: DeviceInfoAPIResponse
              ): State = {
     val state = acc.devices.get(address)
-    val footTraffics = deviceCheckIn.e.map { event => FootTraffic(event.head, event.last) }
+    val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
+    val footTraffics = checkInInfo.e.map { event => FootTraffic(event.head, event.last) }
     val checkInRef = CheckInRef(snapshotOrdinal, checkInHash)
-    val checkInFormatted = DeviceCheckInFormatted(deviceCheckIn.ac, deviceCheckIn.dts, footTraffics, checkInRef)
+    val checkInFormatted = DeviceCheckInFormatted(checkInInfo.ac, checkInInfo.dts, footTraffics, checkInRef)
 
     val newState = state match {
       case Some(current) =>
@@ -43,21 +43,9 @@ object Combiners {
 
     acc.focus(_.devices).modify(_.updated(address, newState))
   }
+  def getCheckInHash(update: DeviceCheckInWithSignature): String = Hash.fromBytes(customUpdateSerialization(update)).toString
 
-  def getDeviceCheckInFromCBOR(data: String): DeviceCheckInWithSignature = {
-    try {
-      val cborData = Utils.toCBORHex(data)
-      Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
-    } catch {
-      case e: Exception =>
-        println(s"Error parsing data on check in. Data: $data")
-        throw e
-    }
-  }
-
-  def getCheckInHash(update: DeviceCheckInRawUpdate): String = Hash.fromBytes(customUpdateSerialization(update)).toString
-
-  def combineDeviceCheckIn(acc: State, signedUpdate: Signed[DeviceCheckInRawUpdate])(implicit context: L0NodeContext[IO]): IO[State] = {
+  def combineDeviceCheckIn(acc: State, signedUpdate: Signed[DeviceCheckInWithSignature])(implicit context: L0NodeContext[IO]): IO[State] = {
     try {
       implicit val sp: SecurityProvider[IO] = context.securityProvider
       val deviceCheckIn = signedUpdate.value

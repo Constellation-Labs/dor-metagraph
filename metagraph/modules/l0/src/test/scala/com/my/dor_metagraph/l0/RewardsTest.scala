@@ -34,7 +34,7 @@ object RewardsTest extends MutableIOSuite {
     )
   }
 
-  test("Build correctly rewards - UnitDeployedBounty") { implicit sc =>
+  test("Build correctly rewards - UnitDeployedBounty") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentPublicKey = "22f97a140b17556e582efa667489bc0097eae9349707790630b0d5133d3b01db67ce0e6adb65e154096036ce5619b5fbdd116dbb07c12f9c68c2306f9830dbc6"
     val currentBounties = List(UnitDeployedBounty("UnitDeployedBounty"), CommercialLocationBounty("CommercialLocationBounty"))
@@ -63,7 +63,7 @@ object RewardsTest extends MutableIOSuite {
       expect.eql(facilitatorsAddresses(2).value.value, rewards.toList(3).destination.value.value)
   }
 
-  test("Build correctly rewards - CommercialLocationBounty") { implicit sc =>
+  test("Build correctly rewards - CommercialLocationBounty") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentPublicKey = "22f97a140b17556e582efa667489bc0097eae9349707790630b0d5133d3b01db67ce0e6adb65e154096036ce5619b5fbdd116dbb07c12f9c68c2306f9830dbc6"
     val currentBounties = List(UnitDeployedBounty("UnitDeployedBounty"), CommercialLocationBounty("CommercialLocationBounty"))
@@ -92,7 +92,7 @@ object RewardsTest extends MutableIOSuite {
       expect.eql(facilitatorsAddresses(2).value.value, rewards.toList(3).destination.value.value)
   }
 
-  test("Empty rewards when epochProgress does not complete 1 day") { implicit sc =>
+  test("Empty rewards when epochProgress does not complete 1 day") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentPublicKey = "22f97a140b17556e582efa667489bc0097eae9349707790630b0d5133d3b01db67ce0e6adb65e154096036ce5619b5fbdd116dbb07c12f9c68c2306f9830dbc6"
     val currentBounties = List(UnitDeployedBounty("UnitDeployedBounty"), CommercialLocationBounty("CommercialLocationBounty"))
