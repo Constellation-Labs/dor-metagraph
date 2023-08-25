@@ -78,8 +78,8 @@ object Utils {
   def buildSignedUpdate(cborData: Array[Byte]): Signed[DeviceCheckInWithSignature] = {
     val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
 
-    val hexId = Hex("e75a6011eaa38d7b0a1cb41810c655cdc89c6c5ffd207cbab9d18fd49cbf2729e262b5387a4687a23a163d14bc0dff8ef6539e2a73932e77d2de6b1895facd99")
-    val hexSignature = Hex("3044022075d21ce2bc7b247ba987bae12709a35b079c146d9eed2e028c5d96c1e07f9a0b02202689e4f625602b77723698ef3f9bc852dfdcb2f6a90ba562de090dfafbc1237d")
+    val hexId = Hex(decodedCheckInWithSignature.id)
+    val hexSignature = Hex(decodedCheckInWithSignature.sig)
 
     val signatureProof = SignatureProof(Id(hexId), Signature(hexSignature))
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))

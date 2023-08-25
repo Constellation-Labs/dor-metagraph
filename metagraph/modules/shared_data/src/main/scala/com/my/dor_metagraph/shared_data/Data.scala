@@ -28,16 +28,14 @@ object Data {
 
   def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
-    val ordinalIO = context.getLastCurrencySnapshot.map(_.get.ordinal)
     val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
 
     updates.foldLeftM(oldState) { (acc, signedUpdate) =>
       val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
       for{
-        ordinal <- ordinalIO
         epochProgress <- epochProgressIO
         address <- addressIO
-      } yield combineDeviceCheckIn(acc, signedUpdate, ordinal.value.value + 1, epochProgress.value.value, address)
+      } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value, address)
     }
   }
 

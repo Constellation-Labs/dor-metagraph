@@ -28,7 +28,7 @@ object Main
   ) {
   def dataApplication: Option[BaseDataApplicationL0Service[IO]] =
     Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, DeviceCheckInWithSignature, CheckInState] {
-      override def genesis: CheckInState = CheckInState(Map.empty, Map.empty, Map.empty, Map.empty)
+      override def genesis: CheckInState = CheckInState(Map.empty)
 
       override def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(oldState, updates)
 

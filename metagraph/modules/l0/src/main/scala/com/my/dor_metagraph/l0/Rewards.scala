@@ -124,7 +124,7 @@ object Rewards {
 
     state.devices.map { case (_, value) =>
       if (currentEpochProgress - value.lastCheckInEpochProgress > EPOCH_PROGRESS_1_DAY) {
-        println(s"Device ${value.publicKey} didn't make a check in in the last 24 hours")
+        println(s"Device with reward address ${value.deviceApiResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
       } else {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
         val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)

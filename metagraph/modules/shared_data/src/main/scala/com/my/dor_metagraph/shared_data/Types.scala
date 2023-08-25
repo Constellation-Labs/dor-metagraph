@@ -15,7 +15,7 @@ object Types {
   case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic])
 
   @derive(decoder, encoder)
-  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, publicKey: String, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, lastCheckInEpochProgress: Long)
+  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, lastCheckInEpochProgress: Long)
 
   @derive(decoder, encoder)
   case class DeviceCheckInWithSignature(cbor: String, id: String, sig: String) extends DataUpdate
@@ -24,23 +24,6 @@ object Types {
   case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
 
   @derive(decoder, encoder)
-  case class DeviceCheckInTransaction(owner: Address, snapshotOrdinal: Long)
-
-  @derive(decoder, encoder)
-  case class LastTxnRefs(snapshotOrdinal: Long, txnOrdinal: Long, hash: String)
-
-  object LastTxnRefs {
-    def empty: LastTxnRefs = LastTxnRefs(0, 0, "0000000000000000000000000000000000000000000000000000000000000000")
-  }
-
-  @derive(decoder, encoder)
-  case class LastSnapshotRefs(ordinal: Long, hash: String)
-
-  object LastSnapshotRefs {
-    def empty: LastSnapshotRefs = LastSnapshotRefs(0, "0000000000000000000000000000000000000000000000000000000000000000")
-  }
-
-  @derive(decoder, encoder)
-  case class CheckInState(devices: Map[Address, DeviceInfo], transactions: Map[String, DeviceCheckInTransaction], lastTxnRefs: Map[Address, LastTxnRefs], lastSnapshotRefs: Map[Address, LastSnapshotRefs]) extends DataState
+  case class CheckInState(devices: Map[Address, DeviceInfo]) extends DataState
 
 }
