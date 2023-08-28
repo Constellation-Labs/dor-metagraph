@@ -1,19 +1,19 @@
 package com.my.dor_metagraph.shared_data
 
 import Codecs._
-import Types.{DeviceCheckInInfo, DeviceCheckInWithSignature, CheckInState}
+import Types.{CheckInState, DeviceCheckInInfo, DeviceCheckInWithSignature}
 import cats.data.NonEmptySet
 import io.bullet.borer.Cbor
 import io.circe.parser
 import io.circe.syntax.EncoderOps
 import org.tessellation.schema.ID.Id
-import org.tessellation.security.hash.Hash
 import org.tessellation.security.hex.Hex
 import org.tessellation.security.signature.Signed
 import org.tessellation.security.signature.signature.{Signature, SignatureProof}
 
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable.SortedSet
+import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
 object Utils {
@@ -26,19 +26,13 @@ object Utils {
         throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
     }
   }
-
-  def getCheckInHash(update: DeviceCheckInWithSignature): String = Hash.fromBytes(customUpdateSerialization(update)).toString
-
   def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
     println("Serialize UPDATE event received")
-    val cborBytes = toCBORHex(update.cbor)
-    println(cborBytes.mkString("Array(", ", ", ")"))
-    cborBytes
+    toCBORHex(update.cbor)
   }
 
   def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInWithSignature] = {
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      println("KAKAKA")
       println(json)
       json.as[DeviceCheckInWithSignature]
     }
@@ -85,5 +79,19 @@ object Utils {
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
 
     Signed(decodedCheckInWithSignature, proofs)
+  }
+
+  def getByteArrayFromRequestBody(bodyAsString: String): Array[Byte] = {
+    val bodyAsBytes: ListBuffer[Byte] = ListBuffer.empty
+
+    var idx = 0
+    while (idx < bodyAsString.length) {
+      val substringParsed = bodyAsString.substring(idx, idx + 2).trim
+      val parsedString = s"0x$substringParsed"
+      bodyAsBytes.addOne(Integer.decode(parsedString).toByte)
+      idx = idx + 2
+    }
+
+    bodyAsBytes.toArray
   }
 }

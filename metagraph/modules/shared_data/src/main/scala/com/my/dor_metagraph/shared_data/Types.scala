@@ -8,6 +8,7 @@ import org.tessellation.currency.dataApplication.{DataState, DataUpdate}
 import org.tessellation.schema.address.Address
 
 object Types {
+  val EPOCH_PROGRESS_1_DAY: Long = 60 * 24
   @derive(decoder, encoder)
   case class FootTraffic(timestamp: Long, direction: Long)
 
@@ -15,7 +16,7 @@ object Types {
   case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic])
 
   @derive(decoder, encoder)
-  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, lastCheckInEpochProgress: Long)
+  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, nextEpochProgressToReward: Long)
 
   @derive(decoder, encoder)
   case class DeviceCheckInWithSignature(cbor: String, id: String, sig: String) extends DataUpdate

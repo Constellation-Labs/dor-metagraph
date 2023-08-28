@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
-import Types.{DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, FootTraffic, CheckInState}
+import Types.{CheckInState, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, EPOCH_PROGRESS_1_DAY, FootTraffic}
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.DorApi.{DeviceInfoAPIResponse, fetchDeviceInfo}
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
@@ -9,7 +9,7 @@ import org.tessellation.schema.address.Address
 import org.tessellation.security.signature.Signed
 
 object Combiners {
-  def getNewCheckIn(acc: CheckInState, address: Address, deviceCheckIn: DeviceCheckInWithSignature, epochProgress: Long, deviceInfo: DeviceInfoAPIResponse): CheckInState = {
+  def getNewCheckIn(acc: CheckInState, address: Address, deviceCheckIn: DeviceCheckInWithSignature, currentEpoch: Long, deviceInfo: DeviceInfoAPIResponse): CheckInState = {
     val state = acc.devices.get(address)
     val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
     val footTraffics = checkInInfo.e.map { event => FootTraffic(event.head, event.last) }
@@ -20,21 +20,34 @@ object Combiners {
       case None => List(UnitDeployedBounty("UnitDeployed"), CommercialLocationBounty("CommercialLocation"))
     }
 
-    val checkIn = DeviceInfo(checkInFormatted, bounties, deviceInfo, epochProgress)
+    val currentEpochModulus = currentEpoch % EPOCH_PROGRESS_1_DAY
+    val nextRewardEpoch = currentEpoch - currentEpochModulus + EPOCH_PROGRESS_1_DAY
+
+    val nextRewardEpochProgress = state match {
+      case Some(current) =>
+        if (currentEpoch >= current.nextEpochProgressToReward ) {
+          nextRewardEpoch
+        } else {
+          current.nextEpochProgressToReward
+        }
+      case None => nextRewardEpoch
+    }
+
+    val checkIn = DeviceInfo(checkInFormatted, bounties, deviceInfo, nextRewardEpochProgress)
     acc.focus(_.devices).modify(_.updated(address, checkIn))
   }
 
-  def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, epochProgress: Long, deviceInfo: DeviceInfoAPIResponse): CheckInState = {
+  def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, currentEpochProgress: Long, deviceInfo: DeviceInfoAPIResponse): CheckInState = {
     val deviceCheckIn = signedUpdate.value
 
-    getNewCheckIn(acc, address, deviceCheckIn, epochProgress, deviceInfo)
+    getNewCheckIn(acc, address, deviceCheckIn, currentEpochProgress, deviceInfo)
   }
 
-  def combineDeviceCheckIn(acc: CheckInState, signedUpdate: Signed[DeviceCheckInWithSignature], epochProgress: Long, address: Address): CheckInState = {
+  def combineDeviceCheckIn(acc: CheckInState, signedUpdate: Signed[DeviceCheckInWithSignature], currentEpochProgress: Long, address: Address): CheckInState = {
     try {
       val publicKey = signedUpdate.proofs.head.id.hex.value
       fetchDeviceInfo(publicKey) match {
-        case Some(deviceInfo) => combine(signedUpdate, acc, address, epochProgress, deviceInfo)
+        case Some(deviceInfo) => combine(signedUpdate, acc, address, currentEpochProgress, deviceInfo)
         case None => acc
       }
     } catch {

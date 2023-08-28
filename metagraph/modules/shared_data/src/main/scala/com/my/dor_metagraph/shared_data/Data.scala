@@ -8,8 +8,8 @@ import org.tessellation.currency.dataApplication.L0NodeContext
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
 import Combiners.combineDeviceCheckIn
-import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, CheckInState}
-import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, getDeviceCheckInInfo}
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInWithSignature}
+import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, customStateDeserialization, customStateSerialization, customUpdateDeserialization, customUpdateSerialization, getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.Validations.deviceCheckInValidations
 import fs2.Compiler.Target.forSync
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
@@ -32,27 +32,27 @@ object Data {
 
     updates.foldLeftM(oldState) { (acc, signedUpdate) =>
       val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
-      for{
+      for {
         epochProgress <- epochProgressIO
         address <- addressIO
-      } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value, address)
+      } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value + 1, address)
     }
   }
 
   def serializeState(state: CheckInState): IO[Array[Byte]] = IO {
-    Utils.customStateSerialization(state)
+    customStateSerialization(state)
   }
 
   def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = IO {
-    Utils.customStateDeserialization(bytes)
+    customStateDeserialization(bytes)
   }
 
   def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = IO {
-    Utils.customUpdateSerialization(update)
+    customUpdateSerialization(update)
   }
 
   def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = IO {
-    Utils.customUpdateDeserialization(bytes)
+    customUpdateDeserialization(bytes)
   }
 
   def dataEncoder: Encoder[DeviceCheckInWithSignature] = deriveEncoder
@@ -63,12 +63,8 @@ object Data {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
       val rawText = msg.as[String]
       val signed = rawText.flatMap { text =>
-        val byteArray = if (text.contains(',')) {
-          text.split(',').map(byteAsString => Integer.decode(byteAsString.trim).toByte)
-        } else {
-          text.split(' ').map(byteAsString => Integer.decode(byteAsString.trim).toByte)
-        }
-        buildSignedUpdate(byteArray).pure[IO]
+        val bodyAsBytes = getByteArrayFromRequestBody(text)
+        buildSignedUpdate(bodyAsBytes).pure[IO]
       }
       DecodeResult.success(signed)
     }

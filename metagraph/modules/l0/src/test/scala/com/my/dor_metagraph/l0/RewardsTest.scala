@@ -1,9 +1,11 @@
 package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
-import com.my.dor_metagraph.l0.Rewards.{buildRewards, buildValidatorNodesRewards, calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
+import com.my.dor_metagraph.l0.BountyRewards.{calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
+import com.my.dor_metagraph.l0.Rewards.buildRewards
+import com.my.dor_metagraph.l0.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInFormatted, DeviceInfo, FootTraffic, CheckInState}
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInFormatted, DeviceInfo, FootTraffic}
 import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.numeric.NonNegLong
@@ -193,7 +195,7 @@ object RewardsTest extends MutableIOSuite {
     val validatorNodesL0 = getValidatorNodesL0
     val validatorNodesL1 = getValidatorNodesL1
 
-    val rewards = buildValidatorNodesRewards(validatorNodesL0, validatorNodesL1, 50000)
+    val rewards = getValidatorNodesTransactions(validatorNodesL0, validatorNodesL1, 50000)
 
     expect.eql(6, rewards.size) &&
       forEach(rewards)(reward => expect.eql(8333L, reward.amount.value.value))

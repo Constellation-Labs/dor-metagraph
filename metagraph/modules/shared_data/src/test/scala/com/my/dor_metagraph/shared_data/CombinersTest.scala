@@ -19,7 +19,7 @@ object CombinersTest extends SimpleIOSuite {
 
     allCheckIns.devices.get(address) match {
       case Some(checkIn) =>
-        expect.eql(epochProgress, checkIn.lastCheckInEpochProgress)
+        expect.eql(epochProgress, checkIn.nextEpochProgressToReward)
         expect.eql(1669815076L, checkIn.lastCheckIn.dts) &&
           expect.eql(3, checkIn.lastCheckIn.ac.size) &&
           expect.eql(143, checkIn.lastCheckIn.ac.head) &&
@@ -46,7 +46,7 @@ object CombinersTest extends SimpleIOSuite {
 
     oldState.devices.get(currentAddress) match {
       case Some(checkIn) =>
-        expect.eql(currentEpochProgress, checkIn.lastCheckInEpochProgress) &&
+        expect.eql(currentEpochProgress, checkIn.nextEpochProgressToReward) &&
           expect.eql(123456L, checkIn.lastCheckIn.dts) &&
           expect.eql(3, checkIn.lastCheckIn.ac.size) &&
           expect.eql(1, checkIn.lastCheckIn.ac.head) &&
@@ -60,13 +60,13 @@ object CombinersTest extends SimpleIOSuite {
         expect.eql(1, 2)
     }
 
-    currentEpochProgress = 2880L
+    currentEpochProgress = 2882L
     val checkInRaw = DeviceCheckInWithSignature(cborString, "", "")
     val allCheckIns = getNewCheckIn(oldState, currentAddress, checkInRaw, currentEpochProgress, currentDeviceInfoAPIResponse)
 
     allCheckIns.devices.get(currentAddress) match {
       case Some(checkIn) =>
-        expect.eql(currentEpochProgress, checkIn.lastCheckInEpochProgress) &&
+        expect.eql(4320L, checkIn.nextEpochProgressToReward) &&
           expect.eql(1669815076L, checkIn.lastCheckIn.dts) &&
           expect.eql(3, checkIn.lastCheckIn.ac.size) &&
           expect.eql(143, checkIn.lastCheckIn.ac.head) &&

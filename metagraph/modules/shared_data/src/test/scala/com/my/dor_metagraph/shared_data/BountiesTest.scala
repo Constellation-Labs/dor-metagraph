@@ -10,7 +10,7 @@ object BountiesTest extends SimpleIOSuite {
   pureTest("Get correctly rewards UnitDeployedBounty") {
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val deviceInfoAPIResponse = DeviceInfoAPIResponse(address, linkedToStore = true, Some("Retail"))
-    val bountyAmount = UnitDeployedBounty("UnitDeployedBounty").getBountyRewardAmount(deviceInfoAPIResponse)
+    val bountyAmount = UnitDeployedBounty("UnitDeployedBounty").getBountyRewardAmount(deviceInfoAPIResponse, 0L)
 
     expect.eql(50, bountyAmount)
   }
@@ -18,7 +18,7 @@ object BountiesTest extends SimpleIOSuite {
   pureTest("Get correctly rewards CommercialLocationBounty - Retail store") {
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val deviceInfoAPIResponse = DeviceInfoAPIResponse(address, linkedToStore = true, Some("Retail"))
-    val bountyAmount = CommercialLocationBounty("CommercialLocationBounty").getBountyRewardAmount(deviceInfoAPIResponse)
+    val bountyAmount = CommercialLocationBounty("CommercialLocationBounty").getBountyRewardAmount(deviceInfoAPIResponse, 1L)
 
     expect.eql(50, bountyAmount)
   }
@@ -26,7 +26,7 @@ object BountiesTest extends SimpleIOSuite {
   pureTest("Get correctly rewards CommercialLocationBounty - Residential store") {
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val deviceInfoAPIResponse = DeviceInfoAPIResponse(address, linkedToStore = true, Some("Residential"))
-    val bountyAmount = CommercialLocationBounty("CommercialLocationBounty").getBountyRewardAmount(deviceInfoAPIResponse)
+    val bountyAmount = CommercialLocationBounty("CommercialLocationBounty").getBountyRewardAmount(deviceInfoAPIResponse, 1L)
 
     expect.eql(0, bountyAmount)
   }
