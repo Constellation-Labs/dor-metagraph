@@ -72,6 +72,10 @@ object Utils {
   def buildSignedUpdate(cborData: Array[Byte]): Signed[DeviceCheckInWithSignature] = {
     val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
 
+    println(s"Decoded CBOR field ${decodedCheckInWithSignature.cbor}")
+    println(s"Decoded ID field ${decodedCheckInWithSignature.id}")
+    println(s"Decoded SIGNATURE field ${decodedCheckInWithSignature.sig}")
+
     val hexId = Hex(decodedCheckInWithSignature.id)
     val hexSignature = Hex(decodedCheckInWithSignature.sig)
 

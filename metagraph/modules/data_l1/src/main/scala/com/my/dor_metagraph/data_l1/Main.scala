@@ -40,7 +40,7 @@ object Main
 
     override def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 
-    override def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
+    override def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateUpdate(update)
 
     override def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L1NodeContext[IO]): IO[CheckInState] = IO.pure(oldState)
 

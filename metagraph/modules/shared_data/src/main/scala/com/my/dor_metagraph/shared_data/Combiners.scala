@@ -12,6 +12,11 @@ object Combiners {
   def getNewCheckIn(acc: CheckInState, address: Address, deviceCheckIn: DeviceCheckInWithSignature, currentEpoch: Long, deviceInfo: DeviceInfoAPIResponse): CheckInState = {
     val state = acc.devices.get(address)
     val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
+
+    println(s"Decoded CBOR field before combining AC ${checkInInfo.ac}")
+    println(s"Decoded CBOR field before combining DTS ${checkInInfo.dts}")
+    println(s"Decoded CBOR field before combining E ${checkInInfo.e}")
+
     val footTraffics = checkInInfo.e.map { event => FootTraffic(event.head, event.last) }
     val checkInFormatted = DeviceCheckInFormatted(checkInInfo.ac, checkInInfo.dts, footTraffics)
 
@@ -34,6 +39,7 @@ object Combiners {
     }
 
     val checkIn = DeviceInfo(checkInFormatted, bounties, deviceInfo, nextRewardEpochProgress)
+    println(s"New checkIn for the device: $checkIn")
     acc.focus(_.devices).modify(_.updated(address, checkIn))
   }
 
