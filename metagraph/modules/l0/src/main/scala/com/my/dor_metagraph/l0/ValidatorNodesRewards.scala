@@ -1,12 +1,20 @@
 package com.my.dor_metagraph.l0
 
 import eu.timepit.refined.types.all.PosLong
+import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
 
 import scala.collection.mutable.ListBuffer
 
 object ValidatorNodesRewards {
+  private val validatorNodesRewards = ValidatorNodesRewards()
+  def getValidatorNodesTransactions(validatorNodesL0: List[Address], validatorNodesL1: List[Address], taxesToValidatorNodes: Long): List[RewardTransaction] = {
+    validatorNodesRewards.getValidatorNodesTransactions(validatorNodesL0, validatorNodesL1, taxesToValidatorNodes)
+  }
+}
+case class ValidatorNodesRewards() {
+  private val logger = LoggerFactory.getLogger(classOf[ValidatorNodesRewards])
   private def getRewardsValidatorNodes(addresses: List[Address], taxToEachLayer: Long, layer: String): List[RewardTransaction] = {
     val numberOfAddresses = addresses.size
     val amountToEachAddress = taxToEachLayer / numberOfAddresses
@@ -17,9 +25,9 @@ object ValidatorNodesRewards {
         TransactionAmount(PosLong.unsafeFrom(amountToEachAddress))
       )
     }
-    println(s"[Validator Nodes $layer] Total Rewards to be distributed: $taxToEachLayer")
-    println(s"[Validator Nodes $layer] Number of addresses: $numberOfAddresses")
-    println(s"[Validator Nodes $layer] Distributing $amountToEachAddress to each one of the $numberOfAddresses addresses")
+    logger.info(s"[Validator Nodes $layer] Total Rewards to be distributed: $taxToEachLayer")
+    logger.info(s"[Validator Nodes $layer] Number of addresses: $numberOfAddresses")
+    logger.info(s"[Validator Nodes $layer] Distributing $amountToEachAddress to each one of the $numberOfAddresses addresses")
 
     validatorNodesRewards.toList
   }
@@ -31,9 +39,9 @@ object ValidatorNodesRewards {
 
     val taxToEachLayer = taxesToValidatorNodes / 2
 
-    println(s"Rewards to distribute between validator nodes: $taxesToValidatorNodes")
-    println(s"Rewards to distribute between validator nodes L0: $taxToEachLayer")
-    println(s"Rewards to distribute between validator nodes L1: $taxToEachLayer")
+    logger.info(s"Rewards to distribute between validator nodes: $taxesToValidatorNodes")
+    logger.info(s"Rewards to distribute between validator nodes L0: $taxToEachLayer")
+    logger.info(s"Rewards to distribute between validator nodes L1: $taxToEachLayer")
 
     //Validator nodes L0
     val validatorNodesL0Rewards = getRewardsValidatorNodes(validatorNodesL0, taxToEachLayer, "L0")

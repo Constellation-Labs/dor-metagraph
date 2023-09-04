@@ -1,19 +1,18 @@
 package com.my.dor_metagraph.shared_data
 
-import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
+import com.my.dor_metagraph.shared_data.Types.DeviceInfoAPIResponse
 import derevo.circe.magnolia.{decoder, encoder}
 import derevo.derive
 
 object Bounties {
   @derive(decoder, encoder)
   sealed trait Bounty {
-    val name: String
 
     def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long
   }
 
   @derive(decoder, encoder)
-  case class UnitDeployedBounty(name: String) extends Bounty {
+  case class UnitDeployedBounty() extends Bounty {
     override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long = {
       if (epochModulus != 0L) {
         return 0L
@@ -24,13 +23,13 @@ object Bounties {
   }
 
   @derive(decoder, encoder)
-  case class CommercialLocationBounty(name: String) extends Bounty {
+  case class CommercialLocationBounty() extends Bounty {
     override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long = {
       if (epochModulus != 1L) {
         return 0L
       }
 
-      deviceInfo.storeType match {
+      deviceInfo.locationType match {
         case None => 0L
         case Some(storeType) =>
           if (storeType != "Residential") {
@@ -38,6 +37,22 @@ object Bounties {
           } else {
             0L
           }
+      }
+
+    }
+  }
+
+  @derive(decoder, encoder)
+  case class RetailAnalyticsSubscriptionBounty() extends Bounty {
+    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long = {
+      if (epochModulus != 2L) {
+        return 0L
+      }
+
+      deviceInfo.billedAmountMonthly match {
+        case None => 0L
+        case Some(billedAmountMonthly) =>
+          billedAmountMonthly * 25L
       }
 
     }

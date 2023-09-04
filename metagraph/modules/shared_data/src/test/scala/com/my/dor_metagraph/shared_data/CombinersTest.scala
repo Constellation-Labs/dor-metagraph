@@ -2,8 +2,7 @@ package com.my.dor_metagraph.shared_data
 
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.Combiners.getNewCheckIn
-import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, FootTraffic}
-import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, FootTraffic}
 import org.tessellation.schema.address.Address
 import weaver.SimpleIOSuite
 
@@ -14,7 +13,7 @@ object CombinersTest extends SimpleIOSuite {
     val cborString = "BF6261639F188F38B43925B8FF636474731A63875B2461659F9F1B00000184A0C9AF5E01FF9F1B00000194A0CD649601FF9F1B00000184A0CE08A701FF9F1B00000184A0D0CF9801FF9F1B00000184A0D3254101FF9F1B00000184A0D3968A01FF9F1B00000184A0D3C95301FF9F1B00000184A0D3F06401FF9F1B00000184A0D47D0501FF9F1B00000184A0D48CA601FFFFFF"
     val checkInRaw = DeviceCheckInWithSignature(cborString, "", "")
     val epochProgress = 1440L
-    val deviceInfoAPIResponse = DeviceInfoAPIResponse(address, linkedToStore = true, Some("Retail"))
+    val deviceInfoAPIResponse = DeviceInfoAPIResponse(address, isInstalled = true, Some("Retail"), Some(10L))
     val allCheckIns = getNewCheckIn(oldState, address, checkInRaw, epochProgress, deviceInfoAPIResponse)
 
     allCheckIns.devices.get(address) match {
@@ -37,8 +36,8 @@ object CombinersTest extends SimpleIOSuite {
   pureTest("Update check in of device") {
     val cborString = "BF6261639F188F38B43925B8FF636474731A63875B2461659F9F1B00000184A0C9AF5E01FF9F1B00000194A0CD649601FF9F1B00000184A0CE08A701FF9F1B00000184A0D0CF9801FF9F1B00000184A0D3254101FF9F1B00000184A0D3968A01FF9F1B00000184A0D3C95301FF9F1B00000184A0D3F06401FF9F1B00000184A0D47D0501FF9F1B00000184A0D48CA601FFFFFF"
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentBounties = List(UnitDeployedBounty("UnitDeployedBounty"), CommercialLocationBounty("CommercialLocationBounty"))
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, linkedToStore = true, Some("Retail"))
+    val currentBounties = List(UnitDeployedBounty(), CommercialLocationBounty())
+    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     var currentEpochProgress = 1440L
     val currentCheckInRaw = DeviceCheckInFormatted(List(1, 2, 3), 123456, List(FootTraffic(12345, 1), FootTraffic(12345, 1)))
 

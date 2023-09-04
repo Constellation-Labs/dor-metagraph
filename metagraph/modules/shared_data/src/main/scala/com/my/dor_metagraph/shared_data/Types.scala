@@ -1,7 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
 import com.my.dor_metagraph.shared_data.Bounties.Bounty
-import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
 import derevo.circe.magnolia.{decoder, encoder}
 import derevo.derive
 import org.tessellation.currency.dataApplication.{DataState, DataUpdate}
@@ -27,4 +26,6 @@ object Types {
   @derive(decoder, encoder)
   case class CheckInState(devices: Map[Address, DeviceInfo]) extends DataState
 
+  @derive(decoder, encoder)
+  case class DeviceInfoAPIResponse(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long])
 }

@@ -1,14 +1,16 @@
 [
   {
-    "linkedToStore": false,
-    "storeType": null,
+    "isInstalled": false,
+    "locationType": null,
     "publicKey": "6d38286a6620d675448de8368aad8daeee87590c6ffa5df619ee525b274727b6bee92257af7136956304f0d475c9b042a7585917545d125d49bafc88d53fbcce",
-    "rewardAddress": "DAG2YYfPzDz3Lhwc3YFbEfWV9XdvS2pE75LdAykx"
+    "rewardAddress": "DAG2YYfPzDz3Lhwc3YFbEfWV9XdvS2pE75LdAykx",
+    "billedAmountMonthly": 10
   },
   {
-    "linkedToStore": true,
-    "storeType": "Retail",
+    "isInstalled": true,
+    "locationType": "Retail",
     "publicKey": "bfcaafb8fff30b016a45dd1caa52d1dd5f8a70e9c683b51105d1ac8bd33ec7bf0325c09e6686ed367796bdfa29fae68a92815e4f8e6af8d8aa70bf100185261a",
-    "rewardAddress": "DAG1pM92gQeMS7atLawKbB67NZbG2EJU4BuwCAZc"
+    "rewardAddress": "DAG1pM92gQeMS7atLawKbB67NZbG2EJU4BuwCAZc",
+    "billedAmountMonthly": 10
   }
 ]

@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
 import com.my.dor_metagraph.shared_data.Data
-import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, CheckInState}
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInWithSignature}
 import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
@@ -54,6 +54,6 @@ object Main
     }))
 
   def rewards(implicit sp: SecurityProvider[IO]): Some[Rewards[IO, currency.CurrencySnapshotStateProof, currency.CurrencyIncrementalSnapshot]] = Some(
-    Rewards.distributeRewards[IO]
+    DorMetagraphRewards.make[IO]
   )
 }

@@ -13,13 +13,48 @@ import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, customStateDes
 import com.my.dor_metagraph.shared_data.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
 import fs2.Compiler.Target.forSync
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
+import org.slf4j.LoggerFactory
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.schema.ID.Id
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hex.Hex
 
 object Data {
+  private val data: Data = Data()
+  def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+    data.validateUpdate(update)
+  }
+  def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+    data.validateData(oldState, updates)
+  }
+  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+    data.combine(oldState, updates)
+  }
+  def serializeState(state: CheckInState): IO[Array[Byte]] = {
+    data.serializeState(state)
+  }
+  def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = {
+    data.deserializeState(bytes)
+  }
 
+  def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = {
+    data.serializeUpdate(update)
+  }
+  def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = {
+    data.deserializeUpdate(bytes)
+  }
+  def dataEncoder: Encoder[DeviceCheckInWithSignature] = {
+    data.dataEncoder
+  }
+  def dataDecoder: Decoder[DeviceCheckInWithSignature] = {
+    data.dataDecoder
+  }
+  def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = {
+    data.signedDataEntityDecoder
+  }
+}
+case class Data() {
+  private val logger = LoggerFactory.getLogger(classOf[Data])
   def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
@@ -34,6 +69,7 @@ object Data {
       lastCurrencySnapshotRaw <- lastCurrencySnapshotStateRawIO
     } yield deviceCheckInValidationsL1(checkInInfo, lastCurrencySnapshotRaw, address)
   }
+
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     updates.traverse { signedUpdate =>
@@ -80,11 +116,11 @@ object Data {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
       val rawText = msg.as[String]
       val signed = rawText.flatMap { text =>
-        println(s"Received RAW request: $text")
+        logger.info(s"Received RAW request: $text")
         val bodyAsBytes = getByteArrayFromRequestBody(text)
         buildSignedUpdate(bodyAsBytes).pure[IO]
       }
-      println(s"PARSED RAW request: $signed")
+      logger.info(s"PARSED RAW request: $signed")
       DecodeResult.success(signed)
     }
   }

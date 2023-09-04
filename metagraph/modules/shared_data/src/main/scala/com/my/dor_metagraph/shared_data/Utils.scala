@@ -15,32 +15,77 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
+import org.slf4j.LoggerFactory
 
 object Utils {
+  private val utils = Utils()
+  private def toCBORHex(hexString: String): Array[Byte] = {
+    utils.toCBORHex(hexString)
+  }
+  def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
+    utils.customUpdateSerialization(update)
+  }
+  def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInWithSignature] = {
+    utils.customUpdateDeserialization(bytes)
+  }
+  def customStateSerialization(state: CheckInState): Array[Byte] = {
+    utils.customStateSerialization(state)
+  }
+
+  def customStateDeserialization(bytes: Array[Byte]): Either[Throwable, CheckInState] = {
+    utils.customStateDeserialization(bytes)
+  }
+
+  def toTokenAmountFormat(balance: Double): Long = {
+    utils.toTokenAmountFormat(balance)
+  }
+
+  def getDeviceCheckInInfo(cborData: String): DeviceCheckInInfo = {
+    utils.getDeviceCheckInInfo(cborData)
+  }
+
+  def convertBytesToHex(bytes: Array[Byte]): String = {
+    utils.convertBytesToHex(bytes)
+  }
+
+  def buildSignedUpdate(cborData: Array[Byte]): Signed[DeviceCheckInWithSignature] = {
+    utils.buildSignedUpdate(cborData)
+  }
+
+  def getByteArrayFromRequestBody(bodyAsString: String): Array[Byte] = {
+    utils.getByteArrayFromRequestBody(bodyAsString)
+  }
+}
+case class Utils() {
+  private val logger = LoggerFactory.getLogger(classOf[Utils])
   private def toCBORHex(hexString: String): Array[Byte] = {
     try {
-      if ((hexString.length & 1) != 0) sys.error("string length is not even")
+      if ((hexString.length & 1) != 0){
+        logger.error("string length is not even")
+        throw new Exception("string length is not even")
+      }
       hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
     } catch {
       case NonFatal(e) =>
+        logger.error(e.getMessage)
         throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
     }
   }
   def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
-    println("Serialize UPDATE event received")
+    logger.info("Serialize UPDATE event received")
     toCBORHex(update.cbor)
   }
 
   def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInWithSignature] = {
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      println(json)
+      logger.info(json.toString())
       json.as[DeviceCheckInWithSignature]
     }
   }
 
   def customStateSerialization(state: CheckInState): Array[Byte] = {
-    println("Serialize STATE event received")
-    println(state.asJson.deepDropNullValues.noSpaces)
+    logger.info("Serialize STATE event received")
+    logger.info(state.asJson.deepDropNullValues.noSpaces)
     state.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
   }
 
@@ -55,8 +100,12 @@ object Utils {
   }
 
   def getDeviceCheckInInfo(cborData: String): DeviceCheckInInfo = {
-    val checkInCborData = Utils.toCBORHex(cborData)
+    val checkInCborData = toCBORHex(cborData)
     val decodedCheckIn = Cbor.decode(checkInCborData).to[DeviceCheckInInfo].value
+
+    logger.info(s"Decoded check-in AC: ${decodedCheckIn.ac}")
+    logger.info(s"Decoded check-in DTS: ${decodedCheckIn.dts}")
+    logger.info(s"Decoded check-in E: ${decodedCheckIn.e}")
 
     decodedCheckIn
   }
@@ -72,9 +121,9 @@ object Utils {
   def buildSignedUpdate(cborData: Array[Byte]): Signed[DeviceCheckInWithSignature] = {
     val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
 
-    println(s"Decoded CBOR field ${decodedCheckInWithSignature.cbor}")
-    println(s"Decoded ID field ${decodedCheckInWithSignature.id}")
-    println(s"Decoded SIGNATURE field ${decodedCheckInWithSignature.sig}")
+    logger.info(s"Decoded CBOR field ${decodedCheckInWithSignature.cbor}")
+    logger.info(s"Decoded ID field ${decodedCheckInWithSignature.id}")
+    logger.info(s"Decoded SIGNATURE field ${decodedCheckInWithSignature.sig}")
 
     val hexId = Hex(decodedCheckInWithSignature.id)
     val hexSignature = Hex(decodedCheckInWithSignature.sig)

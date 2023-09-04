@@ -9,16 +9,33 @@ import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, C
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
-import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
 import com.my.dor_metagraph.shared_data.Utils.customStateDeserialization
+import org.slf4j.LoggerFactory
 import org.tessellation.schema.transaction
+import org.tessellation.sdk.domain.rewards.Rewards
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
-object Rewards {
+object DorMetagraphRewards {
+  def make[F[_] : Async: SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], _: ConsensusTrigger) => {
+      val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
+      lastArtifact.data.map(data => customStateDeserialization(data)) match {
+        case None => SortedSet.empty[transaction.RewardTransaction].pure
+        case Some(state) =>
+          state match {
+            case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure
+            case Right(state) =>
+              DorMetagraphRewards().buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, facilitatorsToReward)
+          }
+      }
+    }
+}
+
+case class DorMetagraphRewards() {
+  private val logger = LoggerFactory.getLogger(classOf[DorMetagraphRewards])
 
   private def buildRewardsTransactionsSortedSet(bountyTransactions: List[RewardTransaction], validatorNodesTransactions: List[RewardTransaction]): SortedSet[RewardTransaction] = {
     val allTransactions = bountyTransactions ::: validatorNodesTransactions
@@ -27,12 +44,34 @@ object Rewards {
     SortedSet(allTransactionsFiltered: _*)
   }
 
+  private def logInitialRewardDistribution(epochProgressModulus: Long): Unit = {
+    epochProgressModulus match {
+      case 0L =>
+        logger.info("Starting UnitDeployed bounty distribution")
+      case 1L =>
+        logger.info("Starting CommercialLocation bounty distribution")
+      case 2L =>
+        logger.info("Starting RetailAnalyticsSubscription bounty distribution")
+      case _ =>
+        logger.info("Invalid")
+    }
+  }
+
   def buildRewards[F[_] : Async](state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance], facilitatorsAddresses: F[List[Address]]): F[SortedSet[RewardTransaction]] = {
-    if (currentEpochProgress % EPOCH_PROGRESS_1_DAY > 1) {
+    val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
+
+    /**
+     * We have 3 bounties and they should be distributed in different snapshots. That's the reason for the conditional below:
+     * UnitDeployed:                epochProgressModulus = 0
+     * CommercialLocation:          epochProgressModulus = 1
+     * RetailAnalyticsSubscription: epochProgressModulus = 2
+     * */
+    if (epochProgressModulus > 2) {
       val emptyTransactions: SortedSet[RewardTransaction] = SortedSet.empty
       return emptyTransactions.pure
     }
 
+    logInitialRewardDistribution(epochProgressModulus)
     val bountyRewards = getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
 
     val bountyTransactions = bountyRewards._1.pure
@@ -50,18 +89,5 @@ object Rewards {
       bountyTxns <- bountyTransactions
       validatorNodesTxns <- validatorNodesTransactions
     } yield buildRewardsTransactionsSortedSet(bountyTxns, validatorNodesTxns)
-  }
-
-  def distributeRewards[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], _: ConsensusTrigger) => {
-    val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
-
-    lastArtifact.data.map(data => customStateDeserialization(data)) match {
-      case None => SortedSet.empty[transaction.RewardTransaction].pure
-      case Some(state) =>
-        state match {
-          case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure
-          case Right(state) => buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, facilitatorsToReward)
-        }
-    }
   }
 }

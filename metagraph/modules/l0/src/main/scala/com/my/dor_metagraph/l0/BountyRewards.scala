@@ -4,11 +4,37 @@ import com.my.dor_metagraph.l0.Types.{COLLATERAL_100K, COLLATERAL_200K, COLLATER
 import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceInfo, EPOCH_PROGRESS_1_DAY}
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.all.PosLong
+import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
 
 object BountyRewards {
+  val bountyRewards: BountyRewards = BountyRewards()
+  def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
+    bountyRewards.getDeviceBountyRewardsAmount(device, currentEpochProgress)
+  }
+  def calculateBountiesRewardsWithCollateral(lastBalances: Map[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
+    bountyRewards.calculateBountiesRewardsWithCollateral(lastBalances, rewardAddress, deviceTotalRewards)
+  }
+
+  def getTaxesToValidatorNodes(deviceTotalRewards: Long): Long = {
+    bountyRewards.getTaxesToValidatorNodes(deviceTotalRewards)
+  }
+
+  def getBountyRewardsTransactions(state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
+    bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
+  }
+}
+case class BountyRewards() {
+
+  private val logger = LoggerFactory.getLogger(classOf[BountyRewards])
+
+  private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
+    val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
+    calculateBountiesRewardsWithCollateral(lastBalances, device.deviceApiResponse.rewardAddress, deviceBountiesRewardsAmount)
+  }
+
   def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
     var deviceTotalRewards = 0L
@@ -39,11 +65,6 @@ object BountyRewards {
     updatedBalance.toLong
   }
 
-  private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
-    val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
-    calculateBountiesRewardsWithCollateral(lastBalances, device.deviceApiResponse.rewardAddress, deviceBountiesRewardsAmount)
-  }
-
   def getTaxesToValidatorNodes(deviceTotalRewards: Long): Long = {
     (deviceTotalRewards * 0.1).toLong
   }
@@ -52,7 +73,7 @@ object BountyRewards {
     var taxesToValidatorNodes = 0L
     val rewardsTransactions = state.devices.map { case (_, value) =>
       if (currentEpochProgress - value.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
-        println(s"Device with reward address ${value.deviceApiResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
+        logger.warn(s"Device with reward address ${value.deviceApiResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
         null
       } else {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
