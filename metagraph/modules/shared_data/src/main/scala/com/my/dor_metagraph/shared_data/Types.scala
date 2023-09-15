@@ -12,7 +12,7 @@ object Types {
   case class FootTraffic(timestamp: Long, direction: Long)
 
   @derive(decoder, encoder)
-  case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic])
+  case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffic: List[FootTraffic])
 
   @derive(decoder, encoder)
   case class CheckInProof(id: String, signature: String)

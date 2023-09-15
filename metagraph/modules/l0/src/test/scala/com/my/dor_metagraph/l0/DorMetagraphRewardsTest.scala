@@ -4,7 +4,7 @@ import cats.effect.{IO, Resource}
 import com.my.dor_metagraph.l0.BountyRewards.{calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
 import com.my.dor_metagraph.l0.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInFormatted, DeviceInfo, DeviceInfoAPIResponse, FootTraffic}
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceInfo, DeviceInfoAPIResponse}
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.numeric.NonNegLong
 import org.tessellation.schema.address.Address

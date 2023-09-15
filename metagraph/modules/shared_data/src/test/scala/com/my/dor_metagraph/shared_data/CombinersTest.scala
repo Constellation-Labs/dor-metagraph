@@ -24,10 +24,10 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql(3, checkIn.lastCheckIn.ac.size) &&
           expect.eql(143, checkIn.lastCheckIn.ac.head) &&
           expect.eql(-9657, checkIn.lastCheckIn.ac.last) &&
-          expect.eql(1669144883038L, checkIn.lastCheckIn.footTraffics.head.timestamp) &&
-          expect.eql(1, checkIn.lastCheckIn.footTraffics.head.direction) &&
-          expect.eql(1669145595046L, checkIn.lastCheckIn.footTraffics.last.timestamp) &&
-          expect.eql(1, checkIn.lastCheckIn.footTraffics.last.direction)
+          expect.eql(1669144883038L, checkIn.lastCheckIn.footTraffic.head.timestamp) &&
+          expect.eql(1, checkIn.lastCheckIn.footTraffic.head.direction) &&
+          expect.eql(1669145595046L, checkIn.lastCheckIn.footTraffic.last.timestamp) &&
+          expect.eql(1, checkIn.lastCheckIn.footTraffic.last.direction)
       case None =>
         //forcing failure
         expect.eql(1, 2)
@@ -52,10 +52,10 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql(3, checkIn.lastCheckIn.ac.size) &&
           expect.eql(1, checkIn.lastCheckIn.ac.head) &&
           expect.eql(3, checkIn.lastCheckIn.ac.last) &&
-          expect.eql(12345L, checkIn.lastCheckIn.footTraffics.head.timestamp) &&
-          expect.eql(1, checkIn.lastCheckIn.footTraffics.head.direction) &&
-          expect.eql(12345L, checkIn.lastCheckIn.footTraffics.last.timestamp) &&
-          expect.eql(1, checkIn.lastCheckIn.footTraffics.last.direction)
+          expect.eql(12345L, checkIn.lastCheckIn.footTraffic.head.timestamp) &&
+          expect.eql(1, checkIn.lastCheckIn.footTraffic.head.direction) &&
+          expect.eql(12345L, checkIn.lastCheckIn.footTraffic.last.timestamp) &&
+          expect.eql(1, checkIn.lastCheckIn.footTraffic.last.direction)
       case None =>
         //forcing failure
         expect.eql(1, 2)
@@ -74,10 +74,10 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql(3, checkIn.lastCheckIn.ac.size) &&
           expect.eql(143, checkIn.lastCheckIn.ac.head) &&
           expect.eql(-9657, checkIn.lastCheckIn.ac.last) &&
-          expect.eql(1669144883038L, checkIn.lastCheckIn.footTraffics.head.timestamp) &&
-          expect.eql(1, checkIn.lastCheckIn.footTraffics.head.direction) &&
-          expect.eql(1669145595046L, checkIn.lastCheckIn.footTraffics.last.timestamp) &&
-          expect.eql(1, checkIn.lastCheckIn.footTraffics.last.direction)
+          expect.eql(1669144883038L, checkIn.lastCheckIn.footTraffic.head.timestamp) &&
+          expect.eql(1, checkIn.lastCheckIn.footTraffic.head.direction) &&
+          expect.eql(1669145595046L, checkIn.lastCheckIn.footTraffic.last.timestamp) &&
+          expect.eql(1, checkIn.lastCheckIn.footTraffic.last.direction)
       case None =>
         //forcing failure
         expect.eql(1, 2)

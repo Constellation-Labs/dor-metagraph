@@ -12,7 +12,6 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.io._
 import org.tessellation.currency.dataApplication.L1NodeContext
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotInfo}
-import io.circe.parser.parse
 
 object CustomRoutes {
 
