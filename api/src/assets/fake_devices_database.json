@@ -1,16 +1,44 @@
 [
   {
-    "isInstalled": false,
-    "locationType": null,
-    "publicKey": "6d38286a6620d675448de8368aad8daeee87590c6ffa5df619ee525b274727b6bee92257af7136956304f0d475c9b042a7585917545d125d49bafc88d53fbcce",
-    "rewardAddress": "DAG2YYfPzDz3Lhwc3YFbEfWV9XdvS2pE75LdAykx",
+    "isInstalled": true,
+    "locationType": "Retail",
+    "publicKey": "4155c8a99f7b7a2af0ab3190aed3f7394311a3439acaeb4b26c2afb8483578c14c9a85ddd17e2ead311baba7c51d83b90cec3f705f0ba566ab99345d4b911f91",
+    "rewardAddress": "DAG5RXteyHD5yXSBJdibKNLSJqBBBfYygBmRwGmR",
     "billedAmountMonthly": 10
   },
   {
     "isInstalled": true,
     "locationType": "Retail",
-    "publicKey": "bfcaafb8fff30b016a45dd1caa52d1dd5f8a70e9c683b51105d1ac8bd33ec7bf0325c09e6686ed367796bdfa29fae68a92815e4f8e6af8d8aa70bf100185261a",
-    "rewardAddress": "DAG1pM92gQeMS7atLawKbB67NZbG2EJU4BuwCAZc",
+    "publicKey": "f09aa4a85c0c638a780d59ff7b17dbd9195405b8d61cdd160664b35bb20f041830821239354ea809a0bbed957fa9d80c991f77f51c4133377e2a84105cd39874",
+    "rewardAddress": "DAG2wAdkbMJXNQxijpuuGW7mgE9TMWY3A1LYQP9g",
+    "billedAmountMonthly": 10
+  },
+  {
+    "isInstalled": true,
+    "locationType": "Retail",
+    "publicKey": "7ae489da50a22257cbbb9fe0c75c68307574e65cfc0d3544f1a21805f91d9e0f82a96b4596782429f7354a912564b05d577719ef52bd14799ae1bd0f1b0e016f",
+    "rewardAddress": "DAG0JRZixTau62PfZyjjAH37kzSdhyH9roWUWpbv",
+    "billedAmountMonthly": 10
+  },
+  {
+    "isInstalled": true,
+    "locationType": "Retail",
+    "publicKey": "864dc777b2d4f25c6c5282df5c8ba498ed32f52d5b5d4b66a01c289fddb0b9785b31e67aec199d30da9f944ea587754a964a6cbfd0ebb8503f7e35b6177bacb9",
+    "rewardAddress": "DAG8nCx3E94jx9o6ij4a4umwFV6SLkV96An2KaoC",
+    "billedAmountMonthly": 10
+  },
+  {
+    "isInstalled": true,
+    "locationType": "Retail",
+    "publicKey": "3f7c2d2b848b69a8f0701c9ef785e853e270a9e296fec4b49dcc3de5d3a0ae5ad032f3a0bffb8ffd140f9d6ee210cac02362cbaf58b08841afd105b6ba4c52bc",
+    "rewardAddress": "DAG2veqTyrnk9mAxFYbBb7MrqH6zwmiu7NhtKuYL",
+    "billedAmountMonthly": 10
+  },
+  {
+    "isInstalled": true,
+    "locationType": "Retail",
+    "publicKey": "cb6f043121672ac923652dac0dc2ff84736e773708d261169fb29299ea0a65717cebeb97e101c76fa18a9df7f1e415ab6e68544d6d09feab09b9f20a140dd125",
+    "rewardAddress": "DAG3HkuM4wUkbMEk4emuY5tTnrhQ49ivK2FKitf2",
     "billedAmountMonthly": 10
   }
 ]

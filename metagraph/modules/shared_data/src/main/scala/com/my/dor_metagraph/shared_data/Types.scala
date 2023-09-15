@@ -15,7 +15,13 @@ object Types {
   case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic])
 
   @derive(decoder, encoder)
-  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, nextEpochProgressToReward: Long)
+  case class CheckInProof(id: String, signature: String)
+
+  @derive(decoder, encoder)
+  case class CheckInUpdates(deviceId: Address, lastCheckIn: DeviceCheckInFormatted, proof: CheckInProof)
+
+  @derive(decoder, encoder)
+  case class DeviceInfo(bounties: List[Bounty], lastCheckIn: Long, deviceApiResponse: DeviceInfoAPIResponse, nextEpochProgressToReward: Long)
 
   @derive(decoder, encoder)
   case class DeviceCheckInWithSignature(cbor: String, id: String, sig: String) extends DataUpdate
@@ -24,7 +30,7 @@ object Types {
   case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
 
   @derive(decoder, encoder)
-  case class CheckInState(devices: Map[Address, DeviceInfo]) extends DataState
+  case class CheckInState(updates: List[CheckInUpdates], devices: Map[Address, DeviceInfo]) extends DataState
 
   @derive(decoder, encoder)
   case class DeviceInfoAPIResponse(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long])

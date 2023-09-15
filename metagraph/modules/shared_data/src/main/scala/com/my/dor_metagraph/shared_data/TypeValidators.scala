@@ -11,7 +11,7 @@ object TypeValidators {
   def validateCheckInTimestamp(oldState: CheckInState, checkInInfo: DeviceCheckInInfo, address: Address): DataApplicationValidationErrorOr[Unit] = {
     val maybeState = oldState.devices.get(address)
     maybeState.map { state =>
-      if (checkInInfo.dts > state.lastCheckIn.dts)
+      if (checkInInfo.dts > state.lastCheckIn)
         ().validNec
       else
         RepeatedCheckIn.asInstanceOf[DataApplicationValidationError].invalidNec

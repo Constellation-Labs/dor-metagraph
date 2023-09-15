@@ -2,7 +2,7 @@ package com.my.dor_metagraph.shared_data
 
 import cats.data.NonEmptySet
 import cats.effect.IO
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxValidatedIdBinCompat0}
+import cats.implicits.catsSyntaxValidatedIdBinCompat0
 import com.my.dor_metagraph.shared_data.Errors.{CouldNotGetLatestCurrencySnapshot, CouldNotGetLatestState}
 import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.TypeValidators.validateCheckInTimestamp

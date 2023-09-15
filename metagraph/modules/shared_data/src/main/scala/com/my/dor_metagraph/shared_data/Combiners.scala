@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
-import Types.{CheckInState, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, EPOCH_PROGRESS_1_DAY, FootTraffic}
+import Types.{CheckInProof, CheckInState, CheckInUpdates, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, EPOCH_PROGRESS_1_DAY, FootTraffic}
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, RetailAnalyticsSubscriptionBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.DorApi.fetchDeviceInfo
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
@@ -53,9 +53,16 @@ case class Combiners() {
       case None => nextRewardEpoch
     }
 
-    val checkIn = DeviceInfo(checkInFormatted, bounties, deviceInfo, nextRewardEpochProgress)
+    val checkInProof = CheckInProof(deviceCheckIn.id, deviceCheckIn.sig)
+    val checkInUpdate = CheckInUpdates(address, checkInFormatted, checkInProof)
+
+    val checkIn = DeviceInfo(bounties, checkInInfo.dts, deviceInfo, nextRewardEpochProgress)
     logger.info(s"New checkIn for the device: $checkIn")
-    acc.focus(_.devices).modify(_.updated(address, checkIn))
+
+    val devices = acc.devices.updated(address, checkIn)
+    val updates = checkInUpdate :: acc.updates
+
+    CheckInState(updates, devices)
   }
 
   def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, currentEpochProgress: Long, deviceInfo: DeviceInfoAPIResponse): CheckInState = {

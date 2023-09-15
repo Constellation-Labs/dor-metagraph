@@ -1,11 +1,8 @@
 package com.my.dor_metagraph.shared_data
 
 import com.my.dor_metagraph.shared_data.Types.DeviceInfoAPIResponse
-import derevo.circe.magnolia.{decoder, encoder}
-import derevo.derive
 import io.circe.parser.decode
 import org.slf4j.LoggerFactory
-import org.tessellation.schema.address.Address
 
 object DorApi {
   private val dorApi = DorApi()

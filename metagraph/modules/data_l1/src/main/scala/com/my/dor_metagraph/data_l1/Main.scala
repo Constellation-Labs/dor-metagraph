@@ -3,17 +3,19 @@ package com.my.dor_metagraph.data_l1
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
+import com.my.dor_metagraph.data_l1.CustomRoutes.{getLatestSnapshotDecoded, getSnapshotByOrdinalDecoded}
 import com.my.dor_metagraph.shared_data.Data
-import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, CheckInState}
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInWithSignature}
 import io.circe.{Decoder, Encoder}
 import org.http4s._
+import org.http4s.dsl.io._
 import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.currency.dataApplication.{BaseDataApplicationL1Service, DataApplicationL1Service, L1NodeContext}
 import org.tessellation.currency.l1.CurrencyL1App
 import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.security.signature.Signed
-import org.http4s. EntityDecoder
+import org.http4s.EntityDecoder
 
 import java.util.UUID
 
@@ -44,7 +46,10 @@ object Main
 
     override def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L1NodeContext[IO]): IO[CheckInState] = IO.pure(oldState)
 
-    override def routes(implicit context: L1NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.empty
+    override def routes(implicit context: L1NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.of {
+      case GET -> Root / "snapshots" / "latest" => getLatestSnapshotDecoded
+      case GET -> Root / "snapshots" / ordinal => getSnapshotByOrdinalDecoded(ordinal)
+    }
 
     override def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = Data.signedDataEntityDecoder
   }))

@@ -83,7 +83,8 @@ case class Data() {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
 
-    updates.foldLeftM(oldState) { (acc, signedUpdate) =>
+    val newState = oldState.copy(updates = List.empty)
+    updates.foldLeftM(newState) { (acc, signedUpdate) =>
       val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
       for {
         epochProgress <- epochProgressIO

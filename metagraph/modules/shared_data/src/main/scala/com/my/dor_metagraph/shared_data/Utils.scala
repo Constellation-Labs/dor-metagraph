@@ -19,9 +19,6 @@ import org.slf4j.LoggerFactory
 
 object Utils {
   private val utils = Utils()
-  private def toCBORHex(hexString: String): Array[Byte] = {
-    utils.toCBORHex(hexString)
-  }
   def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
     utils.customUpdateSerialization(update)
   }
