@@ -19,19 +19,6 @@ object CustomRoutes {
   @derive(decoder, encoder)
   case class SnapshotResponse(incrementalSnapshot: CurrencyIncrementalSnapshot, info: CurrencySnapshotInfo, snapshotState: CheckInState)
 
-  private def getMetagraphStateFromSnapshotOrdinal(ordinal: Long): Array[Byte] = {
-    val headers: Iterable[(String, String)] = Iterable(("Accept", "application/json"))
-    val response = requests.get(s"http://host.docker.internal:9400/snapshots/$ordinal", headers = headers)
-    parse(response.text()) match {
-      case Left(_) => throw new Exception("Error decoding JSON")
-      case Right(value) =>
-        value.hcursor.downField("value").downField("data").as[Array[Byte]] match {
-          case Left(e) => throw new Exception(s"Error getting state on snapshot $ordinal: ${e.getMessage}")
-          case Right(value) => value
-        }
-    }
-  }
-
   private def getState(context: L1NodeContext[IO]) = {
     OptionT(context.getLastCurrencySnapshot)
       .flatMap(_.data.toOptionT)
