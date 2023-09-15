@@ -14,7 +14,7 @@ case class DorApi() {
   private val logger = LoggerFactory.getLogger(classOf[DorApi])
   def fetchDeviceInfo(publicKey: String): Option[DeviceInfoAPIResponse] = {
     try {
-      val response = requests.get(s"http://host.docker.internal:3333/metagraph/devices/$publicKey")
+      val response = requests.get(s"http://localhost:3333/metagraph/devices/$publicKey")
       val body = response.text()
       logger.info(s"API response $body")
 
