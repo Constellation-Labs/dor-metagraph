@@ -44,7 +44,7 @@ case class Combiners() {
     }
 
     val checkInProof = CheckInProof(deviceCheckIn.id, deviceCheckIn.sig)
-    val checkInUpdate = CheckInUpdates(address, checkInInfo.dts, checkInProof, deviceInfo.hash)
+    val checkInUpdate = CheckInUpdates(address, checkInInfo.dts, checkInProof, deviceInfo.checkInHash)
 
     val deviceInfoApiResponse = DeviceInfoAPIResponse(deviceInfo.rewardAddress, deviceInfo.isInstalled, deviceInfo.locationType, deviceInfo.billedAmountMonthly)
     val checkIn = DeviceInfo(checkInInfo.dts, deviceInfoApiResponse, nextRewardEpochProgress)

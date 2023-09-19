@@ -23,9 +23,9 @@ case class DorApi() {
 
     try {
       val requestBody = Obj(
-        "ac" -> Arr(checkInInfo.ac),
+        "ac" -> checkInInfo.ac,
         "dts" -> checkInInfo.dts,
-        "e" -> Arr(checkInInfo.e),
+        "e" -> checkInInfo.e,
         "signature" -> deviceCheckIn.sig
       ).render()
 
@@ -41,7 +41,9 @@ case class DorApi() {
       logger.info(s"API response $body")
 
       decode[DeviceInfoAPIResponseWithHash](body) match {
-        case Left(_) => None
+        case Left(err) =>
+          logger.error(s"Error when decoding ${err.getMessage}")
+          None
         case Right(deviceInfo) => Some(deviceInfo)
       }
     } catch {

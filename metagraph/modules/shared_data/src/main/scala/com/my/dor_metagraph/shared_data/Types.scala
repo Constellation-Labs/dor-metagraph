@@ -26,7 +26,7 @@ object Types {
   case class CheckInState(updates: List[CheckInUpdates], devices: Map[Address, DeviceInfo]) extends DataState
 
   @derive(decoder, encoder)
-  case class DeviceInfoAPIResponseWithHash(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long], hash: String)
+  case class DeviceInfoAPIResponseWithHash(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long], checkInHash: String)
 
   @derive(decoder, encoder)
   case class DeviceInfoAPIResponse(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long])
