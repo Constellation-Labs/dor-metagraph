@@ -1,8 +1,8 @@
 package com.my.dor_metagraph.l0
 
 import com.my.dor_metagraph.l0.Types.{COLLATERAL_100K, COLLATERAL_200K, COLLATERAL_50K, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER, COLLATERAL_GREATER_THAN_200K_MULTIPLIER, COLLATERAL_LESS_THAN_50K_MULTIPLIER}
+import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, RetailAnalyticsSubscriptionBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceInfo, EPOCH_PROGRESS_1_DAY}
-import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
@@ -11,9 +11,11 @@ import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount
 
 object BountyRewards {
   val bountyRewards: BountyRewards = BountyRewards()
+
   def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
     bountyRewards.getDeviceBountyRewardsAmount(device, currentEpochProgress)
   }
+
   def calculateBountiesRewardsWithCollateral(lastBalances: Map[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
     bountyRewards.calculateBountiesRewardsWithCollateral(lastBalances, rewardAddress, deviceTotalRewards)
   }
@@ -26,6 +28,7 @@ object BountyRewards {
     bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
   }
 }
+
 case class BountyRewards() {
 
   private val logger = LoggerFactory.getLogger(classOf[BountyRewards])
@@ -37,13 +40,18 @@ case class BountyRewards() {
 
   def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
-    var deviceTotalRewards = 0L
 
-    for (bounty <- device.bounties) {
-      deviceTotalRewards += bounty.getBountyRewardAmount(device.deviceApiResponse, epochModulus)
+    if (epochModulus == 0L) {
+      return UnitDeployedBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus)
+    }
+    if (epochModulus == 1L) {
+      return CommercialLocationBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus)
+    }
+    if (epochModulus == 2L) {
+      return RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus)
     }
 
-    toTokenAmountFormat(deviceTotalRewards.toDouble)
+    0L
   }
 
   def calculateBountiesRewardsWithCollateral(lastBalances: Map[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
