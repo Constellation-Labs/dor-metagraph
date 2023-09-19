@@ -23,9 +23,6 @@ object Types {
   case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
 
   @derive(decoder, encoder)
-  case class DeviceCheckInInfoWithSignature(ac: List[Long], dts: Long, e: List[List[Long]], signature: String)
-
-  @derive(decoder, encoder)
   case class CheckInState(updates: List[CheckInUpdates], devices: Map[Address, DeviceInfo]) extends DataState
 
   @derive(decoder, encoder)
