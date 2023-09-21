@@ -16,22 +16,30 @@ import com.my.dor_metagraph.shared_data.Utils.customStateDeserialization
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.transaction
 import org.tessellation.sdk.domain.rewards.Rewards
+import org.tessellation.sdk.infrastructure.consensus.trigger
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object DorMetagraphRewards {
-  def make[F[_] : Async: SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], _: ConsensusTrigger) => {
-      val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
-      lastArtifact.data.map(data => customStateDeserialization(data)) match {
-        case None => SortedSet.empty[transaction.RewardTransaction].pure
-        case Some(state) =>
-          state match {
-            case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure
-            case Right(state) =>
-              DorMetagraphRewards().buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, facilitatorsToReward)
-          }
-      }
+  def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] = (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], consensusTrigger: ConsensusTrigger) => {
+    consensusTrigger match {
+      case trigger.EventTrigger =>
+        println("THIS IS A EVENT TRIGGER SNAPSHOT, SKIPPING REWARDS")
+        SortedSet.empty[transaction.RewardTransaction].pure
+      case trigger.TimeTrigger =>
+        println("THIS IS A TIME TRIGGER SNAPSHOT, TRYING TO REWARD")
+        val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
+        lastArtifact.data.map(data => customStateDeserialization(data)) match {
+          case None => SortedSet.empty[transaction.RewardTransaction].pure
+          case Some(state) =>
+            state match {
+              case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure
+              case Right(state) =>
+                DorMetagraphRewards().buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, facilitatorsToReward)
+            }
+        }
     }
+  }
 }
 
 case class DorMetagraphRewards() {
