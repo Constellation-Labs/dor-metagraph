@@ -8,34 +8,34 @@ object Bounties {
   @derive(decoder, encoder)
   sealed trait Bounty {
 
-    def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long
+    def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Double
   }
 
   @derive(decoder, encoder)
   case class UnitDeployedBounty() extends Bounty {
-    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long = {
+    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Double = {
       if (epochModulus != 0L) {
-        return 0L
+        return 0D
       }
       
-      50L
+      50D
     }
   }
 
   @derive(decoder, encoder)
   case class CommercialLocationBounty() extends Bounty {
-    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long = {
+    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Double = {
       if (epochModulus != 1L) {
-        return 0L
+        return 0D
       }
 
       deviceInfo.locationType match {
-        case None => 0L
+        case None => 0D
         case Some(storeType) =>
           if (storeType != "Residential") {
-            50L
+            50D
           } else {
-            0L
+            0D
           }
       }
 
@@ -44,15 +44,15 @@ object Bounties {
 
   @derive(decoder, encoder)
   case class RetailAnalyticsSubscriptionBounty() extends Bounty {
-    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Long = {
+    override def getBountyRewardAmount(deviceInfo: DeviceInfoAPIResponse, epochModulus: Long): Double = {
       if (epochModulus != 2L) {
-        return 0L
+        return 0D
       }
 
       deviceInfo.billedAmountMonthly match {
-        case None => 0L
+        case None => 0D
         case Some(billedAmountMonthly) =>
-          billedAmountMonthly * 25L
+          billedAmountMonthly * 25D
       }
 
     }

@@ -3,6 +3,7 @@ package com.my.dor_metagraph.l0
 import com.my.dor_metagraph.l0.Types.{COLLATERAL_100K, COLLATERAL_200K, COLLATERAL_50K, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER, COLLATERAL_GREATER_THAN_200K_MULTIPLIER, COLLATERAL_LESS_THAN_50K_MULTIPLIER}
 import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, RetailAnalyticsSubscriptionBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceInfo, EPOCH_PROGRESS_1_DAY}
+import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
@@ -42,13 +43,13 @@ case class BountyRewards() {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
 
     if (epochModulus == 0L) {
-      return UnitDeployedBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus)
+      return toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
     }
     if (epochModulus == 1L) {
-      return CommercialLocationBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus)
+      return toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
     }
     if (epochModulus == 2L) {
-      return RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus)
+      return toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
     }
 
     0L
