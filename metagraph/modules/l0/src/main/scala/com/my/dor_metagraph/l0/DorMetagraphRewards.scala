@@ -27,7 +27,9 @@ object DorMetagraphRewards {
         println("THIS IS A EVENT TRIGGER SNAPSHOT, SKIPPING REWARDS")
         SortedSet.empty[transaction.RewardTransaction].pure
       case trigger.TimeTrigger =>
+        val lastSnapshotOrdinal = lastArtifact.value.ordinal.value.value
         println("THIS IS A TIME TRIGGER SNAPSHOT, TRYING TO REWARD")
+        println(s"LAST SNAPSHOT ORDINAL: ${lastSnapshotOrdinal}. PROBABLY CURRENT ORDINAL: ${lastSnapshotOrdinal + 1}")
         val facilitatorsToReward = lastArtifact.proofs.map(_.id).toList.traverse(_.toAddress)
         lastArtifact.data.map(data => customStateDeserialization(data)) match {
           case None => SortedSet.empty[transaction.RewardTransaction].pure

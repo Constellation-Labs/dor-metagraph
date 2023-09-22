@@ -43,13 +43,19 @@ case class BountyRewards() {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
 
     if (epochModulus == 0L) {
-      return toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
+      val tokenAmount = toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
+      logger.info(s"[UnitDeployedBounty] Device with rewardAddress: ${device.deviceApiResponse.rewardAddress}. Reward raw amount: $tokenAmount")
+      return tokenAmount
     }
     if (epochModulus == 1L) {
-      return toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
+      val tokenAmount = toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
+      logger.info(s"[CommercialLocationBounty] Device with rewardAddress: ${device.deviceApiResponse.rewardAddress}. Reward raw amount: $tokenAmount")
+      return tokenAmount
     }
     if (epochModulus == 2L) {
-      return toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
+      val tokenAmount = toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
+      logger.info(s"[RetailAnalyticsSubscriptionBounty] Device with rewardAddress: ${device.deviceApiResponse.rewardAddress}. Reward raw amount: $tokenAmount")
+      return tokenAmount
     }
 
     0L
@@ -88,7 +94,7 @@ case class BountyRewards() {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
         val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)
         val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
-
+        logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress}. Value to be rewarded: $rewardValue")
         taxesToValidatorNodes += deviceTaxToValidatorNodes
         if (rewardValue > 0) {
           //We already checked if the rewardValue is greater than 0, that's the reason we call unsafeFrom

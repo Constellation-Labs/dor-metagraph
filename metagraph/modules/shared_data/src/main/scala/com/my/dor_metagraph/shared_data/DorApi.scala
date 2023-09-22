@@ -42,13 +42,13 @@ case class DorApi() {
 
       decode[DeviceInfoAPIResponseWithHash](body) match {
         case Left(err) =>
-          logger.error(s"Error when decoding ${err.getMessage}")
+          logger.warn(s"Error when decoding ${err.getMessage}")
           None
         case Right(deviceInfo) => Some(deviceInfo)
       }
     } catch {
       case x: Exception =>
-        logger.error(s"Error when fetching API: ${x.getMessage}")
+        logger.warn(s"Error when fetching API: ${x.getMessage}")
         None
     }
   }
