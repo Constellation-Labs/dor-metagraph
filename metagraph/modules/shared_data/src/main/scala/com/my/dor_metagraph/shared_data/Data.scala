@@ -1,94 +1,127 @@
 package com.my.dor_metagraph.shared_data
 
-import cats.data.{NonEmptyList, NonEmptySet}
+import cats.data.NonEmptyList
 import cats.effect.IO
-import derevo.circe.magnolia.{decoder, encoder}
-import derevo.derive
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
-import org.tessellation.currency.dataApplication.{DataState, DataUpdate, L0NodeContext}
+import org.tessellation.currency.dataApplication.{L0NodeContext, L1NodeContext}
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
 import Combiners.combineDeviceCheckIn
-import com.my.dor_metagraph.shared_data.Bounties.Bounty
-import com.my.dor_metagraph.shared_data.DorApi.DeviceInfoAPIResponse
-import com.my.dor_metagraph.shared_data.Utils.buildSignedUpdate
-import com.my.dor_metagraph.shared_data.Validations.deviceCheckInValidations
+import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInWithSignature}
+import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, customStateDeserialization, customStateSerialization, customUpdateDeserialization, customUpdateSerialization, getByteArrayFromRequestBody, getDeviceCheckInInfo}
+import com.my.dor_metagraph.shared_data.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
 import fs2.Compiler.Target.forSync
-import io.bullet.borer.{Cbor, Codec}
-import io.bullet.borer.derivation.MapBasedCodecs._
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
+import org.slf4j.LoggerFactory
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.schema.ID.Id
-import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hex.Hex
-import org.tessellation.security.signature.signature.{Signature, SignatureProof}
-
-import java.nio.charset.StandardCharsets
-import scala.collection.immutable.SortedSet
 
 object Data {
-  implicit val dorCodec: Codec[DeviceCheckInWithSignature] = deriveCodec[DeviceCheckInWithSignature]
-  @derive(decoder, encoder)
-  case class DeviceCheckInWithSignature(ac: List[Long], dts: Long, e: List[List[Long]], id: String, signature: String)
+  private val data: Data = Data()
+  def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+    data.validateUpdate(update)
+  }
+  def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+    data.validateData(oldState, updates)
+  }
+  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+    data.combine(oldState, updates)
+  }
+  def serializeState(state: CheckInState): IO[Array[Byte]] = {
+    data.serializeState(state)
+  }
+  def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = {
+    data.deserializeState(bytes)
+  }
 
-  @derive(decoder, encoder)
-  case class FootTraffic(timestamp: Long, direction: Long)
+  def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = {
+    data.serializeUpdate(update)
+  }
+  def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = {
+    data.deserializeUpdate(bytes)
+  }
+  def dataEncoder: Encoder[DeviceCheckInWithSignature] = {
+    data.dataEncoder
+  }
+  def dataDecoder: Decoder[DeviceCheckInWithSignature] = {
+    data.dataDecoder
+  }
+  def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = {
+    data.signedDataEntityDecoder
+  }
+}
+case class Data() {
+  private val logger = LoggerFactory.getLogger(classOf[Data])
+  def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+    implicit val sp: SecurityProvider[IO] = context.securityProvider
+    val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
 
-  @derive(decoder, encoder)
-  case class CheckInRef(ordinal: Long, hash: String)
+    val addressIO = Id(Hex(update.id)).toAddress[IO]
+    val lastCurrencySnapshotStateRawIO = lastCurrencySnapshotRaw.map(_.get.data)
 
-  @derive(decoder, encoder)
-  case class DeviceCheckInFormatted(ac: List[Long], dts: Long, footTraffics: List[FootTraffic], checkInRef: CheckInRef)
+    val checkInInfo = getDeviceCheckInInfo(update.cbor)
 
-  @derive(decoder, encoder)
-  case class DeviceInfo(lastCheckIn: DeviceCheckInFormatted, publicKey: String, bounties: List[Bounty], deviceApiResponse: DeviceInfoAPIResponse, lastCheckInEpochProgress: Long)
+    for {
+      address <- addressIO
+      lastCurrencySnapshotRaw <- lastCurrencySnapshotStateRawIO
+    } yield deviceCheckInValidationsL1(checkInInfo, lastCurrencySnapshotRaw, address)
+  }
 
-  @derive(decoder, encoder)
-  case class DeviceCheckInRawUpdate(ac: List[Long], dts: Long, e: List[List[Long]]) extends DataUpdate
-
-  @derive(decoder, encoder)
-  case class State(devices: Map[Address, DeviceInfo]) extends DataState
-
-  def validateData(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInRawUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+  def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     updates.traverse { signedUpdate =>
-      deviceCheckInValidations(signedUpdate, oldState)
+      val checkInInfo = getDeviceCheckInInfo(signedUpdate.value.cbor)
+      deviceCheckInValidationsL0(checkInInfo, signedUpdate.proofs, oldState)
     }.map(_.reduce)
   }
 
 
-  def combine(oldState: State, updates: NonEmptyList[Signed[DeviceCheckInRawUpdate]])(implicit context: L0NodeContext[IO]): IO[State] = {
-    updates.foldLeftM(oldState) { (acc, signedUpdate) =>
-      combineDeviceCheckIn(acc, signedUpdate)
+  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+    implicit val sp: SecurityProvider[IO] = context.securityProvider
+    val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
+
+    val newState = oldState.copy(updates = List.empty)
+    updates.foldLeftM(newState) { (acc, signedUpdate) =>
+      val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
+      for {
+        epochProgress <- epochProgressIO
+        address <- addressIO
+      } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value + 1, address)
     }
   }
 
-  def serializeState(state: State): IO[Array[Byte]] = IO {
-    Utils.customStateSerialization(state)
+  def serializeState(state: CheckInState): IO[Array[Byte]] = IO {
+    customStateSerialization(state)
   }
 
-  def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, State]] = IO {
-    Utils.customStateDeserialization(bytes)
+  def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = IO {
+    customStateDeserialization(bytes)
   }
 
-  def serializeUpdate(update: DeviceCheckInRawUpdate): IO[Array[Byte]] = IO {
-    Utils.customUpdateSerialization(update)
+  def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = IO {
+    customUpdateSerialization(update)
   }
 
-  def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInRawUpdate]] = IO {
-    Utils.customUpdateDeserialization(bytes)
+  def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = IO {
+    customUpdateDeserialization(bytes)
   }
 
-  def dataEncoder: Encoder[DeviceCheckInRawUpdate] = deriveEncoder
+  def dataEncoder: Encoder[DeviceCheckInWithSignature] = deriveEncoder
 
-  def dataDecoder: Decoder[DeviceCheckInRawUpdate] = deriveDecoder
+  def dataDecoder: Decoder[DeviceCheckInWithSignature] = deriveDecoder
 
-  def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInRawUpdate]] = {
+  def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
       val rawText = msg.as[String]
-      val signed = rawText.flatMap(buildSignedUpdate(_).pure[IO])
+      val signed = rawText.flatMap { text =>
+        logger.info(s"Received RAW request: $text")
+        val bodyAsBytes = getByteArrayFromRequestBody(text)
+        buildSignedUpdate(bodyAsBytes).pure[IO]
+      }
+      logger.info(s"PARSED RAW request: $signed")
       DecodeResult.success(signed)
     }
   }

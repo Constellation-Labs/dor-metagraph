@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object V {
-    val tessellation = "develop"
+    val tessellation = "2.0.0-alpha.13"
     val decline = "2.4.1"
   }
   def tessellation(artifact: String): ModuleID = "org.constellation" %% s"tessellation-$artifact" % V.tessellation
@@ -26,6 +26,7 @@ object Dependencies {
     val borerCore = "io.bullet" %% "borer-core" % "1.8.0"
     val borerDerivation = "io.bullet" %% "borer-derivation" % "1.8.0"
     val requests = "com.lihaoyi" %% "requests" % "0.8.0"
+    val upickle = "com.lihaoyi" %% "upickle" % "3.1.3"
     val catsEffectTestkit = "org.typelevel" %% "cats-effect-testkit" % "3.4.7"
     val weaverCats = "com.disneystreaming" %% "weaver-cats" % "0.8.1"
     val weaverDiscipline = "com.disneystreaming" %% "weaver-discipline" % "0.8.1"

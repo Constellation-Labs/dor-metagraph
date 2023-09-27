@@ -1,86 +1,79 @@
 package com.my.dor_metagraph.shared_data
 
-import cats.effect.IO
-import Data.{CheckInRef, DeviceCheckInFormatted, DeviceCheckInWithSignature, DeviceInfo, DeviceCheckInRawUpdate, FootTraffic, State}
-import cats.implicits.catsSyntaxApplicativeId
-import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.DorApi.{DeviceInfoAPIResponse, fetchDeviceInfo}
-import com.my.dor_metagraph.shared_data.Utils.customUpdateSerialization
-import io.bullet.borer.Cbor
-import monocle.Monocle.toAppliedFocusOps
-import org.tessellation.currency.dataApplication.L0NodeContext
+import Types.{CheckInProof, CheckInState, CheckInUpdates, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, DeviceInfoAPIResponseWithHash, EPOCH_PROGRESS_1_DAY}
+import com.my.dor_metagraph.shared_data.DorApi.saveDeviceCheckIn
+import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
+import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
-import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
-import org.tessellation.security.hash.Hash
 
 object Combiners {
-  def combine(
-               acc: State,
-               address: Address,
-               deviceCheckIn: DeviceCheckInRawUpdate,
-               publicKey: String,
-               snapshotOrdinal: Long,
-               checkInHash: String,
-               epochProgress: Long,
-               deviceInfo: DeviceInfoAPIResponse
-             ): State = {
+  private val combiners: Combiners = Combiners()
+
+  def getNewCheckIn(acc: CheckInState, address: Address, deviceCheckIn: DeviceCheckInWithSignature, currentEpoch: Long, deviceInfo: DeviceInfoAPIResponseWithHash): CheckInState = {
+    combiners.getNewCheckIn(acc, address, deviceCheckIn, currentEpoch, deviceInfo)
+  }
+
+  def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, currentEpochProgress: Long, deviceInfo: DeviceInfoAPIResponseWithHash): CheckInState = {
+    combiners.combine(signedUpdate, acc, address, currentEpochProgress, deviceInfo)
+  }
+
+  def combineDeviceCheckIn(acc: CheckInState, signedUpdate: Signed[DeviceCheckInWithSignature], currentEpochProgress: Long, address: Address): CheckInState = {
+    combiners.combineDeviceCheckIn(acc, signedUpdate, currentEpochProgress, address)
+  }
+}
+
+case class Combiners() {
+  private val logger = LoggerFactory.getLogger(classOf[Combiners])
+
+  def getNewCheckIn(acc: CheckInState, address: Address, deviceCheckIn: DeviceCheckInWithSignature, currentEpoch: Long, deviceInfo: DeviceInfoAPIResponseWithHash): CheckInState = {
     val state = acc.devices.get(address)
-    val footTraffics = deviceCheckIn.e.map { event => FootTraffic(event.head, event.last) }
-    val checkInRef = CheckInRef(snapshotOrdinal, checkInHash)
-    val checkInFormatted = DeviceCheckInFormatted(deviceCheckIn.ac, deviceCheckIn.dts, footTraffics, checkInRef)
+    val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
 
-    val newState = state match {
+    val currentEpochModulus = currentEpoch % EPOCH_PROGRESS_1_DAY
+    val nextRewardEpoch = currentEpoch - currentEpochModulus + EPOCH_PROGRESS_1_DAY
+
+    val nextRewardEpochProgress = state match {
       case Some(current) =>
-        DeviceInfo(checkInFormatted, publicKey, current.bounties, deviceInfo, epochProgress)
-      case None =>
-        val bounties = List(
-          UnitDeployedBounty("UnitDeployed"),
-          CommercialLocationBounty("CommercialLocation")
-        )
-        DeviceInfo(checkInFormatted, publicKey, bounties, deviceInfo, epochProgress)
+        if (currentEpoch >= current.nextEpochProgressToReward) {
+          nextRewardEpoch
+        } else {
+          current.nextEpochProgressToReward
+        }
+      case None => nextRewardEpoch
     }
 
-    acc.focus(_.devices).modify(_.updated(address, newState))
+    val checkInProof = CheckInProof(deviceCheckIn.id, deviceCheckIn.sig)
+    val checkInUpdate = CheckInUpdates(address, checkInInfo.dts, checkInProof, deviceInfo.checkInHash)
+
+    val deviceInfoApiResponse = DeviceInfoAPIResponse(deviceInfo.rewardAddress, deviceInfo.isInstalled, deviceInfo.locationType, deviceInfo.billedAmountMonthly)
+    val checkIn = DeviceInfo(checkInInfo.dts, deviceInfoApiResponse, nextRewardEpochProgress)
+    logger.info(s"New checkIn for the device: $checkIn")
+
+    val devices = acc.devices.updated(address, checkIn)
+    val updates = checkInUpdate :: acc.updates
+
+    CheckInState(updates, devices)
   }
 
-  def getDeviceCheckInFromCBOR(data: String): DeviceCheckInWithSignature = {
-    try {
-      val cborData = Utils.toCBORHex(data)
-      Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
-    } catch {
-      case e: Exception =>
-        println(s"Error parsing data on check in. Data: $data")
-        throw e
-    }
+  def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, currentEpochProgress: Long, deviceInfo: DeviceInfoAPIResponseWithHash): CheckInState = {
+    val deviceCheckIn = signedUpdate.value
+
+    getNewCheckIn(acc, address, deviceCheckIn, currentEpochProgress, deviceInfo)
   }
 
-  def getCheckInHash(update: DeviceCheckInRawUpdate): String = Hash.fromBytes(customUpdateSerialization(update)).toString
-
-  def combineDeviceCheckIn(acc: State, signedUpdate: Signed[DeviceCheckInRawUpdate])(implicit context: L0NodeContext[IO]): IO[State] = {
+  def combineDeviceCheckIn(acc: CheckInState, signedUpdate: Signed[DeviceCheckInWithSignature], currentEpochProgress: Long, address: Address): CheckInState = {
     try {
-      implicit val sp: SecurityProvider[IO] = context.securityProvider
-      val deviceCheckIn = signedUpdate.value
-      val checkInHash = getCheckInHash(signedUpdate.value)
       val publicKey = signedUpdate.proofs.head.id.hex.value
-
-      val ordinalIO = context.getLastCurrencySnapshot.map(_.get.ordinal)
-      val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress) // Should be replaced
-      val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
-      fetchDeviceInfo(publicKey) match {
-        case Some(deviceInfo) =>
-          for {
-            ordinal <- ordinalIO
-            address <- addressIO
-            epochProgress <- epochProgressIO
-          } yield combine(acc, address, deviceCheckIn, publicKey, ordinal.value.value, checkInHash, epochProgress.value.value, deviceInfo)
-        case None => acc.pure[IO]
+      saveDeviceCheckIn(publicKey, signedUpdate.value) match {
+        case Some(deviceInfo) => combine(signedUpdate, acc, address, currentEpochProgress, deviceInfo)
+        case None => acc
       }
     } catch {
       case e: Exception =>
-        println(e.getMessage)
-        println("Ignoring update and keeping with the current state")
-        acc.pure[IO]
+        logger.warn(e.getMessage)
+        logger.warn("Ignoring update and keeping with the current state")
+        acc
     }
   }
 }
