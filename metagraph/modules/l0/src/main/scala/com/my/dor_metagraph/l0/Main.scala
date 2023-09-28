@@ -34,7 +34,7 @@ object Main
 
       override def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 
-      override def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = Data.combine(oldState, updates)
+      def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = Data.combine(oldState, updates)
 
       override def serializeState(state: CheckInState): IO[Array[Byte]] = Data.serializeState(state)
 

@@ -27,7 +27,7 @@ object Data {
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     data.validateData(oldState, updates)
   }
-  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+  def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     data.combine(oldState, updates)
   }
   def serializeState(state: CheckInState): IO[Array[Byte]] = {
@@ -79,7 +79,7 @@ case class Data() {
   }
 
 
-  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+  def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
 
