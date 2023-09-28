@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.tessellation.schema.transaction
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
+import eu.timepit.refined.auto._
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -87,8 +88,18 @@ case class DorMetagraphRewards() {
     val bountyTransactions = bountyRewards._1.pure
     val taxesToValidatorNodes = bountyRewards._2
 
-    val validatorNodesL0 = facilitatorsAddresses
-    val validatorNodesL1 = facilitatorsAddresses
+    //TODO: This should be replaced after David's ticket
+    val validatorNodesL0 = List(
+      Address("DAG3Z6oMiqXyi4SKEU4u4fwNiYAMYFyPwR3ttTSd"),
+      Address("DAG4WbN2DwPgk7xSJNS2GbXRwMdJh8yJfAUj3qog"),
+      Address("DAG0xyJ3TQ2orgr6TKPk3jR6Hz2f5XxwuuovQdjD")
+    ).pure
+
+    val validatorNodesL1 = List(
+      Address("DAG1s9m7yFSvKEraSNwUXwLG7C7DLN9psfFzm25p"),
+      Address("DAG2deZH8boSUuVKs9hjm921HHLAMTGuuD2mcu7F"),
+      Address("DAG1LZc4MAuuk76m57f8E1SjYRSKzsg2c6r6U3WN")
+    ).pure
 
     val validatorNodesTransactions = for {
       validatorNodesL0Addresses <- validatorNodesL0
