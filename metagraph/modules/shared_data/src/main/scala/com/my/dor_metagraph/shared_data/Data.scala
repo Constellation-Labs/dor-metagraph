@@ -58,16 +58,16 @@ case class Data() {
   def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
-
+    val checkInInfo = getDeviceCheckInInfo(update.cbor)
     val addressIO = Id(Hex(update.id)).toAddress[IO]
     val lastCurrencySnapshotStateRawIO = lastCurrencySnapshotRaw.map(_.get.data)
 
-    val checkInInfo = getDeviceCheckInInfo(update.cbor)
-
-    for {
+    val validations = for {
       address <- addressIO
       lastCurrencySnapshotRaw <- lastCurrencySnapshotStateRawIO
     } yield deviceCheckInValidationsL1(checkInInfo, lastCurrencySnapshotRaw, address)
+
+    validations.flatMap(validation => validation)
   }
 
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {

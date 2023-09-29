@@ -7,6 +7,10 @@ import org.tessellation.schema.address.Address
 
 object Types {
   val EPOCH_PROGRESS_1_DAY: Long = 60 * 24
+
+  //Friday, 1 September 2023 00:00:00
+  val MINIMUM_CHECK_IN_TIMESTAMP = 1693526400L
+
   @derive(decoder, encoder)
   case class CheckInProof(id: String, signature: String)
 

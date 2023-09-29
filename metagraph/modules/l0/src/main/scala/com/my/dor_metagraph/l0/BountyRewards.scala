@@ -86,7 +86,9 @@ case class BountyRewards() {
 
   def getBountyRewardsTransactions(state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
     var taxesToValidatorNodes = 0L
-    val rewardsTransactions = state.devices.map { case (_, value) =>
+    val allRewards: Map[Address, RewardTransaction] = Map.empty
+
+    val rewardsTransactions = state.devices.foldLeft(allRewards) { case (acc, (_, value)) =>
       if (currentEpochProgress - value.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
         logger.warn(s"Device with reward address ${value.deviceApiResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
         null
@@ -96,14 +98,20 @@ case class BountyRewards() {
         val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
         logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress}. Value to be rewarded: $rewardValue")
         taxesToValidatorNodes += deviceTaxToValidatorNodes
+
         if (rewardValue > 0) {
-          //We already checked if the rewardValue is greater than 0, that's the reason we call unsafeFrom
-          RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue)))
+          acc.get(value.deviceApiResponse.rewardAddress) match {
+            case Some(currentReward) =>
+              val newValue = currentReward.amount.value.value + rewardValue
+              acc + (value.deviceApiResponse.rewardAddress -> RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(newValue))))
+            case None =>
+              acc + (value.deviceApiResponse.rewardAddress -> RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue))))
+          }
         } else {
-          null
+          acc
         }
       }
-    }.filter(_ != null).toList
+    }.values.filter(_ != null).toList
 
     (rewardsTransactions, taxesToValidatorNodes)
   }

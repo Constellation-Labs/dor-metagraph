@@ -12,4 +12,8 @@ object Errors {
   case object CouldNotGetLatestState extends DataApplicationValidationError {
     val message = "Could not get latest state"
   }
+
+  case object CheckInOlderThanAllowed extends DataApplicationValidationError {
+    val message = "CheckIn is older than allowed"
+  }
 }
