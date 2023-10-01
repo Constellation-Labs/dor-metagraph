@@ -91,18 +91,14 @@ case class BountyRewards() {
     val rewardsTransactions = state.devices.foldLeft(allRewards) { case (acc, (_, value)) =>
       if (currentEpochProgress - value.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
         logger.warn(s"Device with reward address ${value.deviceApiResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
-        null
+        acc
       } else {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
         val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)
         val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
         taxesToValidatorNodes += deviceTaxToValidatorNodes
 
-        try{
         if (rewardValue > 0) {
-          if(value.deviceApiResponse == null) {
-            logger.info(s"DEVICE API RESPONSE null ${deviceTotalRewards}")
-          }
           acc.get(value.deviceApiResponse.rewardAddress) match {
             case Some(currentReward) =>
               logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} already have a reward, increasing value")
@@ -116,11 +112,6 @@ case class BountyRewards() {
         } else {
           logger.info(s"Ignoring reward, value equals to 0")
           acc
-        }
-      }catch {
-          case e: Exception =>
-            logger.info(s"Error $value")
-            throw e
         }
       }
     }.values.filter(_ != null).toList
