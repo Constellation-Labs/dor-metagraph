@@ -98,7 +98,11 @@ case class BountyRewards() {
         val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
         taxesToValidatorNodes += deviceTaxToValidatorNodes
 
+        try{
         if (rewardValue > 0) {
+          if(value.deviceApiResponse == null) {
+            logger.info(s"DEVICE API RESPONSE null ${deviceTotalRewards}")
+          }
           acc.get(value.deviceApiResponse.rewardAddress) match {
             case Some(currentReward) =>
               logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} already have a reward, increasing value")
@@ -112,6 +116,11 @@ case class BountyRewards() {
         } else {
           logger.info(s"Ignoring reward, value equals to 0")
           acc
+        }
+      }catch {
+          case e: Exception =>
+            logger.info(s"Error $value")
+            throw e
         }
       }
     }.values.filter(_ != null).toList
