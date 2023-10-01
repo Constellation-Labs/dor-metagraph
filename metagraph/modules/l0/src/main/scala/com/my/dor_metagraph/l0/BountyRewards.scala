@@ -96,18 +96,21 @@ case class BountyRewards() {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
         val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)
         val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
-        logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress}. Value to be rewarded: $rewardValue")
         taxesToValidatorNodes += deviceTaxToValidatorNodes
 
         if (rewardValue > 0) {
           acc.get(value.deviceApiResponse.rewardAddress) match {
             case Some(currentReward) =>
+              logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} already have a reward, increasing value")
               val newValue = currentReward.amount.value.value + rewardValue
+              logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} new value: $newValue")
               acc + (value.deviceApiResponse.rewardAddress -> RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(newValue))))
             case None =>
+              logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} doesn't have a reward yet, creating with value: $rewardValue")
               acc + (value.deviceApiResponse.rewardAddress -> RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue))))
           }
         } else {
+          logger.info(s"Ignoring reward, value equals to 0")
           acc
         }
       }
