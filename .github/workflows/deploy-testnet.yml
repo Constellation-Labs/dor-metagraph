@@ -1,0 +1,43 @@
+name: Deploy testnet
+
+on:
+  push:
+    branches:
+      - "deploy/testnet"
+jobs:
+  hydra-script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install AWS Cli
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          arch: amd64
+      - name: Install jq
+        shell: bash
+        run: |
+          sudo apt install -y jq
+      - name: Filling EC2 instances information
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+        shell: bash
+        run: |
+          echo "EC2_INSTANCE_1_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId)" >> $GITHUB_ENV
+          echo "EC2_INSTANCE_1_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].PublicIpAddress)" >> $GITHUB_ENV
+          
+          echo "EC2_INSTANCE_2_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 2" | jq -r ".Reservations[0].Instances[0].InstanceId)" >> $GITHUB_ENV
+          echo "EC2_INSTANCE_2_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 2" | jq -r ".Reservations[0].Instances[0].PublicIpAddress)" >> $GITHUB_ENV
+          
+          echo "EC2_INSTANCE_3_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].InstanceId)" >> $GITHUB_ENV
+          echo "EC2_INSTANCE_3_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].PublicIpAddress)" >> $GITHUB_ENV
+          
+          echo "EC2_INSTANCE_1_ID=$EC2_INSTANCE_1_ID"
+          echo "EC2_INSTANCE_1_IP=$EC2_INSTANCE_1_IP"
+          
+          echo "EC2_INSTANCE_2_ID=$EC2_INSTANCE_2_ID"
+          echo "EC2_INSTANCE_2_IP=$EC2_INSTANCE_2_IP"
+          
+          echo "EC2_INSTANCE_3_ID=$EC2_INSTANCE_3_ID"
+          echo "EC2_INSTANCE_3_IP=$EC2_INSTANCE_3_IP"
