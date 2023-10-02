@@ -26,13 +26,23 @@ jobs:
         shell: bash
         run: |          
           echo "EC2_INSTANCE_1_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
-          echo "EC2_INSTANCE_1_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
-          
           echo "EC2_INSTANCE_2_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 2" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
-          echo "EC2_INSTANCE_2_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 2" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
-          
           echo "EC2_INSTANCE_3_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
-          echo "EC2_INSTANCE_3_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
+          echo "BUCKET_NAME=dor-metagraph-jars" >> $GITHUB_ENV
+
+      - name: Validate S3 bucket
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+        run: |
+          if ! aws s3 ls "s3://$BUCKET_NAME" 2>/dev/null; then
+            aws s3api create-bucket --bucket "$BUCKET_NAME"
+            echo "Bucket '$BUCKET_NAME' created successfully"
+          else
+            echo "Bucket '$BUCKET_NAME' already exists."
+          fi
 
       - name: Get tessellation version to build
         shell: bash
@@ -53,3 +63,29 @@ jobs:
           git checkout $TESSELLATION_VERSION
           
           sbt --error shared/publishM2 kernel/publishM2 keytool/publishM2 sdk/publishM2 dagL1/publishM2 currencyL0/publishM2 currencyL1/publishM2
+
+      - name: Generate Metagraph JARS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          cd metagraph
+          sbt currencyL1/assembly currencyL0/assembly dataL1/assembly
+
+      - name: Move JARS to artifact folder
+        shell: bash
+        run: |
+          mkdir .github/artifacts
+          mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0.jar
+          mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1.jar
+          mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1.jar
+
+      - name: Send JARs to S3 bucket
+        shell: bash
+        run: |
+          cd .github/artifacts
+          aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars/
+          
+          mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0-$TESSELLATION_VERSION.jar
+          mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1-$TESSELLATION_VERSION.jar
+          mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1-$TESSELLATION_VERSION.jar
