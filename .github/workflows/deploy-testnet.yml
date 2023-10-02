@@ -82,9 +82,13 @@ jobs:
 
       - name: Send JARs to S3 bucket
         shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
           cd .github/artifacts
-          ls
           aws s3 cp metagraph-l0-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/
           aws s3 cp data-l1-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/
           aws s3 cp currency-l1-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/
