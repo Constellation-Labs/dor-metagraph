@@ -23,10 +23,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
           AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         shell: bash
-        run: |
-          aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId"
-          echo "EC2_INSTANCE_1_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId")"
-          
+        run: |          
           echo "EC2_INSTANCE_1_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
           echo "EC2_INSTANCE_1_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
           
@@ -35,12 +32,14 @@ jobs:
           
           echo "EC2_INSTANCE_3_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
           echo "EC2_INSTANCE_3_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
+      - name: Print instances information
+        shell: bash
+        run: |
+          echo $EC2_INSTANCE_1_ID
+          echo $EC2_INSTANCE_1_IP
           
-          echo "EC2_INSTANCE_1_ID=$EC2_INSTANCE_1_ID"
-          echo "EC2_INSTANCE_1_IP=$EC2_INSTANCE_1_IP"
+          echo $EC2_INSTANCE_2_ID
+          echo $EC2_INSTANCE_2_IP
           
-          echo "EC2_INSTANCE_2_ID=$EC2_INSTANCE_2_ID"
-          echo "EC2_INSTANCE_2_IP=$EC2_INSTANCE_2_IP"
-          
-          echo "EC2_INSTANCE_3_ID=$EC2_INSTANCE_3_ID"
-          echo "EC2_INSTANCE_3_IP=$EC2_INSTANCE_3_IP"
+          echo $EC2_INSTANCE_3_ID
+          echo $EC2_INSTANCE_3_IP
