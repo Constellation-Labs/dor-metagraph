@@ -25,6 +25,7 @@ jobs:
         shell: bash
         run: |
           aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId"
+          echo "EC2_INSTANCE_1_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId")"
           
           echo "EC2_INSTANCE_1_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
           echo "EC2_INSTANCE_1_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 1" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
