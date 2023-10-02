@@ -28,13 +28,13 @@ object CombinersTest extends SimpleIOSuite {
   }
 
   pureTest("Update check in of device") {
-    val cborString = "BF6261639F188F38B43925B8FF636474731A63875B2461659F9F1B00000184A0C9AF5E01FF9F1B00000194A0CD649601FF9F1B00000184A0CE08A701FF9F1B00000184A0D0CF9801FF9F1B00000184A0D3254101FF9F1B00000184A0D3968A01FF9F1B00000184A0D3C95301FF9F1B00000184A0D3F06401FF9F1B00000184A0D47D0501FF9F1B00000184A0D48CA601FFFFFF"
+    val cborString = "bf6261639f39260e3901dd190886ff636474731a6516d81661659fff72626174746572795f766f6c746167655f6d760062637468696e74657276616c617200616e64576946696261706957696669547269616c6264746764656661756c7462667765302e302e30781b626f6f746c6f616465725f6669726d776172655f76657273696f6e65302e302e30ff"
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentDeviceInfoAPIResponseWithHash = DeviceInfoAPIResponseWithHash(currentAddress, isInstalled = true, Some("Retail"), Some(10L), "123")
     var currentEpochProgress = 1440L
 
-    val oldState = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)))
+    val oldState = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val deviceInfo = oldState.devices(currentAddress)
 
     oldState.updates.find(_.deviceId == currentAddress) match {
