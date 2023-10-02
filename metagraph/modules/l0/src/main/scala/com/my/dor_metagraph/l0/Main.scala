@@ -11,7 +11,8 @@ import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.currency.dataApplication.{BaseDataApplicationL0Service, DataApplicationL0Service, L0NodeContext}
 import org.tessellation.currency.l0.CurrencyL0App
-import org.tessellation.currency.schema.currency
+import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
+import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
@@ -53,7 +54,7 @@ object Main
       override def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = Data.signedDataEntityDecoder
     }))
 
-  def rewards(implicit sp: SecurityProvider[IO]): Some[Rewards[IO, currency.CurrencySnapshotStateProof, currency.CurrencyIncrementalSnapshot]] = Some(
+  def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]]= Some(
     DorMetagraphRewards.make[IO]
   )
 }
