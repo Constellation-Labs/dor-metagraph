@@ -17,6 +17,7 @@ jobs:
         shell: bash
         run: |
           sudo apt install -y jq
+
       - name: Filling EC2 instances information
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
@@ -32,14 +33,23 @@ jobs:
           
           echo "EC2_INSTANCE_3_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
           echo "EC2_INSTANCE_3_IP=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].PublicIpAddress")" >> $GITHUB_ENV
-      - name: Print instances information
+
+      - name: Get tessellation version to build
         shell: bash
         run: |
-          echo $EC2_INSTANCE_1_ID
-          echo $EC2_INSTANCE_1_IP
+          echo "TESSELLATION_VERSION=v$(cat metagraph/project/Dependencies.scala | grep -E "tessellation = \"(.*)" | grep -o "\".*\"" | grep -Eo "[^\"]*")" >> $GITHUB_ENV
+
+      - name: Clone and generate Tessellation dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          echo "TESSELLATION_VERSION=$TESSELLATION_VERSION"
           
-          echo $EC2_INSTANCE_2_ID
-          echo $EC2_INSTANCE_2_IP
+          mkdir .github/dependencies
+          cd .github/dependencies
+          git clone https://github.com/Constellation-Labs/tessellation.git
+          cd tessellation
+          git checkout $TESSELLATION_VERSION
           
-          echo $EC2_INSTANCE_3_ID
-          echo $EC2_INSTANCE_3_IP
+          sbt --error shared/publishM2 kernel/publishM2 keytool/publishM2 sdk/publishM2 dagL1/publishM2 currencyL0/publishM2 currencyL1/publishM2
