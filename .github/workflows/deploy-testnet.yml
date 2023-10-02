@@ -76,16 +76,15 @@ jobs:
         shell: bash
         run: |
           mkdir .github/artifacts
-          mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0.jar
-          mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1.jar
-          mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1.jar
+          mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0-$TESSELLATION_VERSION.jar
+          mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1-$TESSELLATION_VERSION.jar
+          mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1-$TESSELLATION_VERSION.jar
 
       - name: Send JARs to S3 bucket
         shell: bash
         run: |
           cd .github/artifacts
-          aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars/
-          
-          mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0-$TESSELLATION_VERSION.jar
-          mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1-$TESSELLATION_VERSION.jar
-          mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1-$TESSELLATION_VERSION.jar
+          ls
+          aws s3 cp metagraph-l0-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/
+          aws s3 cp data-l1-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/
+          aws s3 cp currency-l1-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/
