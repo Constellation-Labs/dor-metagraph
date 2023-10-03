@@ -141,10 +141,16 @@ jobs:
           --instance-id $EC2_INSTANCE_1_ID \
           --command-id "$metagraph_l0_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
 
-          echo "Exit Code Metagraph L0: $metagraph_l0_exit_code"
+          if [ $metagraph_l0_exit_code -eq 0 ]
+          then
+            echo "Metagraph L0 JAR uploaded successfully - Instance 1"
+          else
+            echo "Failure when uploading Metagraph L0 JAR - Instance 1"
+            exit 1
+          fi
           
           currency_l1_command_id=$(aws ssm send-command \
           --instance-id $EC2_INSTANCE_1_ID \
@@ -161,10 +167,16 @@ jobs:
           --instance-id $EC2_INSTANCE_1_ID \
           --command-id "$currency_l1_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
 
-          echo "Exit Code Currency L1: $currency_l1_exit_code"
+          if [ $currency_l1_exit_code -eq 0 ]
+          then
+            echo "Currency L1 JAR uploaded successfully - Instance 1"
+          else
+            echo "Failure when uploading Currency L1 JAR - Instance 1"
+            exit 1
+          fi
           
           data_l1_command_id=$(aws ssm send-command \
           --instance-id $EC2_INSTANCE_1_ID \
@@ -181,10 +193,16 @@ jobs:
           --instance-id $EC2_INSTANCE_1_ID \
           --command-id "$data_l1_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
 
-          echo "Exit Code DATA L1: $data_l1_exit_code"
+          if [ $data_l1_exit_code -eq 0 ]
+          then
+            echo "Data L1 JAR uploaded successfully - Instance 1"
+          else
+            echo "Failure when uploading Data L1 JAR - Instance 1"
+            exit 1
+          fi
 
       - name: Send JARS from S3 to EC2 - Instance 2
         shell: bash
@@ -213,10 +231,16 @@ jobs:
           --instance-id $EC2_INSTANCE_2_ID \
           --command-id "$metagraph_l0_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
 
-          echo "Exit Code Metagraph L0: $metagraph_l0_exit_code"
+          if [ $metagraph_l0_exit_code -eq 0 ]
+          then
+            echo "Metagraph L0 JAR uploaded successfully - Instance 2"
+          else
+            echo "Failure when uploading Metagraph L0 JAR - Instance 2"
+            exit 1
+          fi
           
           currency_l1_command_id=$(aws ssm send-command \
           --instance-id $EC2_INSTANCE_2_ID \
@@ -233,10 +257,16 @@ jobs:
           --instance-id $EC2_INSTANCE_2_ID \
           --command-id "$currency_l1_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
 
-          echo "Exit Code Currency L1: $currency_l1_exit_code"
+          if [ $currency_l1_exit_code -eq 0 ]
+          then
+            echo "Currency L1 JAR uploaded successfully - Instance 2"
+          else
+            echo "Failure when uploading Currency L1 JAR - Instance 2"
+            exit 1
+          fi
           
           data_l1_command_id=$(aws ssm send-command \
           --instance-id $EC2_INSTANCE_2_ID \
@@ -253,10 +283,16 @@ jobs:
           --instance-id $EC2_INSTANCE_2_ID \
           --command-id "$data_l1_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
 
-          echo "Exit Code DATA L1: $data_l1_exit_code"
+          if [ $data_l1_exit_code -eq 0 ]
+          then
+            echo "Data L1 JAR uploaded successfully - Instance 2"
+          else
+            echo "Failure when uploading Data L1 JAR - Instance 2"
+            exit 1
+          fi
 
       - name: Send JARS from S3 to EC2 - Instance 3
         shell: bash
@@ -285,10 +321,16 @@ jobs:
           --instance-id $EC2_INSTANCE_3_ID \
           --command-id "$metagraph_l0_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
-
-          echo "Exit Code Metagraph L0: $metagraph_l0_exit_code"
+          
+          if [ $metagraph_l0_exit_code -eq 0 ]
+          then
+            echo "Metagraph L0 JAR uploaded successfully - Instance 3"
+          else
+            echo "Failure when uploading Metagraph L0 JAR - Instance 3"
+            exit 1
+          fi
           
           currency_l1_command_id=$(aws ssm send-command \
           --instance-id $EC2_INSTANCE_3_ID \
@@ -305,10 +347,16 @@ jobs:
           --instance-id $EC2_INSTANCE_3_ID \
           --command-id "$currency_l1_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
           --output text)
-
-          echo "Exit Code Currency L1: $currency_l1_exit_code"
+          
+          if [ $currency_l1_exit_code -eq 0 ]
+          then
+            echo "Currency L1 JAR uploaded successfully - Instance 3"
+          else
+            echo "Failure when uploading Currency L1 JAR - Instance 3"
+            exit 1
+          fi
           
           data_l1_command_id=$(aws ssm send-command \
           --instance-id $EC2_INSTANCE_3_ID \
@@ -325,7 +373,121 @@ jobs:
           --instance-id $EC2_INSTANCE_3_ID \
           --command-id "$data_l1_command_id" \
           --details \
-          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
+          --output text)
+          
+          if [ $data_l1_exit_code -eq 0 ]
+          then
+            echo "Data L1 JAR uploaded successfully - Instance 3"
+          else
+            echo "Failure when uploading Data L1 JAR - Instance 3"
+            exit 1
+          fi
+          
+
+      - name: Kill current Metagraph execution
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+        run: |
+          DESTROY_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && fuser -k 7000/tcp && fuser -k 8000/tcp && fuser -k 9000/tcp"
+
+          destroy_command_instance_1=$(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$DESTROY_COMMAND"] \
+          --query "Command.CommandId" \
           --output text)
 
-          echo "Exit Code DATA L1: $data_l1_exit_code"
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$destroy_command_instance_1"
+
+          destroy_command_instance_1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$destroy_command_instance_1" \
+          --details \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
+          --output text)
+
+          if [ $destroy_command_instance_1_exit_code -eq 0 ]
+          then
+            echo "Instance 1 processes killed successfully"
+          else
+            echo "Failure killing processes Instance 1"
+            exit 1
+          fi
+          
+          destroy_command_instance_2=$(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$DESTROY_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$destroy_command_instance_2"
+
+          destroy_command_instance_2_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$destroy_command_instance_2" \
+          --details \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
+          --output text)
+
+          if [ $destroy_command_instance_2_exit_code -eq 0 ]
+          then
+            echo "Instance 2 processes killed successfully"
+          else
+            echo "Failure killing processes Instance 2"
+            exit 1
+          fi
+          
+          destroy_command_instance_3=$(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$DESTROY_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$destroy_command_instance_3"
+
+          destroy_command_instance_3_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$destroy_command_instance_3" \
+          --details \
+          --query "CommandInvocations[0].CommandPlugins[0].ResponseCode" \
+          --output text)
+
+          if [ $destroy_command_instance_3_exit_code -eq 0 ]
+          then
+            echo "Instance 3 processes killed successfully"
+          else
+            echo "Failure killing processes Instance 3"
+            exit 1
+          fi
+
+      - name: Save Metagraph L0 JAR
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: metagraph-l0.jar
+          path: .github/artifacts/metagraph-l0.jar
+      - name: Save Currency L1 JAR
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: currency-l0.jar
+          path: .github/artifacts/currency-l1.jar
+      - name: Save Data L1 JAR
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: data-l1.jar
+          path: .github/artifacts/data-l1.jar
