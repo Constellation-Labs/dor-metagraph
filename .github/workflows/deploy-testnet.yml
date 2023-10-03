@@ -30,6 +30,27 @@ jobs:
           echo "EC2_INSTANCE_3_ID=$(aws ec2 describe-instances  --filters "Name=tag:Name,Values=DOR Metagraph - 3" | jq -r ".Reservations[0].Instances[0].InstanceId")" >> $GITHUB_ENV
           echo "BUCKET_NAME=dor-metagraph-jars" >> $GITHUB_ENV
 
+      - name: Install AWS Cli on instances if not exists
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+        shell: bash
+        run: |          
+            aws ssm send-command \
+            --instance-id $EC2_INSTANCE_1_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":["if ! command -v aws &> /dev/null; then sudo apt-get update -y && sudo apt-get install -y awscli; fi"]}'
+
+            aws ssm send-command \
+            --instance-id $EC2_INSTANCE_2_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":["if ! command -v aws &> /dev/null; then sudo apt-get update -y && sudo apt-get install -y awscli; fi"]}'
+          
+            aws ssm send-command \
+            --instance-id $EC2_INSTANCE_3_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":["if ! command -v aws &> /dev/null; then sudo apt-get update -y && sudo apt-get install -y awscli; fi"]}'
       - name: Validate S3 bucket
         shell: bash
         env:
