@@ -114,7 +114,7 @@ jobs:
           aws s3 cp data-l1.jar s3://dor-metagraph-jars
           aws s3 cp currency-l1.jar s3://dor-metagraph-jars
 
-      - name: Download UPDATED jar on instances
+      - name: Send JARS from S3 to EC2 - Instance 1
         shell: bash
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
@@ -122,9 +122,210 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
-          METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/metagraph-l0.jar /home/ubuntu/code/"
+          METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
+          CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/currency-l1.jar /home/ubuntu/code/currency-l1/"
+          DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/data-l1.jar /home/ubuntu/code/data-l1/"
           
-          aws ssm send-command \
-          --instance-id  $EC2_INSTANCE_1_ID \
+          metagraph_l0_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_1_ID \
           --document-name "AWS-RunShellScript" \
           --parameters commands=["$METAGRAPH_L0_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+          
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$metagraph_l0_command_id"
+          
+          metagraph_l0_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$metagraph_l0_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code Metagraph L0: $metagraph_l0_exit_code"
+          
+          currency_l1_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$CURRENCY_L1_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$currency_l1_command_id"
+
+          currency_l1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$currency_l1_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code Currency L1: $currency_l1_exit_code"
+          
+          data_l1_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$DATA_L1_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$data_l1_command_id"
+
+          data_l1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_1_ID \
+          --command-id "$data_l1_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code DATA L1: $data_l1_exit_code"
+
+      - name: Send JARS from S3 to EC2 - Instance 2
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+        run: |
+          METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
+          CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/currency-l1.jar /home/ubuntu/code/currency-l1/"
+          DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/data-l1.jar /home/ubuntu/code/data-l1/"
+          
+          metagraph_l0_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$METAGRAPH_L0_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+          
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$metagraph_l0_command_id"
+          
+          metagraph_l0_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$metagraph_l0_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code Metagraph L0: $metagraph_l0_exit_code"
+          
+          currency_l1_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$CURRENCY_L1_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$currency_l1_command_id"
+
+          currency_l1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$currency_l1_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code Currency L1: $currency_l1_exit_code"
+          
+          data_l1_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$DATA_L1_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$data_l1_command_id"
+
+          data_l1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_2_ID \
+          --command-id "$data_l1_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code DATA L1: $data_l1_exit_code"
+
+      - name: Send JARS from S3 to EC2 - Instance 3
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_TESTNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
+        run: |
+          METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
+          CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/currency-l1.jar /home/ubuntu/code/currency-l1/"
+          DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars/data-l1.jar /home/ubuntu/code/data-l1/"
+          
+          metagraph_l0_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$METAGRAPH_L0_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+          
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$metagraph_l0_command_id"
+          
+          metagraph_l0_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$metagraph_l0_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code Metagraph L0: $metagraph_l0_exit_code"
+          
+          currency_l1_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$CURRENCY_L1_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$currency_l1_command_id"
+
+          currency_l1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$currency_l1_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code Currency L1: $currency_l1_exit_code"
+          
+          data_l1_command_id = $(aws ssm send-command \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=["$DATA_L1_COMMAND"] \
+          --query "Command.CommandId" \
+          --output text)
+
+          aws ssm wait command-executed \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$data_l1_command_id"
+
+          data_l1_exit_code=$(aws ssm list-command-invocations \
+          --instance-id $EC2_INSTANCE_3_ID \
+          --command-id "$data_l1_command_id" \
+          --details \
+          --query "CommandInvocations[0].StatusDetails.ExitCode" \
+          --output text)
+
+          echo "Exit Code DATA L1: $data_l1_exit_code"
