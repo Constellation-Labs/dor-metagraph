@@ -30,7 +30,7 @@ object Data {
     data.validateData(oldState, updates)
   }
 
-  def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     data.combine(oldState, updates)
   }
 
@@ -90,7 +90,7 @@ case class Data() {
   }
 
 
-  def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     val newState = oldState.copy(updates = List.empty)
 
     if (updates.isEmpty) {

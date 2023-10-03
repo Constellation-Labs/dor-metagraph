@@ -40,8 +40,8 @@ object DorMetagraphRewards {
     }
   }
 
-  def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
-    (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], consensusTrigger: ConsensusTrigger, currencySnapshotsEvents: Set[CurrencySnapshotEvent]) => {
+  def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot] =
+    (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], consensusTrigger: ConsensusTrigger) => {
       consensusTrigger match {
         case trigger.EventTrigger =>
           println("THIS IS A EVENT TRIGGER SNAPSHOT, SKIPPING REWARDS")
@@ -52,8 +52,17 @@ object DorMetagraphRewards {
           println("THIS IS A TIME TRIGGER SNAPSHOT, TRYING TO REWARD")
           println(s"LAST SNAPSHOT ORDINAL: $lastSnapshotOrdinal. PROBABLY CURRENT ORDINAL: ${lastSnapshotOrdinal + 1}")
 
-          val l0ValidatorNodes = getL0ValidatorNodesAddresses(lastArtifact)
-          val l1ValidatorNodes = getL1ValidatorNodesAddresses(currencySnapshotsEvents)
+          val validatorNodesL0 = List(
+            Address("DAG3Z6oMiqXyi4SKEU4u4fwNiYAMYFyPwR3ttTSd"),
+            Address("DAG4WbN2DwPgk7xSJNS2GbXRwMdJh8yJfAUj3qog"),
+            Address("DAG0xyJ3TQ2orgr6TKPk3jR6Hz2f5XxwuuovQdjD")
+          ).pure
+
+          val validatorNodesL1 = List(
+            Address("DAG1s9m7yFSvKEraSNwUXwLG7C7DLN9psfFzm25p"),
+            Address("DAG2deZH8boSUuVKs9hjm921HHLAMTGuuD2mcu7F"),
+            Address("DAG1LZc4MAuuk76m57f8E1SjYRSKzsg2c6r6U3WN")
+          ).pure
 
           lastArtifact.data.map(data => customStateDeserialization(data)) match {
             case None => SortedSet.empty[transaction.RewardTransaction].pure
@@ -61,7 +70,7 @@ object DorMetagraphRewards {
               state match {
                 case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure
                 case Right(state) =>
-                  DorMetagraphRewards().buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, l0ValidatorNodes, l1ValidatorNodes)
+                  DorMetagraphRewards().buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, validatorNodesL0, validatorNodesL1)
               }
           }
       }

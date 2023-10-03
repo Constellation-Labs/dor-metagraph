@@ -11,7 +11,6 @@ import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.currency.dataApplication.{BaseDataApplicationL0Service, DataApplicationL0Service, L0NodeContext}
 import org.tessellation.currency.l0.CurrencyL0App
-import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.sdk.domain.rewards.Rewards
@@ -35,7 +34,7 @@ object Main
 
       override def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 
-      def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = Data.combine(oldState, updates)
+      def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = Data.combine(oldState, updates)
 
       override def serializeState(state: CheckInState): IO[Array[Byte]] = Data.serializeState(state)
 
@@ -54,7 +53,7 @@ object Main
       override def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = Data.signedDataEntityDecoder
     }))
 
-  def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]]= Some(
+  def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot]]= Some(
     DorMetagraphRewards.make[IO]
   )
 }
