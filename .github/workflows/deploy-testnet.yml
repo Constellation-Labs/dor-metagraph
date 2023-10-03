@@ -91,9 +91,9 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
           cd .github/artifacts
-          aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME
-          aws s3 cp data-l1.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME
-          aws s3 cp currency-l1.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME      
+          aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME/
+          aws s3 cp data-l1.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME/
+          aws s3 cp currency-l1.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME/
 
       - name: Download UPDATED jar on instances
         shell: bash
@@ -103,4 +103,5 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
-          aws ssm send-command --instance-id $EC2_INSTANCE_1_ID --document-name "AWS-RunShellScript" --parameters '{"commands":["aws s3 cp s3://dor-metagraph-jars/$S3_FOLDER_NAME/metagraph-l0.jar /home/ubuntu/code/"]}'
+          METAGRAPH_L0="{\"commands\":[\"aws s3 cp s3://dor-metagraph-jars/$S3_FOLDER_NAME/metagraph-l0.jar /home/ubuntu/code/\"]}"
+          aws ssm send-command --instance-id $EC2_INSTANCE_1_ID --document-name "AWS-RunShellScript" --parameters $METAGRAPH_L0
