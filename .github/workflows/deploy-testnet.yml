@@ -91,9 +91,9 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
           cd .github/artifacts
-          aws s3 cp metagraph-l0-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME
-          aws s3 cp data-l1-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME
-          aws s3 cp currency-l1-$TESSELLATION_VERSION.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME      
+          aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME
+          aws s3 cp data-l1.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME
+          aws s3 cp currency-l1.jar s3://dor-metagraph-jars/$S3_FOLDER_NAME      
 
       - name: Download UPDATED jar on instances
         shell: bash
