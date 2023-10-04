@@ -1,7 +1,6 @@
 package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
-import cats.implicits.catsSyntaxApplicativeId
 import com.my.dor_metagraph.l0.BountyRewards.{calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
 import com.my.dor_metagraph.l0.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceInfo, DeviceInfoAPIResponse}
@@ -11,7 +10,6 @@ import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.security.SecurityProvider
 import weaver.MutableIOSuite
-import eu.timepit.refined.auto._
 
 object DorMetagraphRewardsTest extends MutableIOSuite {
   val dorMetagraphRewards: DorMetagraphRewards = DorMetagraphRewards()
@@ -37,24 +35,27 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
   }
 
   test("Build correctly rewards - UnitDeployedBounty") {
-    val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
 
     val state = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
-    val facilitatorsAddressesL0 = getValidatorNodesL0.pure[IO]
-    val facilitatorsAddressesL1 = getValidatorNodesL1.pure[IO]
+    val facilitatorsAddresses = getValidatorNodesL0
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, facilitatorsAddressesL0, facilitatorsAddressesL1)
-    val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
+    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, IO.pure(facilitatorsAddresses))
 
     for {
       rewards <- rewardsIO
-      reward <- rewardIO
     } yield expect.eql(7, rewards.size) &&
-      expect.eql(5400000000L, reward.get.amount.value.value) &&
-      expect.eql(currentAddress, reward.get.destination)
+      expect.eql(100000000L, rewards.head.amount.value.value) &&
+      expect.eql(currentAddress.value.value, "DAG5Sf7kTCkeL7vSaxAaYKQxx3DB9sP6wAktmdpv") &&
+      expect.eql(100000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses.head.value.value, "DAG5gXRij2kfddcC9ngoPG2ptsj9vB1jonXYVrce") &&
+      expect.eql(100000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses(1).value.value, "DAG6ZBgpbAej6Y21gjRdM9GfKmCbu6EgD9KM54Qp") &&
+      expect.eql(100000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses(2).value.value, "DAG81HkNSrrkqKdjVfqfPoXU7DVrfQncQyWdwFYn")
   }
 
   test("Build correctly rewards - multiple wallets with same reward address") {
@@ -70,41 +71,45 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     ))
 
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
-    val facilitatorsAddressesL0 = getValidatorNodesL0.pure[IO]
-    val facilitatorsAddressesL1 = getValidatorNodesL1.pure[IO]
+    val facilitatorsAddresses = getValidatorNodesL0
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, facilitatorsAddressesL0, facilitatorsAddressesL1)
-    val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
+    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, IO.pure(facilitatorsAddresses))
 
     for {
       rewards <- rewardsIO
-      reward <- rewardIO
     } yield expect.eql(7, rewards.size) &&
-      expect.eql(10800000000L, reward.get.amount.value.value) &&
-      expect.eql(currentAddress, reward.get.destination) &&
-      expect.eql(10800000000L, rewards.toList(1).amount.value.value)
+      expect.eql(200000000L, rewards.head.amount.value.value) &&
+      expect.eql(currentAddress.value.value, "DAG5Sf7kTCkeL7vSaxAaYKQxx3DB9sP6wAktmdpv") &&
+      expect.eql(200000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses.head.value.value, "DAG5gXRij2kfddcC9ngoPG2ptsj9vB1jonXYVrce") &&
+      expect.eql(200000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses(1).value.value, "DAG6ZBgpbAej6Y21gjRdM9GfKmCbu6EgD9KM54Qp") &&
+      expect.eql(200000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses(2).value.value, "DAG81HkNSrrkqKdjVfqfPoXU7DVrfQncQyWdwFYn")
   }
 
   test("Build correctly rewards - CommercialLocationBounty") {
-    val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1441L
 
     val state = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
-    val facilitatorsAddressesL0 = getValidatorNodesL0.pure[IO]
-    val facilitatorsAddressesL1 = getValidatorNodesL1.pure[IO]
+    val facilitatorsAddresses = getValidatorNodesL0
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, facilitatorsAddressesL0, facilitatorsAddressesL1)
-    val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
+    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, IO.pure(facilitatorsAddresses))
 
     for {
       rewards <- rewardsIO
-      reward <- rewardIO
-    } yield
-      expect.eql(7, rewards.size) &&
-      expect.eql(5400000000L, reward.get.amount.value.value) &&
-      expect.eql(currentAddress.value.value, "DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(100000000L, rewards.head.amount.value.value) &&
+      expect.eql(currentAddress.value.value, "DAG5Sf7kTCkeL7vSaxAaYKQxx3DB9sP6wAktmdpv") &&
+      expect.eql(100000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses.head.value.value, "DAG5gXRij2kfddcC9ngoPG2ptsj9vB1jonXYVrce") &&
+      expect.eql(100000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses(1).value.value, "DAG6ZBgpbAej6Y21gjRdM9GfKmCbu6EgD9KM54Qp") &&
+      expect.eql(100000000L, rewards.toList(1).amount.value.value) &&
+      expect.eql(facilitatorsAddresses(2).value.value, "DAG81HkNSrrkqKdjVfqfPoXU7DVrfQncQyWdwFYn")
   }
 
   test("Empty rewards when epochProgress does not complete 1 day") {
@@ -114,10 +119,9 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
     val state = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
-    val facilitatorsAddressesL0 = getValidatorNodesL0.pure[IO]
-    val facilitatorsAddressesL1 = getValidatorNodesL1.pure[IO]
+    val facilitatorsAddresses = getValidatorNodesL0
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, facilitatorsAddressesL0, facilitatorsAddressesL1)
+    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, IO.pure(facilitatorsAddresses))
 
     for {
       rewards <- rewardsIO
