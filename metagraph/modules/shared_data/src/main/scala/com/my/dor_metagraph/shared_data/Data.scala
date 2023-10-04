@@ -96,11 +96,13 @@ case class Data() {
 
     val validatorNodesIO = for {
       epochProgress <- epochProgressIO
-    } yield getValidatorNodes(epochProgress.value.value + 1, oldState)
+    } yield getValidatorNodes(epochProgress.value.value + 1, oldState, sp)
 
     val newStateIO = for {
       validatorNodes <- validatorNodesIO
-    } yield CheckInState(List.empty, oldState.devices, validatorNodes._1, validatorNodes._2)
+      l0ValidatorNodes <- validatorNodes._1
+      l1ValidatorNodes <- validatorNodes._2
+    } yield CheckInState(List.empty, oldState.devices, l0ValidatorNodes, l1ValidatorNodes)
 
     if (updates.isEmpty) {
       logger.info("Snapshot without any check-ins, updating the state to empty updates")

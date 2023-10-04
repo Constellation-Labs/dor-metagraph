@@ -12,15 +12,13 @@ import org.tessellation.security.signature.Signed
 import org.tessellation.security.signature.signature.{Signature, SignatureProof}
 
 import java.nio.charset.StandardCharsets
-import org.bouncycastle.crypto.digests.SHA256Digest
-import org.bitcoinj.core.Base58
-
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
-import org.tessellation.schema.address.{Address, DAGAddressRefined}
-import eu.timepit.refined._
+import org.tessellation.schema.address.Address
+import _root_.cats.effect.IO
+import org.tessellation.security.SecurityProvider
 
 object Utils {
   private val utils = Utils()
@@ -61,14 +59,13 @@ object Utils {
     utils.getByteArrayFromRequestBody(bodyAsString)
   }
 
-  def getDagAddressFromPublicKey(publicKey: String): Address = {
-    utils.getDagAddressFromPublicKey(publicKey)
+  def getDagAddressFromPublicKey(publicKey: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
+    utils.getDagAddressFromPublicKey(publicKey, securityProvider)
   }
 
 }
 
 case class Utils() {
-  private val PKCS_PREFIX = "3056301006072a8648ce3d020106052b8104000a034200"
   private val logger = LoggerFactory.getLogger(classOf[Utils])
 
   private def toCBORHex(hexString: String): Array[Byte] = {
@@ -162,38 +159,9 @@ case class Utils() {
     bodyAsBytes.toArray
   }
 
-  private def sha256(input: String): Array[Byte] = {
-    val digest = new SHA256Digest
-    val inputBytes = org.bouncycastle.util.encoders.Hex.decode(input)
-
-    digest.update(inputBytes, 0, inputBytes.length)
-
-    val result = new Array[Byte](digest.getDigestSize)
-    digest.doFinal(result, 0)
-
-    result
-  }
-
-  def getDagAddressFromPublicKey(publicKeyHex: String): Address = {
-    var modifiedPublicKeyHex = publicKeyHex
-    if (publicKeyHex.length == 128) {
-      modifiedPublicKeyHex = "04" + publicKeyHex
-    }
-
-    val publicKeyHexWithPrefix = PKCS_PREFIX + modifiedPublicKeyHex
-    val sha256Bytes = sha256(publicKeyHexWithPrefix)
-    val sha256Str = org.bouncycastle.util.encoders.Hex.toHexString(sha256Bytes)
-
-    val bytes = org.bouncycastle.util.encoders.Hex.decode(sha256Str)
-    val hash = Base58.encode(bytes)
-
-    val end = hash.substring(hash.length - 36)
-    val sum = end.filter(_.isDigit).map(_.asDigit).sum
-
-    val par = sum % 9
-    refineV[DAGAddressRefined](s"DAG$par$end") match {
-      case Left(_) => throw new Exception("Error when parsing pub_id to DAG Address")
-      case Right(value) => Address(value)
-    }
+  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
+    implicit val sp: SecurityProvider[IO] = securityProvider
+    val publicKey: Id = Id(Hex(publicKeyHex))
+    publicKey.toAddress[IO]
   }
 }

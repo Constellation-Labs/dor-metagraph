@@ -1,11 +1,14 @@
 package com.my.dor_metagraph.shared_data
 
 import Types.{CheckInProof, CheckInState, CheckInUpdates, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, DeviceInfoAPIResponseWithHash, EPOCH_PROGRESS_1_DAY}
+import cats.effect.IO
+import cats.implicits.catsSyntaxApplicativeId
 import com.my.dor_metagraph.shared_data.ClusterApi.getValidatorNodesAddresses
 import com.my.dor_metagraph.shared_data.DorApi.saveDeviceCheckIn
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
+import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 
 object Combiners {
@@ -23,8 +26,8 @@ object Combiners {
     combiners.combineDeviceCheckIn(acc, signedUpdate, currentEpochProgress, address)
   }
 
-  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState): (List[Address], List[Address]) = {
-    combiners.getValidatorNodes(currentEpochProgress, currentState)
+  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
+    combiners.getValidatorNodes(currentEpochProgress, currentState, securityProvider)
   }
 }
 
@@ -82,13 +85,13 @@ case class Combiners() {
     }
   }
 
-  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState): (List[Address], List[Address]) = {
+  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
     val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
     if (currentState.l0ValidatorNodesAddresses.isEmpty || currentState.l1ValidatorNodesAddresses.isEmpty || epochProgressModulus == 0L) {
       val environment = sys.env.getOrElse("CL_APP_ENV", "dev")
-      return getValidatorNodesAddresses(environment)
+      return getValidatorNodesAddresses(environment, securityProvider)
     }
 
-    (currentState.l0ValidatorNodesAddresses, currentState.l1ValidatorNodesAddresses)
+    (currentState.l0ValidatorNodesAddresses.pure[IO], currentState.l1ValidatorNodesAddresses.pure[IO])
   }
 }

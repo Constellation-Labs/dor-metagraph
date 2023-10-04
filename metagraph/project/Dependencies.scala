@@ -31,9 +31,6 @@ object Dependencies {
     val weaverCats = "com.disneystreaming" %% "weaver-cats" % "0.8.1"
     val weaverDiscipline = "com.disneystreaming" %% "weaver-discipline" % "0.8.1"
     val weaverScalaCheck = "com.disneystreaming" %% "weaver-scalacheck" % "0.8.1"
-    val bouncyCastleOn = "org.bouncycastle" % "bcprov-jdk15on" % "1.70"
-    val bouncyCastleTo = "org.bouncycastle" % "bcprov-jdk15to18" % "1.70"
-    val bitcoinJ = "org.bitcoinj" % "bitcoinj-core" % "0.16.2"
   }
 
 
