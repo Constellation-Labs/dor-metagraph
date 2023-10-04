@@ -27,11 +27,14 @@ object Types {
   case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
 
   @derive(decoder, encoder)
-  case class CheckInState(updates: List[CheckInUpdates], devices: Map[Address, DeviceInfo]) extends DataState
+  case class CheckInState(updates: List[CheckInUpdates], devices: Map[Address, DeviceInfo], l0ValidatorNodesAddresses: List[Address], l1ValidatorNodesAddresses: List[Address]) extends DataState
 
   @derive(decoder, encoder)
   case class DeviceInfoAPIResponseWithHash(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long], checkInHash: String)
 
   @derive(decoder, encoder)
   case class DeviceInfoAPIResponse(rewardAddress: Address, isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long])
+
+  @derive(decoder, encoder)
+  case class ClusterInfoResponse(id: String, ip: String, publicPort: Long, p2pPort: Long, session: String, state: String)
 }

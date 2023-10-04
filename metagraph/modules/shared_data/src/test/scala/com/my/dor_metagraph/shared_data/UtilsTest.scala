@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
-import com.my.dor_metagraph.shared_data.Utils.buildSignedUpdate
+import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, getDagAddressFromPublicKey}
 import weaver.SimpleIOSuite
 
 object UtilsTest extends SimpleIOSuite {
@@ -13,6 +13,13 @@ object UtilsTest extends SimpleIOSuite {
     expect.eql("bf6261639f188f38b43925b8ff636474731a63875b2461659f9f1b00000184a0c9af5e01ff9f1b00000194a0cd649601ff9f1b00000184a0ce08a701ff9f1b00000184a0d0cf9801ff9f1b00000184a0d3254101ff9f1b00000184a0d3968a01ff9f1b00000184a0d3c95301ff9f1b00000184a0d3f06401ff9f1b00000184a0d47d0501ff9f1b00000184a0d48ca601ffffff", signedUpdate.cbor)
     expect.eql("6d38286a6620d675448de8368aad8daeee87590c6ffa5df619ee525b274727b6bee92257af7136956304f0d475c9b042a7585917545d125d49bafc88d53fbcce", signedUpdate.proofs.head.id.hex.value)
     expect.eql("3046022100bfcaafb8fff30b016a45dd1caa52d1dd5f8a70e9c683b51105d1ac8bd33ec7bf022100fbf8adb6008f05200847d91112df1f40501c42b6fc9436a14892c6f2440ba464", signedUpdate.proofs.head.signature.value.value)
+  }
+
+  pureTest("Test get DAG address from pub_key") {
+    val publicKey = "d741b547225b6ba6f1ba38be192ab7550b7610ef54e7fee88a9666b79a12a6741d1565241fba5c2a812be66edd878824f927a42430ffba48fa0bd0264a5483bf"
+    val address = getDagAddressFromPublicKey(publicKey)
+
+    expect.eql("DAG3Z6oMiqXyi4SKEU4u4fwNiYAMYFyPwR3ttTSd", address.value.value)
   }
 
 }

@@ -53,7 +53,10 @@ lazy val sharedData = (project in file("modules/shared_data"))
       Libraries.borerCore,
       Libraries.borerDerivation,
       Libraries.requests,
-      Libraries.upickle
+      Libraries.upickle,
+      Libraries.bouncyCastleOn,
+      Libraries.bouncyCastleTo,
+      Libraries.bitcoinJ
     )
   )
 lazy val currencyL1 = (project in file("modules/l1"))

@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object V {
-    val tessellation = "2.0.0-alpha.14"
+    val tessellation = "2.0.0-alpha.16"
     val decline = "2.4.1"
   }
   def tessellation(artifact: String): ModuleID = "org.constellation" %% s"tessellation-$artifact" % V.tessellation
@@ -31,6 +31,9 @@ object Dependencies {
     val weaverCats = "com.disneystreaming" %% "weaver-cats" % "0.8.1"
     val weaverDiscipline = "com.disneystreaming" %% "weaver-discipline" % "0.8.1"
     val weaverScalaCheck = "com.disneystreaming" %% "weaver-scalacheck" % "0.8.1"
+    val bouncyCastleOn = "org.bouncycastle" % "bcprov-jdk15on" % "1.70"
+    val bouncyCastleTo = "org.bouncycastle" % "bcprov-jdk15to18" % "1.70"
+    val bitcoinJ = "org.bitcoinj" % "bitcoinj-core" % "0.16.2"
   }
 
 

@@ -1,6 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
 import Types.{CheckInProof, CheckInState, CheckInUpdates, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, DeviceInfoAPIResponseWithHash, EPOCH_PROGRESS_1_DAY}
+import com.my.dor_metagraph.shared_data.ClusterApi.getValidatorNodesAddresses
 import com.my.dor_metagraph.shared_data.DorApi.saveDeviceCheckIn
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
 import org.slf4j.LoggerFactory
@@ -20,6 +21,10 @@ object Combiners {
 
   def combineDeviceCheckIn(acc: CheckInState, signedUpdate: Signed[DeviceCheckInWithSignature], currentEpochProgress: Long, address: Address): CheckInState = {
     combiners.combineDeviceCheckIn(acc, signedUpdate, currentEpochProgress, address)
+  }
+
+  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState): (List[Address], List[Address]) = {
+    combiners.getValidatorNodes(currentEpochProgress, currentState)
   }
 }
 
@@ -53,7 +58,7 @@ case class Combiners() {
     val devices = acc.devices.updated(address, checkIn)
     val updates = checkInUpdate :: acc.updates
 
-    CheckInState(updates, devices)
+    CheckInState(updates, devices, acc.l0ValidatorNodesAddresses, acc.l1ValidatorNodesAddresses)
   }
 
   def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, currentEpochProgress: Long, deviceInfo: DeviceInfoAPIResponseWithHash): CheckInState = {
@@ -75,5 +80,15 @@ case class Combiners() {
         logger.warn("Ignoring update and keeping with the current state")
         acc
     }
+  }
+
+  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState): (List[Address], List[Address]) = {
+    val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
+    if (currentState.l0ValidatorNodesAddresses.isEmpty || currentState.l1ValidatorNodesAddresses.isEmpty || epochProgressModulus == 0L) {
+      val environment = sys.env.getOrElse("CL_APP_ENV", "dev")
+      return getValidatorNodesAddresses(environment)
+    }
+
+    (currentState.l0ValidatorNodesAddresses, currentState.l1ValidatorNodesAddresses)
   }
 }
