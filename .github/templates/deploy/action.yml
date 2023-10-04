@@ -13,6 +13,8 @@ inputs:
     required: true
   EC2_INSTANCE_3_ID:
     required: true
+  GITHUB_TOKEN:
+    required: true
 
 runs:
   using: "composite"
@@ -81,7 +83,7 @@ runs:
 
     - name: Clone and generate Tessellation dependencies
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       shell: bash
       run: |
         echo "TESSELLATION_VERSION=$TESSELLATION_VERSION"
@@ -96,7 +98,7 @@ runs:
 
     - name: Generate Metagraph JARS
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       shell: bash
       run: |
         cd metagraph
