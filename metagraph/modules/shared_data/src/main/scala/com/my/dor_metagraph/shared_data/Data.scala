@@ -21,23 +21,18 @@ import org.tessellation.security.hex.Hex
 
 object Data {
   private val data: Data = Data()
-
   def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     data.validateUpdate(update)
   }
-
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     data.validateData(oldState, updates)
   }
-
   def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     data.combine(oldState, updates)
   }
-
   def serializeState(state: CheckInState): IO[Array[Byte]] = {
     data.serializeState(state)
   }
-
   def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = {
     data.deserializeState(bytes)
   }
@@ -45,27 +40,21 @@ object Data {
   def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = {
     data.serializeUpdate(update)
   }
-
   def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = {
     data.deserializeUpdate(bytes)
   }
-
   def dataEncoder: Encoder[DeviceCheckInWithSignature] = {
     data.dataEncoder
   }
-
   def dataDecoder: Decoder[DeviceCheckInWithSignature] = {
     data.dataDecoder
   }
-
   def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = {
     data.signedDataEntityDecoder
   }
 }
-
 case class Data() {
   private val logger = LoggerFactory.getLogger(classOf[Data])
-
   def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
@@ -91,15 +80,10 @@ case class Data() {
 
 
   def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
-    val newState = oldState.copy(updates = List.empty)
-
-    if (updates.isEmpty) {
-      logger.info("Snapshot without any check-ins, updating the state to empty updates")
-      return newState.pure[IO]
-    }
-
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
+
+    val newState = oldState.copy(updates = List.empty)
     updates.foldLeftM(newState) { (acc, signedUpdate) =>
       val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
       for {
