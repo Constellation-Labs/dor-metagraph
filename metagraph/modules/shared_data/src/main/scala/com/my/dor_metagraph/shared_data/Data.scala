@@ -7,7 +7,7 @@ import io.circe.{Decoder, Encoder}
 import org.tessellation.currency.dataApplication.{L0NodeContext, L1NodeContext}
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
-import Combiners.combineDeviceCheckIn
+import Combiners.{combineDeviceCheckIn, getValidatorNodes}
 import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInWithSignature}
 import com.my.dor_metagraph.shared_data.Utils.{buildSignedUpdate, customStateDeserialization, customStateSerialization, customUpdateDeserialization, customUpdateSerialization, getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
@@ -21,18 +21,23 @@ import org.tessellation.security.hex.Hex
 
 object Data {
   private val data: Data = Data()
+
   def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     data.validateUpdate(update)
   }
+
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     data.validateData(oldState, updates)
   }
-  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+
+  def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     data.combine(oldState, updates)
   }
+
   def serializeState(state: CheckInState): IO[Array[Byte]] = {
     data.serializeState(state)
   }
+
   def deserializeState(bytes: Array[Byte]): IO[Either[Throwable, CheckInState]] = {
     data.deserializeState(bytes)
   }
@@ -40,21 +45,27 @@ object Data {
   def serializeUpdate(update: DeviceCheckInWithSignature): IO[Array[Byte]] = {
     data.serializeUpdate(update)
   }
+
   def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, DeviceCheckInWithSignature]] = {
     data.deserializeUpdate(bytes)
   }
+
   def dataEncoder: Encoder[DeviceCheckInWithSignature] = {
     data.dataEncoder
   }
+
   def dataDecoder: Decoder[DeviceCheckInWithSignature] = {
     data.dataDecoder
   }
+
   def signedDataEntityDecoder: EntityDecoder[IO, Signed[DeviceCheckInWithSignature]] = {
     data.signedDataEntityDecoder
   }
 }
+
 case class Data() {
   private val logger = LoggerFactory.getLogger(classOf[Data])
+
   def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
@@ -79,18 +90,33 @@ case class Data() {
   }
 
 
-  def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
+  def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[CheckInState] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
     val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
 
-    val newState = oldState.copy(updates = List.empty)
-    updates.foldLeftM(newState) { (acc, signedUpdate) =>
-      val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
-      for {
-        epochProgress <- epochProgressIO
-        address <- addressIO
-      } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value + 1, address)
+    val validatorNodesIO = for {
+      epochProgress <- epochProgressIO
+    } yield getValidatorNodes(epochProgress.value.value + 1, oldState, sp)
+
+    val newStateIO = for {
+      validatorNodes <- validatorNodesIO
+      l0ValidatorNodes <- validatorNodes._1
+      l1ValidatorNodes <- validatorNodes._2
+    } yield CheckInState(List.empty, oldState.devices, l0ValidatorNodes, l1ValidatorNodes)
+
+    if (updates.isEmpty) {
+      logger.info("Snapshot without any check-ins, updating the state to empty updates")
+      return newStateIO
     }
+    newStateIO.flatMap(newState => {
+      updates.foldLeftM(newState) { (acc, signedUpdate) =>
+        val addressIO = signedUpdate.proofs.map(_.id).head.toAddress[IO]
+        for {
+          epochProgress <- epochProgressIO
+          address <- addressIO
+        } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value + 1, address)
+      }
+    })
   }
 
   def serializeState(state: CheckInState): IO[Array[Byte]] = IO {

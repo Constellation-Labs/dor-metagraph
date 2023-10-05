@@ -7,7 +7,7 @@ import weaver.SimpleIOSuite
 
 object CombinersTest extends SimpleIOSuite {
   pureTest("Create a new check in on state") {
-    val oldState = CheckInState(List.empty, Map.empty)
+    val oldState = CheckInState(List.empty, Map.empty, List.empty, List.empty)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val cborString = "BF6261639F188F38B43925B8FF636474731A63875B2461659F9F1B00000184A0C9AF5E01FF9F1B00000194A0CD649601FF9F1B00000184A0CE08A701FF9F1B00000184A0D0CF9801FF9F1B00000184A0D3254101FF9F1B00000184A0D3968A01FF9F1B00000184A0D3C95301FF9F1B00000184A0D3F06401FF9F1B00000184A0D47D0501FF9F1B00000184A0D48CA601FFFFFF"
     val checkInRaw = DeviceCheckInWithSignature(cborString, "", "")
@@ -34,7 +34,7 @@ object CombinersTest extends SimpleIOSuite {
     val currentDeviceInfoAPIResponseWithHash = DeviceInfoAPIResponseWithHash(currentAddress, isInstalled = true, Some("Retail"), Some(10L), "123")
     var currentEpochProgress = 1440L
 
-    val oldState = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
+    val oldState = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), List.empty, List.empty)
     val deviceInfo = oldState.devices(currentAddress)
 
     oldState.updates.find(_.deviceId == currentAddress) match {

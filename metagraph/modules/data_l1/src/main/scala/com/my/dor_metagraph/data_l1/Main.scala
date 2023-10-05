@@ -44,7 +44,7 @@ object Main
 
     override def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateUpdate(update)
 
-    override def combine(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L1NodeContext[IO]): IO[CheckInState] = IO.pure(oldState)
+    override def combine(oldState: CheckInState, updates: List[Signed[DeviceCheckInWithSignature]])(implicit context: L1NodeContext[IO]): IO[CheckInState] = IO.pure(oldState)
 
     override def routes(implicit context: L1NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.of {
       case GET -> Root / "snapshots" / "latest" => getLatestSnapshotDecoded

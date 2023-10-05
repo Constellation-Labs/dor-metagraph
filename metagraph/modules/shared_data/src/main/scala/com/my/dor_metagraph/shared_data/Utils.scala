@@ -16,15 +16,21 @@ import scala.collection.immutable.SortedSet
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
+import org.tessellation.schema.address.Address
+import _root_.cats.effect.IO
+import org.tessellation.security.SecurityProvider
 
 object Utils {
   private val utils = Utils()
+
   def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
     utils.customUpdateSerialization(update)
   }
+
   def customUpdateDeserialization(bytes: Array[Byte]): Either[Throwable, DeviceCheckInWithSignature] = {
     utils.customUpdateDeserialization(bytes)
   }
+
   def customStateSerialization(state: CheckInState): Array[Byte] = {
     utils.customStateSerialization(state)
   }
@@ -52,12 +58,19 @@ object Utils {
   def getByteArrayFromRequestBody(bodyAsString: String): Array[Byte] = {
     utils.getByteArrayFromRequestBody(bodyAsString)
   }
+
+  def getDagAddressFromPublicKey(publicKey: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
+    utils.getDagAddressFromPublicKey(publicKey, securityProvider)
+  }
+
 }
+
 case class Utils() {
   private val logger = LoggerFactory.getLogger(classOf[Utils])
+
   private def toCBORHex(hexString: String): Array[Byte] = {
     try {
-      if ((hexString.length & 1) != 0){
+      if ((hexString.length & 1) != 0) {
         logger.error("string length is not even")
         throw new Exception("string length is not even")
       }
@@ -68,6 +81,7 @@ case class Utils() {
         throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
     }
   }
+
   def customUpdateSerialization(update: DeviceCheckInWithSignature): Array[Byte] = {
     logger.info("Serialize UPDATE event received")
     toCBORHex(update.cbor)
@@ -143,5 +157,11 @@ case class Utils() {
     }
 
     bodyAsBytes.toArray
+  }
+
+  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
+    implicit val sp: SecurityProvider[IO] = securityProvider
+    val publicKey: Id = Id(Hex(publicKeyHex))
+    publicKey.toAddress[IO]
   }
 }

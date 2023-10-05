@@ -4,7 +4,7 @@ import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, Devic
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
 import io.circe.parser.decode
 import org.slf4j.LoggerFactory
-import ujson.{Arr, Obj}
+import ujson.Obj
 
 object DorApi {
   private val dorApi = DorApi()

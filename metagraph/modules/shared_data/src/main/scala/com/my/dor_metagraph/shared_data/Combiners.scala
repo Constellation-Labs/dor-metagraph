@@ -1,10 +1,14 @@
 package com.my.dor_metagraph.shared_data
 
 import Types.{CheckInProof, CheckInState, CheckInUpdates, DeviceCheckInWithSignature, DeviceInfo, DeviceInfoAPIResponse, DeviceInfoAPIResponseWithHash, EPOCH_PROGRESS_1_DAY}
+import cats.effect.IO
+import cats.implicits.catsSyntaxApplicativeId
+import com.my.dor_metagraph.shared_data.ClusterApi.getValidatorNodesAddresses
 import com.my.dor_metagraph.shared_data.DorApi.saveDeviceCheckIn
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
+import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 
 object Combiners {
@@ -20,6 +24,10 @@ object Combiners {
 
   def combineDeviceCheckIn(acc: CheckInState, signedUpdate: Signed[DeviceCheckInWithSignature], currentEpochProgress: Long, address: Address): CheckInState = {
     combiners.combineDeviceCheckIn(acc, signedUpdate, currentEpochProgress, address)
+  }
+
+  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
+    combiners.getValidatorNodes(currentEpochProgress, currentState, securityProvider)
   }
 }
 
@@ -53,7 +61,7 @@ case class Combiners() {
     val devices = acc.devices.updated(address, checkIn)
     val updates = checkInUpdate :: acc.updates
 
-    CheckInState(updates, devices)
+    CheckInState(updates, devices, acc.l0ValidatorNodesAddresses, acc.l1ValidatorNodesAddresses)
   }
 
   def combine(signedUpdate: Signed[DeviceCheckInWithSignature], acc: CheckInState, address: Address, currentEpochProgress: Long, deviceInfo: DeviceInfoAPIResponseWithHash): CheckInState = {
@@ -75,5 +83,15 @@ case class Combiners() {
         logger.warn("Ignoring update and keeping with the current state")
         acc
     }
+  }
+
+  def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
+    val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
+    if (currentState.l0ValidatorNodesAddresses.isEmpty || currentState.l1ValidatorNodesAddresses.isEmpty || epochProgressModulus == 0L) {
+      val environment = sys.env.getOrElse("CL_APP_ENV", "dev")
+      return getValidatorNodesAddresses(environment, securityProvider)
+    }
+
+    (currentState.l0ValidatorNodesAddresses.pure[IO], currentState.l1ValidatorNodesAddresses.pure[IO])
   }
 }
