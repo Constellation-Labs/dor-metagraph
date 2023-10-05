@@ -12,17 +12,13 @@ import org.tessellation.security.SecurityProvider
 object ClusterApi {
   private val clusterApi = ClusterApi()
 
-  def getValidatorNodesAddresses(environment: String,  securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
-    clusterApi.getValidatorNodesAddresses(environment, securityProvider)
+  def getValidatorNodesAddresses(metagraphL0NodeUrl: String, dataL1NodeUrl: String,  securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
+    clusterApi.getValidatorNodesAddresses(metagraphL0NodeUrl, dataL1NodeUrl, securityProvider)
   }
 }
 
 case class ClusterApi() {
   private val logger = LoggerFactory.getLogger(classOf[ClusterApi])
-
-  private val TESTNET_BASE_URLS: (String, String) = ("http://34.212.38.215:7000/cluster/info", "http://34.212.38.215:9000/cluster/info")
-  private val INTEGRATIONNET_BASE_URLS: (String, String) = ("http://54.218.46.24:7000/cluster/info", "http://54.218.46.24:9000/cluster/info")
-  private val LOCAL_DEV_BASE_URLS: (String, String) = ("http://host.docker.internal:9400/cluster/info", "http://host.docker.internal:8000/cluster/info")
 
   private def getValidatorNodesAddressesFromClusterInfo(url: String, sp: SecurityProvider[IO]): IO[List[Address]] = {
     try {
@@ -46,15 +42,10 @@ case class ClusterApi() {
     }
   }
 
-  def getValidatorNodesAddresses(environment: String, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
-    val baseUrls = environment match {
-      case "testnet" => TESTNET_BASE_URLS
-      case "integrationnet" => INTEGRATIONNET_BASE_URLS
-      case _ => LOCAL_DEV_BASE_URLS
-    }
-    logger.info(s"Starting to fetch validator nodes of env ${baseUrls._1} and ${baseUrls._2}")
-    val l0ValidatorNodes = getValidatorNodesAddressesFromClusterInfo(s"${baseUrls._1}", securityProvider)
-    val l1ValidatorNodes = getValidatorNodesAddressesFromClusterInfo(s"${baseUrls._2}", securityProvider)
+  def getValidatorNodesAddresses(metagraphL0NodeUrl: String, dataL1NodeUrl: String, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
+    logger.info(s"Starting to fetch validator nodes of env $metagraphL0NodeUrl and $dataL1NodeUrl")
+    val l0ValidatorNodes = getValidatorNodesAddressesFromClusterInfo(metagraphL0NodeUrl, securityProvider)
+    val l1ValidatorNodes = getValidatorNodesAddressesFromClusterInfo(dataL1NodeUrl, securityProvider)
     (l0ValidatorNodes, l1ValidatorNodes)
   }
 
