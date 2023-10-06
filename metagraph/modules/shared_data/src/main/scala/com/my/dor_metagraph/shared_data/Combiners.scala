@@ -85,11 +85,15 @@ case class Combiners() {
     }
   }
 
+  /**
+   * Be sure to provide the variables: METAGRAPH_L0_NODE_URL and DATA_L1_NODE_URL on the startup of JAR
+   * */
   def getValidatorNodes(currentEpochProgress: Long, currentState: CheckInState, securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
     val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
     if (currentState.l0ValidatorNodesAddresses.isEmpty || currentState.l1ValidatorNodesAddresses.isEmpty || epochProgressModulus == 0L) {
-      val environment = sys.env.getOrElse("CL_APP_ENV", "dev")
-      return getValidatorNodesAddresses(environment, securityProvider)
+      val metagraphL0NodeUrl = sys.env.getOrElse("METAGRAPH_L0_NODE_URL", throw new Exception("Error when getting METAGRAPH_L0_NODE_URL from ENV"))
+      val dataL1NodeUrl = sys.env.getOrElse("DATA_L1_NODE_URL", throw new Exception("Error when getting DATA_L1_NODE_URL from ENV"))
+      return getValidatorNodesAddresses(metagraphL0NodeUrl, dataL1NodeUrl, securityProvider)
     }
 
     (currentState.l0ValidatorNodesAddresses.pure[IO], currentState.l1ValidatorNodesAddresses.pure[IO])
