@@ -39,7 +39,7 @@ runs:
         echo "EC2_INSTANCE_1_ID=${{ inputs.EC2_INSTANCE_1_ID }}" >> $GITHUB_ENV
         echo "EC2_INSTANCE_2_ID=${{ inputs.EC2_INSTANCE_2_ID }}" >> $GITHUB_ENV
         echo "EC2_INSTANCE_3_ID=${{ inputs.EC2_INSTANCE_3_ID }}" >> $GITHUB_ENV
-        echo "BUCKET_NAME=dor-metagraph-jars" >> $GITHUB_ENV
+        echo "BUCKET_NAME=dor-metagraph" >> $GITHUB_ENV
 
     - name: Install AWS Cli on instances if not exists
       env:
@@ -69,7 +69,6 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
       run: |
-        aws s3 ls "s3://$BUCKET_NAME"
         if ! aws s3 ls "s3://$BUCKET_NAME" 2>/dev/null; then
           aws s3api create-bucket --bucket "$BUCKET_NAME"
           echo "Bucket '$BUCKET_NAME' created successfully"
