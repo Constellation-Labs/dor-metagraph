@@ -70,7 +70,7 @@ runs:
         AWS_REGION: ${{ inputs.AWS_REGION }}
       run: |
         if ! aws s3 ls "s3://$BUCKET_NAME" 2>/dev/null; then
-          aws s3api create-bucket --bucket "$BUCKET_NAME" --region ${AWS_REGION}
+          aws s3api create-bucket --bucket "$BUCKET_NAME" --region ${{ inputs.AWS_REGION }}
           echo "Bucket '$BUCKET_NAME' created successfully"
         else
           echo "Bucket '$BUCKET_NAME' already exists."
