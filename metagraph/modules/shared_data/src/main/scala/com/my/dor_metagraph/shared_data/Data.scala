@@ -60,7 +60,10 @@ case class Data() {
     val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
     val checkInInfo = getDeviceCheckInInfo(update.cbor)
     val addressIO = Id(Hex(update.id)).toAddress[IO]
-    val lastCurrencySnapshotStateRawIO = lastCurrencySnapshotRaw.map(_.get.data)
+    val lastCurrencySnapshotStateRawIO = lastCurrencySnapshotRaw.map {
+      case Some(value) => value.data
+      case None => None
+    }
 
     val validations = for {
       address <- addressIO
