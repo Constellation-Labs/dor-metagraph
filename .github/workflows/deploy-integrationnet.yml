@@ -21,6 +21,13 @@ jobs:
           EC2_INSTANCE_2_ID: ${{ secrets.EC2_INSTANCE_2_ID_INTEGRATIONNET }}
           EC2_INSTANCE_3_ID: ${{ secrets.EC2_INSTANCE_3_ID_INTEGRATIONNET }}
 
+      - name: Inject information to JSON
+        uses: Lambdaspire/action-substitute-secrets-in-file@v1.0.0
+        with:
+          file: .github/assets/integrationnet-lambda-payload.json
+          tokenPattern: ${TOKEN}
+          secretsJson: ${{ toJSON(secrets) }}
+
       - name: Trigger Auto Restart Lambda - Integrationnet
         shell: bash
         env:
@@ -29,4 +36,9 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION_INTEGRATIONNET }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_INTEGRATIONNET }}
         run: |
-          aws lambda invoke --function-name MetagraphMonitor --invocation-type Event --cli-binary-format raw-in-base64-out --payload "{\"network\":\"integrationnet\",\"metagraph_id\":\"DAG5Q12Zb5UraXyGSUM3sZBkxJyyN3uRBWEvhMeU\",\"metagraph_name\":\"DOR\",\"region\":\"us-west-2\",\"base_metagraph_l0_directory\":\"/home/ubuntu/code/metagraph-l0\",\"base_currency_l1_directory\":\"/home/ubuntu/code/currency-l1\",\"base_data_l1_directory\":\"/home/ubuntu/code/data-l1\",\"cl_app_env\":\"integrationnet\",\"cl_collateral\":0,\"include_currency_l1_layer\":true,\"include_data_l1_layer\":true,\"metagraph_l0_public_port\":7000,\"metagraph_l0_p2p_port\":7001,\"metagraph_l0_cli_port\":7002,\"currency_l1_public_port\":8000,\"currency_l1_p2p_port\":8001,\"currency_l1_cli_port\":8002,\"data_l1_public_port\":9000,\"data_l1_p2p_port\":9001,\"data_l1_cli_port\":9002,\"ec2_instance_1_id\":\"${{ secrets.EC2_INSTANCE_1_ID_INTEGRATIONNET }}\",\"ec2_instance_1_ip\":\"${{ secrets.EC2_INSTANCE_1_IP_INTEGRATIONNET }}\",\"ec2_instance_2_id\":\"${{ secrets.EC2_INSTANCE_2_ID_INTEGRATIONNET }}\",\"ec2_instance_2_ip\":\"${{ secrets.EC2_INSTANCE_2_IP_INTEGRATIONNET }}\",\"ec2_instance_3_id\":\"${{ secrets.EC2_INSTANCE_3_ID_INTEGRATIONNET }}\",\"ec2_instance_3_ip\":\"${{ secrets.EC2_INSTANCE_3_IP_INTEGRATIONNET }}\",\"network_global_l0_ip\":\"3.101.147.116\",\"network_global_l0_port\":9000,\"network_global_l0_id\":\"e2f4496e5872682d7a55aa06e507a58e96b5d48a5286bfdff7ed780fa464d9e789b2760ecd840f4cb3ee6e1c1d81b2ee844c88dbebf149b1084b7313eb680714\",\"force_restart\": true, , \"additional_metagraph_l0_env_variables\": [\"METAGRAPH_L0_NODE_URL=http://54.218.46.24:7000/cluster/info\", \"DATA_L1_NODE_URL=http://54.218.46.24:9000/cluster/info\"], \"additional_currency_l1_env_variables\": [], \"additional_data_l1_env_variables\": []}" response.json
+          aws lambda invoke \
+          --function-name MetagraphMonitor \
+          --invocation-type Event \
+          --cli-binary-format raw-in-base64-out \
+          --payload file://.github/assets/integrationnet-lambda-payload.json \
+          response.json
