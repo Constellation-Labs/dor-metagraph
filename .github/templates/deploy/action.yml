@@ -69,6 +69,7 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
       run: |
+        aws s3 ls "s3://$BUCKET_NAME"
         if ! aws s3 ls "s3://$BUCKET_NAME" 2>/dev/null; then
           aws s3api create-bucket --bucket "$BUCKET_NAME"
           echo "Bucket '$BUCKET_NAME' created successfully"
