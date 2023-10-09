@@ -39,7 +39,7 @@ runs:
         echo "EC2_INSTANCE_1_ID=${{ inputs.EC2_INSTANCE_1_ID }}" >> $GITHUB_ENV
         echo "EC2_INSTANCE_2_ID=${{ inputs.EC2_INSTANCE_2_ID }}" >> $GITHUB_ENV
         echo "EC2_INSTANCE_3_ID=${{ inputs.EC2_INSTANCE_3_ID }}" >> $GITHUB_ENV
-        echo "BUCKET_NAME=dor-metagraph" >> $GITHUB_ENV
+        echo "BUCKET_NAME=all-dor-metagraph-files" >> $GITHUB_ENV
 
     - name: Install AWS Cli on instances if not exists
       env:
