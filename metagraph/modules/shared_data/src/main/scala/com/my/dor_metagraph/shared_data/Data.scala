@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
-import org.tessellation.currency.dataApplication.{L0NodeContext, L1NodeContext}
+import org.tessellation.currency.dataApplication.L0NodeContext
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
 import Combiners.combineDeviceCheckIn
@@ -15,13 +15,11 @@ import fs2.Compiler.Target.forSync
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
 import org.slf4j.LoggerFactory
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
-import org.tessellation.schema.ID.Id
 import org.tessellation.security.SecurityProvider
-import org.tessellation.security.hex.Hex
 
 object Data {
   private val data: Data = Data()
-  def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
+  def validateUpdate(update: DeviceCheckInWithSignature): IO[DataApplicationValidationErrorOr[Unit]] = {
     data.validateUpdate(update)
   }
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
@@ -55,22 +53,9 @@ object Data {
 }
 case class Data() {
   private val logger = LoggerFactory.getLogger(classOf[Data])
-  def validateUpdate(update: DeviceCheckInWithSignature)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
-    implicit val sp: SecurityProvider[IO] = context.securityProvider
-    val lastCurrencySnapshotRaw = context.getLastCurrencySnapshot
+  def validateUpdate(update: DeviceCheckInWithSignature): IO[DataApplicationValidationErrorOr[Unit]] = {
     val checkInInfo = getDeviceCheckInInfo(update.cbor)
-    val addressIO = Id(Hex(update.id)).toAddress[IO]
-    val lastCurrencySnapshotStateRawIO = lastCurrencySnapshotRaw.map {
-      case Some(value) => value.data
-      case None => None
-    }
-
-    val validations = for {
-      address <- addressIO
-      lastCurrencySnapshotRaw <- lastCurrencySnapshotStateRawIO
-    } yield deviceCheckInValidationsL1(checkInInfo, lastCurrencySnapshotRaw, address)
-
-    validations.flatMap(validation => validation)
+    deviceCheckInValidationsL1(checkInInfo)
   }
 
   def validateData(oldState: CheckInState, updates: NonEmptyList[Signed[DeviceCheckInWithSignature]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
