@@ -1,7 +1,7 @@
-package com.my.dor_metagraph.shared_data
+package com.my.dor_metagraph.shared_data.types
 
-import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInInfo, DeviceCheckInWithSignature}
 import com.my.dor_metagraph.shared_data.Utils.convertBytesToHex
+import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInInfo, DeviceCheckInWithSignature}
 import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.deriveCodec
 

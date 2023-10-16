@@ -1,9 +1,9 @@
-package com.my.dor_metagraph.shared_data
+package com.my.dor_metagraph.shared_data.external_apis
 
 import cats.effect.IO
 import cats.implicits.{catsSyntaxApplicativeId, toTraverseOps}
-import com.my.dor_metagraph.shared_data.Types.ClusterInfoResponse
 import com.my.dor_metagraph.shared_data.Utils.getDagAddressFromPublicKey
+import com.my.dor_metagraph.shared_data.types.Types.ClusterInfoResponse
 import io.circe.parser.decode
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
@@ -11,7 +11,6 @@ import org.tessellation.security.SecurityProvider
 
 object ClusterApi {
   private val clusterApi = ClusterApi()
-
   def getValidatorNodesAddresses(metagraphL0NodeUrl: String, dataL1NodeUrl: String,  securityProvider: SecurityProvider[IO]): (IO[List[Address]], IO[List[Address]]) = {
     clusterApi.getValidatorNodesAddresses(metagraphL0NodeUrl, dataL1NodeUrl, securityProvider)
   }

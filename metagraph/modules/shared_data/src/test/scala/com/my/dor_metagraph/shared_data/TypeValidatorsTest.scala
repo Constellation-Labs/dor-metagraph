@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
-import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceCheckInInfo, DeviceInfo, DeviceInfoAPIResponse}
-import com.my.dor_metagraph.shared_data.TypeValidators.{validateCheckInTimestampIsGreaterThanLastCheckIn, validateCheckInLimitTimestamp}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInStateOnChain, DeviceCheckInInfo, DeviceInfo, DeviceInfoAPIResponse}
+import com.my.dor_metagraph.shared_data.validations.TypeValidators.{validateCheckInTimestampIsGreaterThanLastCheckIn, validateCheckInLimitTimestamp}
 import org.tessellation.schema.address.Address
 import weaver.SimpleIOSuite
 

@@ -1,9 +1,8 @@
-package com.my.dor_metagraph.l0
+package com.my.dor_metagraph.l0.rewards
 
-import com.my.dor_metagraph.l0.Types.{COLLATERAL_100K, COLLATERAL_200K, COLLATERAL_50K, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER, COLLATERAL_GREATER_THAN_200K_MULTIPLIER, COLLATERAL_LESS_THAN_50K_MULTIPLIER}
-import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, RetailAnalyticsSubscriptionBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.Types.{CheckInState, DeviceInfo, EPOCH_PROGRESS_1_DAY}
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
+import com.my.dor_metagraph.shared_data.bounties.{CommercialLocationBounty, RetailAnalyticsSubscriptionBounty, UnitDeployedBounty}
+import com.my.dor_metagraph.shared_data.types.Types.{COLLATERAL_100K, COLLATERAL_200K, COLLATERAL_50K, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER, COLLATERAL_GREATER_THAN_200K_MULTIPLIER, COLLATERAL_LESS_THAN_50K_MULTIPLIER, CheckInDataCalculatedState, CheckInStateOnChain, DeviceInfo, EPOCH_PROGRESS_1_DAY}
 import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
@@ -25,7 +24,7 @@ object BountyRewards {
     bountyRewards.getTaxesToValidatorNodes(deviceTotalRewards)
   }
 
-  def getBountyRewardsTransactions(state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
+  def getBountyRewardsTransactions(state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
     bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
   }
 }
@@ -36,25 +35,25 @@ case class BountyRewards() {
 
   private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
     val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
-    calculateBountiesRewardsWithCollateral(lastBalances, device.deviceApiResponse.rewardAddress, deviceBountiesRewardsAmount)
+    calculateBountiesRewardsWithCollateral(lastBalances, device.dorAPIResponse.rewardAddress, deviceBountiesRewardsAmount)
   }
 
   def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
 
     if (epochModulus == 0L) {
-      val tokenAmount = toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
-      logger.info(s"[UnitDeployedBounty] Device with rewardAddress: ${device.deviceApiResponse.rewardAddress}. Reward raw amount: $tokenAmount")
+      val tokenAmount = toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      logger.info(s"[UnitDeployedBounty] Device with rewardAddress: ${device.dorAPIResponse.rewardAddress}. Reward raw amount: $tokenAmount")
       return tokenAmount
     }
     if (epochModulus == 1L) {
-      val tokenAmount = toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
-      logger.info(s"[CommercialLocationBounty] Device with rewardAddress: ${device.deviceApiResponse.rewardAddress}. Reward raw amount: $tokenAmount")
+      val tokenAmount = toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      logger.info(s"[CommercialLocationBounty] Device with rewardAddress: ${device.dorAPIResponse.rewardAddress}. Reward raw amount: $tokenAmount")
       return tokenAmount
     }
     if (epochModulus == 2L) {
-      val tokenAmount = toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.deviceApiResponse, epochModulus))
-      logger.info(s"[RetailAnalyticsSubscriptionBounty] Device with rewardAddress: ${device.deviceApiResponse.rewardAddress}. Reward raw amount: $tokenAmount")
+      val tokenAmount = toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      logger.info(s"[RetailAnalyticsSubscriptionBounty] Device with rewardAddress: ${device.dorAPIResponse.rewardAddress}. Reward raw amount: $tokenAmount")
       return tokenAmount
     }
 
@@ -84,13 +83,13 @@ case class BountyRewards() {
     (deviceTotalRewards * 0.1).toLong
   }
 
-  def getBountyRewardsTransactions(state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
+  def getBountyRewardsTransactions(state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
     var taxesToValidatorNodes = 0L
     val allRewards: Map[Address, RewardTransaction] = Map.empty
 
     val rewardsTransactions = state.devices.foldLeft(allRewards) { case (acc, (_, value)) =>
       if (currentEpochProgress - value.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
-        logger.warn(s"Device with reward address ${value.deviceApiResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
+        logger.warn(s"Device with reward address ${value.dorAPIResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
         acc
       } else {
         val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
@@ -99,15 +98,15 @@ case class BountyRewards() {
         taxesToValidatorNodes += deviceTaxToValidatorNodes
 
         if (rewardValue > 0) {
-          acc.get(value.deviceApiResponse.rewardAddress) match {
+          acc.get(value.dorAPIResponse.rewardAddress) match {
             case Some(currentReward) =>
-              logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} already have a reward, increasing value")
+              logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} already have a reward, increasing value")
               val newValue = currentReward.amount.value.value + rewardValue
-              logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} new value: $newValue")
-              acc + (value.deviceApiResponse.rewardAddress -> RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(newValue))))
+              logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} new value: $newValue")
+              acc + (value.dorAPIResponse.rewardAddress -> RewardTransaction(value.dorAPIResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(newValue))))
             case None =>
-              logger.info(s"Device with rewardAddress: ${value.deviceApiResponse.rewardAddress} doesn't have a reward yet, creating with value: $rewardValue")
-              acc + (value.deviceApiResponse.rewardAddress -> RewardTransaction(value.deviceApiResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue))))
+              logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} doesn't have a reward yet, creating with value: $rewardValue")
+              acc + (value.dorAPIResponse.rewardAddress -> RewardTransaction(value.dorAPIResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue))))
           }
         } else {
           logger.info(s"Ignoring reward, value equals to 0")

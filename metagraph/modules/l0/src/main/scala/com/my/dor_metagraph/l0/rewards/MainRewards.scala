@@ -1,29 +1,31 @@
-package com.my.dor_metagraph.l0
+package com.my.dor_metagraph.l0.rewards
 
 import cats.effect.Async
 import cats.syntax.all._
-import com.my.dor_metagraph.l0.BountyRewards.getBountyRewardsTransactions
-import com.my.dor_metagraph.l0.ValidatorNodesRewards.getValidatorNodesTransactions
-import com.my.dor_metagraph.shared_data.Types.{CheckInState, EPOCH_PROGRESS_1_DAY}
+import com.my.dor_metagraph.l0.rewards.BountyRewards.getBountyRewardsTransactions
+import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
+import com.my.dor_metagraph.shared_data.Utils.customStateDeserialization
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, EPOCH_PROGRESS_1_DAY}
+import org.slf4j.LoggerFactory
+import org.tessellation.currency.dataApplication.DataCalculatedState
+import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
-import org.tessellation.security.SecurityProvider
-import org.tessellation.security.signature.Signed
-import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
-import com.my.dor_metagraph.shared_data.Utils.customStateDeserialization
-import org.slf4j.LoggerFactory
 import org.tessellation.schema.transaction
+import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
-import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
+import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
+import org.tessellation.security.SecurityProvider
+import org.tessellation.security.signature.Signed
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
-object DorMetagraphRewards {
+object MainRewards {
+  val mainRewards: MainRewards = MainRewards()
   def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
-    (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], consensusTrigger: ConsensusTrigger, _: Set[CurrencySnapshotEvent]) => {
+    (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], consensusTrigger: ConsensusTrigger, _: Set[CurrencySnapshotEvent], maybeCalculatedState: Option[CheckInDataCalculatedState]) => {
       consensusTrigger match {
         case trigger.EventTrigger =>
           println("THIS IS A EVENT TRIGGER SNAPSHOT, SKIPPING REWARDS")
@@ -33,22 +35,23 @@ object DorMetagraphRewards {
 
           println("THIS IS A TIME TRIGGER SNAPSHOT, TRYING TO REWARD")
           println(s"LAST SNAPSHOT ORDINAL: $lastSnapshotOrdinal. PROBABLY CURRENT ORDINAL: ${lastSnapshotOrdinal + 1}")
-
-          lastArtifact.data.map(data => customStateDeserialization(data)) match {
+          maybeCalculatedState match {
             case None => SortedSet.empty[transaction.RewardTransaction].pure
-            case Some(state) =>
-              state match {
-                case Left(_) => SortedSet.empty[transaction.RewardTransaction].pure
-                case Right(state) =>
-                  DorMetagraphRewards().buildRewards(state, lastArtifact.epochProgress.value.value + 1, lastBalances, state.l0ValidatorNodesAddresses, state.l1ValidatorNodesAddresses)
-              }
+            case Some(calculatedState) =>
+              mainRewards.buildRewards(
+                calculatedState,
+                lastArtifact.epochProgress.value.value + 1,
+                lastBalances,
+                calculatedState.l0ValidatorNodesAddresses,
+                calculatedState.l1ValidatorNodesAddresses
+              )
           }
       }
     }
 }
 
-case class DorMetagraphRewards() {
-  private val logger = LoggerFactory.getLogger(classOf[DorMetagraphRewards])
+case class MainRewards() {
+  private val logger = LoggerFactory.getLogger(classOf[MainRewards])
 
   private def buildRewardsTransactionsSortedSet(bountyTransactions: List[RewardTransaction], validatorNodesTransactions: List[RewardTransaction]): SortedSet[RewardTransaction] = {
     val allTransactions = bountyTransactions ::: validatorNodesTransactions
@@ -70,7 +73,7 @@ case class DorMetagraphRewards() {
     }
   }
 
-  def buildRewards[F[_] : Async](state: CheckInState, currentEpochProgress: Long, lastBalances: Map[Address, Balance], l0ValidatorNodes: List[Address], l1ValidatorNodes: List[Address]): F[SortedSet[RewardTransaction]] = {
+  def buildRewards[F[_] : Async](state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): F[SortedSet[RewardTransaction]] = {
     val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
 
     /**
@@ -90,7 +93,7 @@ case class DorMetagraphRewards() {
     val bountyTransactions = bountyRewards._1.pure
     val taxesToValidatorNodes = bountyRewards._2
 
-    val validatorNodesTransactions =  getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, taxesToValidatorNodes).pure
+    val validatorNodesTransactions =  getValidatorNodesTransactions(state.l0ValidatorNodesAddresses, state.l1ValidatorNodesAddresses, taxesToValidatorNodes).pure
 
     for {
       bountyTxns <- bountyTransactions

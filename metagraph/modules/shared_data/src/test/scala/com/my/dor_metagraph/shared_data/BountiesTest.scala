@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
-import com.my.dor_metagraph.shared_data.Bounties.{CommercialLocationBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.Types.DeviceInfoAPIResponse
+import com.my.dor_metagraph.shared_data.bounties.Bounty.{CommercialLocationBounty, UnitDeployedBounty}
+import com.my.dor_metagraph.shared_data.types.Types.DeviceInfoAPIResponse
 import org.tessellation.schema.address.Address
 import weaver.SimpleIOSuite
 

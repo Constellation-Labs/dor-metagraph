@@ -1,4 +1,4 @@
-package com.my.dor_metagraph.l0
+package com.my.dor_metagraph.l0.rewards
 
 import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
