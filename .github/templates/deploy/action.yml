@@ -92,7 +92,7 @@ runs:
         cd .github/dependencies
         git clone https://github.com/Constellation-Labs/tessellation.git
         cd tessellation
-        git checkout $TESSELLATION_VERSION
+        git checkout v2.0.0-alpha.17.marcus
         
         sbt --error shared/publishM2 kernel/publishM2 keytool/publishM2 sdk/publishM2 dagL1/publishM2 currencyL0/publishM2 currencyL1/publishM2
 
