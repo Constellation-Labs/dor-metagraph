@@ -35,7 +35,7 @@ object CalculatedState {
       CheckInDataCalculatedState(updatedDevices, state.l0ValidatorNodesAddresses, state.l1ValidatorNodesAddresses)
     )
 
-    logger.info(s"SETTING CALCULATED STATE, NEW STATE: $maybeCheckInCalculatedState")
+    logger.info(s"SETTING CALCULATED STATE, NEW STATE: $maybeCheckInCalculatedState CURRENT ORDINAL: ${snapshotOrdinal}")
 
     IO(true)
   }
