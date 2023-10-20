@@ -2,13 +2,10 @@ package com.my.dor_metagraph.shared_data.decoders
 
 import cats.data.NonEmptySet
 import cats.effect.IO
-import cats.implicits.catsSyntaxApplicativeId
 import com.my.dor_metagraph.shared_data.Utils.{getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.external_apis.DorApi.saveDeviceCheckIn
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.bullet.borer.Cbor
-import io.circe.Decoder
-import io.circe.generic.semiauto._
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.ID.Id
@@ -21,22 +18,12 @@ import scala.collection.immutable.SortedSet
 
 
 object Decoders {
-  private val decoders: Decoders = Decoders()
-  def dataDecoder: Decoder[CheckInUpdate] = deriveDecoder
-  def calculatedStateDecoder: Decoder[CheckInDataCalculatedState] = deriveDecoder
-
-  def signedDataEntityDecoder: EntityDecoder[IO, Signed[CheckInUpdate]] = {
-    decoders.signedDataEntityDecoder
-  }
-}
-
-case class Decoders() {
-  private val logger = LoggerFactory.getLogger(classOf[Decoders])
-
+  private val logger = LoggerFactory.getLogger("Decoders")
   private def buildSignedUpdate(cborData: Array[Byte]): Signed[CheckInUpdate] = {
     val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
 
     logger.info(s"Decoded CBOR field ${decodedCheckInWithSignature.cbor}")
+    logger.info(s"Decoded HASH field ${decodedCheckInWithSignature.hash}")
     logger.info(s"Decoded ID field ${decodedCheckInWithSignature.id}")
     logger.info(s"Decoded SIGNATURE field ${decodedCheckInWithSignature.sig}")
 
@@ -53,7 +40,7 @@ case class Decoders() {
           decodedCheckInWithSignature.id,
           decodedCheckInWithSignature.sig,
           checkInInfo.dts,
-          decodedCheckInWithSignature.cbor,
+          decodedCheckInWithSignature.hash,
           value
         )
         Signed(checkInUpdate, proofs)
@@ -62,13 +49,14 @@ case class Decoders() {
         throw new Exception(s"Error when making check-in with device: ${decodedCheckInWithSignature.id}")
     }
   }
+
   def signedDataEntityDecoder: EntityDecoder[IO, Signed[CheckInUpdate]] = {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
       val rawText = msg.as[String]
       val signed = rawText.flatMap { text =>
         logger.info(s"Received RAW request: $text")
         val bodyAsBytes = getByteArrayFromRequestBody(text)
-        buildSignedUpdate(bodyAsBytes).pure[IO]
+        IO(buildSignedUpdate(bodyAsBytes))
       }
       logger.info(s"PARSED RAW request: $signed")
       DecodeResult.success(signed)

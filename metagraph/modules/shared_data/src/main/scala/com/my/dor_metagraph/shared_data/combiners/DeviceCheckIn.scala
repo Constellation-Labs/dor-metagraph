@@ -6,14 +6,8 @@ import org.tessellation.currency.dataApplication.DataState
 import org.tessellation.schema.address.Address
 
 object DeviceCheckIn {
-  private val deviceCheckIn: DeviceCheckIn = DeviceCheckIn()
-  def getNewCheckIn(acc: DataState[CheckInStateOnChain, CheckInDataCalculatedState], address: Address, checkInUpdate: CheckInUpdate, currentEpoch: Long): DataState[CheckInStateOnChain, CheckInDataCalculatedState] = {
-    deviceCheckIn.getNewCheckIn(acc, address, checkInUpdate, currentEpoch)
-  }
-}
+  private val logger = LoggerFactory.getLogger("DeviceCheckIn")
 
-case class DeviceCheckIn() {
-  private val logger = LoggerFactory.getLogger(classOf[DeviceCheckIn])
   def getNewCheckIn(acc: DataState[CheckInStateOnChain, CheckInDataCalculatedState], address: Address, checkInUpdate: CheckInUpdate, currentEpoch: Long): DataState[CheckInStateOnChain, CheckInDataCalculatedState] = {
     val state = acc.calculated.devices.get(address)
 
@@ -31,7 +25,7 @@ case class DeviceCheckIn() {
     }
 
     val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
-    val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dorApiResponse.checkInHash)
+    val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
 
     val checkIn = DeviceInfo(checkInUpdate.dts, checkInUpdate.dorApiResponse, nextRewardEpochProgress)
 
@@ -45,5 +39,4 @@ case class DeviceCheckIn() {
       CheckInDataCalculatedState(devices, acc.calculated.l0ValidatorNodesAddresses, acc.calculated.l1ValidatorNodesAddresses)
     )
   }
-
 }

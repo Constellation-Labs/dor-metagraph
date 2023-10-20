@@ -2,9 +2,9 @@ package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
 import com.my.dor_metagraph.l0.rewards.BountyRewards.{calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
-import com.my.dor_metagraph.l0.rewards.DorMetagraphRewards
+import com.my.dor_metagraph.l0.rewards.MainRewards
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInStateOnChain, DeviceInfo, DeviceInfoAPIResponse}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, DeviceInfo, DorAPIResponse}
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.numeric.NonNegLong
 import org.tessellation.schema.address.Address
@@ -14,8 +14,6 @@ import weaver.MutableIOSuite
 import eu.timepit.refined.auto._
 
 object DorMetagraphRewardsTest extends MutableIOSuite {
-  val dorMetagraphRewards: DorMetagraphRewards = DorMetagraphRewards()
-
   override type Res = SecurityProvider[IO]
 
   override def sharedResource: Resource[IO, SecurityProvider[IO]] = SecurityProvider.forAsync[IO]
@@ -38,13 +36,13 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
   test("Build correctly rewards - UnitDeployedBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
 
-    val state = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val rewardsIO = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
 
     for {
@@ -59,17 +57,17 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentAddress2 = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRM2".getBytes)
 
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
 
-    val state = CheckInState(List.empty, Map(
+    val state = CheckInDataCalculatedState(Map(
       currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress),
       currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)
     ),getValidatorNodesL0, getValidatorNodesL1)
 
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
 
     for {
@@ -83,13 +81,13 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
   test("Build correctly rewards - CommercialLocationBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1441L
 
-    val state = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
+    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
 
     for {
@@ -103,13 +101,13 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
   test("Empty rewards when epochProgress does not complete 1 day") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1500L
 
-    val state = CheckInState(List.empty, Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
+    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = dorMetagraphRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances)
 
     for {
       rewards <- rewardsIO
@@ -118,7 +116,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
   pureTest("Get bounty reward amount - UnitDeployedBounty") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
 
     val deviceInfo = DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)
@@ -129,7 +127,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
   pureTest("Get bounty reward amount - CommercialLocationBounty") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1441L
     //    val currentCheckInRaw = DeviceCheckInFormatted(List(1, 2, 3), 123456, List(FootTraffic(12345, 1), FootTraffic(12345, 1)))
 
@@ -141,7 +139,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
   pureTest("Get bounty reward amount - Empty") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DeviceInfoAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1450L
     //    val currentCheckInRaw = DeviceCheckInFormatted(List(1, 2, 3), 123456, List(FootTraffic(12345, 1), FootTraffic(12345, 1)))
 

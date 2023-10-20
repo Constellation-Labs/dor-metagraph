@@ -2,7 +2,7 @@ package com.my.dor_metagraph.l0.rewards
 
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import com.my.dor_metagraph.shared_data.bounties.{CommercialLocationBounty, RetailAnalyticsSubscriptionBounty, UnitDeployedBounty}
-import com.my.dor_metagraph.shared_data.types.Types.{COLLATERAL_100K, COLLATERAL_200K, COLLATERAL_50K, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER, COLLATERAL_GREATER_THAN_200K_MULTIPLIER, COLLATERAL_LESS_THAN_50K_MULTIPLIER, CheckInDataCalculatedState, CheckInStateOnChain, DeviceInfo, EPOCH_PROGRESS_1_DAY}
+import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
@@ -10,28 +10,7 @@ import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
 
 object BountyRewards {
-  val bountyRewards: BountyRewards = BountyRewards()
-
-  def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
-    bountyRewards.getDeviceBountyRewardsAmount(device, currentEpochProgress)
-  }
-
-  def calculateBountiesRewardsWithCollateral(lastBalances: Map[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
-    bountyRewards.calculateBountiesRewardsWithCollateral(lastBalances, rewardAddress, deviceTotalRewards)
-  }
-
-  def getTaxesToValidatorNodes(deviceTotalRewards: Long): Long = {
-    bountyRewards.getTaxesToValidatorNodes(deviceTotalRewards)
-  }
-
-  def getBountyRewardsTransactions(state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
-    bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
-  }
-}
-
-case class BountyRewards() {
-
-  private val logger = LoggerFactory.getLogger(classOf[BountyRewards])
+  private val logger = LoggerFactory.getLogger("BountyRewards")
 
   private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
     val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)

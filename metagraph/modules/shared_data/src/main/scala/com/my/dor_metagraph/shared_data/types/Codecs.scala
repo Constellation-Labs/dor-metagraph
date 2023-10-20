@@ -7,15 +7,17 @@ import io.bullet.borer.derivation.MapBasedCodecs.deriveCodec
 
 object Codecs {
   implicit val decoderCheckInWithSignatureRaw: io.bullet.borer.Decoder[DeviceCheckInWithSignature] = io.bullet.borer.Decoder { reader =>
-    val unbounded = reader.readMapOpen(3)
+    val unbounded = reader.readMapOpen(4)
     reader.readString()
     val cbor = convertBytesToHex(reader.readByteArray())
+    reader.readString()
+    val hash = convertBytesToHex(reader.readByteArray())
     reader.readString()
     val id = convertBytesToHex(reader.readByteArray())
     reader.readString()
     val signature = convertBytesToHex(reader.readByteArray())
 
-    val deviceCheckingWithSignature = DeviceCheckInWithSignature(cbor, id, signature)
+    val deviceCheckingWithSignature = DeviceCheckInWithSignature(cbor, hash, id, signature)
     reader.readArrayClose(unbounded, deviceCheckingWithSignature)
   }
   implicit val encoderCheckInWithSignatureRaw: io.bullet.borer.Encoder[DeviceCheckInWithSignature] = io.bullet.borer.derivation.MapBasedCodecs.deriveEncoder

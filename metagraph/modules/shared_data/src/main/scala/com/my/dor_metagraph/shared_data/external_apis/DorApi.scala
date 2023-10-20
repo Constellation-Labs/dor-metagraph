@@ -7,13 +7,8 @@ import org.slf4j.LoggerFactory
 import ujson.Obj
 
 object DorApi {
-  private val dorApi = DorApi()
-  def saveDeviceCheckIn(publicKey: String, deviceCheckIn: DeviceCheckInWithSignature): Option[DorAPIResponse] = {
-    dorApi.saveDeviceCheckIn(publicKey, deviceCheckIn)
-  }
-}
-case class DorApi() {
-  private val logger = LoggerFactory.getLogger(classOf[DorApi])
+  private val logger = LoggerFactory.getLogger("DorAPI")
+
   def saveDeviceCheckIn(publicKey: String, deviceCheckIn: DeviceCheckInWithSignature): Option[DorAPIResponse] = {
     val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
 

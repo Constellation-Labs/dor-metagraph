@@ -13,36 +13,27 @@ import _root_.cats.effect.IO
 import org.tessellation.security.SecurityProvider
 
 object Utils {
-  private val utils = Utils()
-
-  def toTokenAmountFormat(balance: Double): Long = {
-    utils.toTokenAmountFormat(balance)
-  }
-
-  def getDeviceCheckInInfo(cborData: String): DeviceCheckInInfo = {
-    utils.getDeviceCheckInInfo(cborData)
-  }
-
-  def convertBytesToHex(bytes: Array[Byte]): String = {
-    utils.convertBytesToHex(bytes)
-  }
+  private val logger = LoggerFactory.getLogger("Utils")
 
   def getByteArrayFromRequestBody(bodyAsString: String): Array[Byte] = {
-    utils.getByteArrayFromRequestBody(bodyAsString)
+    val bodyAsBytes: ListBuffer[Byte] = ListBuffer.empty
+
+    var idx = 0
+    while (idx < bodyAsString.length) {
+      val substringParsed = bodyAsString.substring(idx, idx + 2).trim
+      val parsedString = s"0x$substringParsed"
+      bodyAsBytes.addOne(Integer.decode(parsedString).toByte)
+      idx = idx + 2
+    }
+
+    bodyAsBytes.toArray
   }
 
-  def getDagAddressFromPublicKey(publicKey: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
-    utils.getDagAddressFromPublicKey(publicKey, securityProvider)
+  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
+    implicit val sp: SecurityProvider[IO] = securityProvider
+    val publicKey: Id = Id(Hex(publicKeyHex))
+    publicKey.toAddress[IO]
   }
-
-  def toCBORHex(hexString: String): Array[Byte] = {
-    utils.toCBORHex(hexString)
-  }
-}
-
-case class Utils() {
-  private val logger = LoggerFactory.getLogger(classOf[Utils])
-
   def toCBORHex(hexString: String): Array[Byte] = {
     try {
       if ((hexString.length & 1) != 0) {
@@ -56,7 +47,6 @@ case class Utils() {
         throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
     }
   }
-
   def toTokenAmountFormat(balance: Double): Long = {
     (balance * 10e7).toLong
   }
@@ -80,23 +70,4 @@ case class Utils() {
     sb.toString
   }
 
-  def getByteArrayFromRequestBody(bodyAsString: String): Array[Byte] = {
-    val bodyAsBytes: ListBuffer[Byte] = ListBuffer.empty
-
-    var idx = 0
-    while (idx < bodyAsString.length) {
-      val substringParsed = bodyAsString.substring(idx, idx + 2).trim
-      val parsedString = s"0x$substringParsed"
-      bodyAsBytes.addOne(Integer.decode(parsedString).toByte)
-      idx = idx + 2
-    }
-
-    bodyAsBytes.toArray
-  }
-
-  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
-    implicit val sp: SecurityProvider[IO] = securityProvider
-    val publicKey: Id = Id(Hex(publicKeyHex))
-    publicKey.toAddress[IO]
-  }
 }

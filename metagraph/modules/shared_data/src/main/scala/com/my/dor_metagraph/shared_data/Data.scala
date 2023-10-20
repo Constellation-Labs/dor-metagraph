@@ -5,7 +5,8 @@ import cats.effect.IO
 import org.tessellation.currency.dataApplication.{DataState, L0NodeContext}
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
-import com.my.dor_metagraph.shared_data.combiners.Combiners.{combineDeviceCheckIn, getValidatorNodes}
+import com.my.dor_metagraph.shared_data.combiners.Combiners.combineDeviceCheckIn
+import com.my.dor_metagraph.shared_data.combiners.ValidatorNodes.getValidatorNodes
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import com.my.dor_metagraph.shared_data.validations.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
 import fs2.Compiler.Target.forSync
@@ -14,26 +15,10 @@ import org.tessellation.currency.dataApplication.dataApplication.DataApplication
 import org.tessellation.security.SecurityProvider
 
 object Data {
-  private val data: Data = Data()
+  private val logger = LoggerFactory.getLogger("Data")
 
   def validateUpdate(update: CheckInUpdate): IO[DataApplicationValidationErrorOr[Unit]] = {
-    data.validateUpdate(update)
-  }
-
-  def validateData(oldState: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: NonEmptyList[Signed[CheckInUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = {
-    data.validateData(oldState, updates)
-  }
-
-  def combine(oldState: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: List[Signed[CheckInUpdate]])(implicit context: L0NodeContext[IO]): IO[DataState[CheckInStateOnChain, CheckInDataCalculatedState]] = {
-    data.combine(oldState, updates)
-  }
-}
-
-case class Data() {
-  private val logger = LoggerFactory.getLogger(classOf[Data])
-
-  def validateUpdate(update: CheckInUpdate): IO[DataApplicationValidationErrorOr[Unit]] = {
-    val validations =  deviceCheckInValidationsL1(update)
+    val validations = deviceCheckInValidationsL1(update)
     validations
   }
 
@@ -46,11 +31,19 @@ case class Data() {
 
   def combine(oldState: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: List[Signed[CheckInUpdate]])(implicit context: L0NodeContext[IO]): IO[DataState[CheckInStateOnChain, CheckInDataCalculatedState]] = {
     implicit val sp: SecurityProvider[IO] = context.securityProvider
-    val epochProgressIO = context.getLastCurrencySnapshot.map(_.get.epochProgress)
+    val lastCurrencySnapshot = context.getLastCurrencySnapshot
+
+    val epochProgressIO = lastCurrencySnapshot.map {
+      case Some(value) => value.epochProgress.value.value
+      case None =>
+        val message = "Could not get the epochProgress from currency snapshot. lastCurrencySnapshot not found"
+        logger.error(message)
+        throw new Exception(message)
+    }
 
     val validatorNodesIO = for {
       epochProgress <- epochProgressIO
-    } yield getValidatorNodes(epochProgress.value.value + 1, oldState.calculated, sp)
+    } yield getValidatorNodes(epochProgress + 1, oldState.calculated, sp)
 
     val newStateIO = for {
       validatorNodes <- validatorNodesIO
@@ -69,7 +62,7 @@ case class Data() {
         for {
           epochProgress <- epochProgressIO
           address <- addressIO
-        } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress.value.value + 1, address)
+        } yield combineDeviceCheckIn(acc, signedUpdate, epochProgress + 1, address)
       }
     })
   }
