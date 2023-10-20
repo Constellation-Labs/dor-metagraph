@@ -36,6 +36,7 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
+          echo "test"
           aws lambda invoke \
           --function-name MetagraphMonitor \
           --invocation-type Event \
