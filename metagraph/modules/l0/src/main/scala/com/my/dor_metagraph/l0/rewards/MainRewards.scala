@@ -36,7 +36,7 @@ object MainRewards {
               logger.error("Could not get calculatedState, skipping rewards.")
               SortedSet.empty[transaction.RewardTransaction].pure
             case Some(calculatedState) =>
-              logger.error(s"Calculated state got: $calculatedState")
+              logger.info(s"Calculated state got: $calculatedState")
               buildRewards(calculatedState.asInstanceOf[CheckInDataCalculatedState], lastArtifact.epochProgress.value.value + 1, lastBalances)
           }
       }
