@@ -27,7 +27,7 @@ object DeviceCheckIn {
     val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
     val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
 
-    val checkIn = DeviceInfo(checkInUpdate.dts, checkInUpdate.dorApiResponse, nextRewardEpochProgress)
+    val checkIn = DeviceInfo(checkInUpdate.dts, checkInUpdate.maybeDorAPIResponse.get, nextRewardEpochProgress)
 
     logger.info(s"New checkIn for the device: $checkIn")
 

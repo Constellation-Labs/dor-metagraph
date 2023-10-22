@@ -1,6 +1,5 @@
 package com.my.dor_metagraph.shared_data.serializers
 
-import com.my.dor_metagraph.shared_data.Utils.toCBORHex
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInStateOnChain, CheckInUpdate}
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps

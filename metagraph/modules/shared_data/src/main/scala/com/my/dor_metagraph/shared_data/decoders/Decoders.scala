@@ -33,21 +33,17 @@ object Decoders {
     val signatureProof = SignatureProof(Id(hexId), Signature(hexSignature))
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
 
-    saveDeviceCheckIn(decodedCheckInWithSignature.id, decodedCheckInWithSignature) match {
-      case Some(value) =>
-        val checkInInfo = getDeviceCheckInInfo(decodedCheckInWithSignature.cbor)
-        val checkInUpdate = CheckInUpdate(
-          decodedCheckInWithSignature.id,
-          decodedCheckInWithSignature.sig,
-          checkInInfo.dts,
-          decodedCheckInWithSignature.hash,
-          value
-        )
-        Signed(checkInUpdate, proofs)
-      case None =>
-        logger.error(s"Error when making check-in with device: ${decodedCheckInWithSignature.id}")
-        throw new Exception(s"Error when making check-in with device: ${decodedCheckInWithSignature.id}")
-    }
+    val deviceCheckInDORApi = saveDeviceCheckIn(decodedCheckInWithSignature.id, decodedCheckInWithSignature)
+    val checkInInfo = getDeviceCheckInInfo(decodedCheckInWithSignature.cbor)
+    val checkInUpdate = CheckInUpdate(
+      decodedCheckInWithSignature.id,
+      decodedCheckInWithSignature.sig,
+      checkInInfo.dts,
+      decodedCheckInWithSignature.hash,
+      deviceCheckInDORApi
+    )
+
+    Signed(checkInUpdate, proofs)
   }
 
   def signedDataEntityDecoder: EntityDecoder[IO, Signed[CheckInUpdate]] = {

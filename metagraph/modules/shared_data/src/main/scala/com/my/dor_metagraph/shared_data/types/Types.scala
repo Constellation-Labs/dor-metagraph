@@ -43,7 +43,7 @@ object Types {
   case class CheckInDataCalculatedState(devices: Map[Address, DeviceInfo], l0ValidatorNodesAddresses: List[Address], l1ValidatorNodesAddresses: List[Address]) extends DataCalculatedState
 
   @derive(decoder, encoder)
-  case class CheckInUpdate(publicId: String, signature: String, dts: Long, dtmCheckInHash: String, dorApiResponse: DorAPIResponse) extends DataUpdate
+  case class CheckInUpdate(publicId: String, signature: String, dts: Long, dtmCheckInHash: String, maybeDorAPIResponse: Option[DorAPIResponse]) extends DataUpdate
 
   @derive(decoder, encoder)
   case class ClusterInfoResponse(id: String, ip: String, publicPort: Long, p2pPort: Long, session: String, state: String)

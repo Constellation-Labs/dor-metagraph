@@ -10,4 +10,8 @@ object Errors {
   case object CheckInOlderThanAllowed extends DataApplicationValidationError {
     val message = "CheckIn is older than allowed"
   }
+
+  case object DeviceNotRegisteredOnDorApi extends DataApplicationValidationError {
+    val message = "Device not registered on Dor API"
+  }
 }
