@@ -12,7 +12,7 @@ object CombinersTest extends SimpleIOSuite {
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty)
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val deviceInfoAPIResponse = DorAPIResponse(address, isInstalled = true, Some("Retail"), Some(10L))
+    val deviceInfoAPIResponse = DorAPIResponse(Some(address), isInstalled = true, Some("Retail"), Some(10L))
     val checkInRaw = CheckInUpdate("123", "456", 1669815076L, "123", Some(deviceInfoAPIResponse))
 
     val epochProgress = 1440L
@@ -32,7 +32,7 @@ object CombinersTest extends SimpleIOSuite {
 
   pureTest("Update check in of device") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
+    val currentDeviceInfoAPIResponse = DorAPIResponse(Some(currentAddress), isInstalled = true, Some("Retail"), Some(10L))
     var currentEpochProgress = 1440L
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)

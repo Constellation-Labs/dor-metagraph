@@ -14,7 +14,12 @@ object BountyRewards {
 
   private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
     val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
-    calculateBountiesRewardsWithCollateral(lastBalances, device.dorAPIResponse.rewardAddress, deviceBountiesRewardsAmount)
+    device.dorAPIResponse.rewardAddress match {
+      case Some(rewardAddress) => calculateBountiesRewardsWithCollateral(lastBalances, rewardAddress, deviceBountiesRewardsAmount)
+      case None =>
+        logger.warn(s"Could not get bounty rewards, nullable reward address!")
+        0L
+    }
   }
 
   def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
@@ -67,30 +72,36 @@ object BountyRewards {
     val allRewards: Map[Address, RewardTransaction] = Map.empty
 
     val rewardsTransactions = state.devices.foldLeft(allRewards) { case (acc, (_, value)) =>
-      if (currentEpochProgress - value.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
-        logger.warn(s"Device with reward address ${value.dorAPIResponse.rewardAddress.value.value} didn't make a check in in the last 24 hours")
-        acc
-      } else {
-        val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
-        val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)
-        val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
-        taxesToValidatorNodes += deviceTaxToValidatorNodes
-
-        if (rewardValue > 0) {
-          acc.get(value.dorAPIResponse.rewardAddress) match {
-            case Some(currentReward) =>
-              logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} already have a reward, increasing value")
-              val newValue = currentReward.amount.value.value + rewardValue
-              logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} new value: $newValue")
-              acc + (value.dorAPIResponse.rewardAddress -> RewardTransaction(value.dorAPIResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(newValue))))
-            case None =>
-              logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} doesn't have a reward yet, creating with value: $rewardValue")
-              acc + (value.dorAPIResponse.rewardAddress -> RewardTransaction(value.dorAPIResponse.rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue))))
-          }
-        } else {
-          logger.info(s"Ignoring reward, value equals to 0")
+      value.dorAPIResponse.rewardAddress match {
+        case None =>
+          logger.warn(s"Device doesn't have rewardAddress")
           acc
-        }
+        case Some(rewardAddress) =>
+          if (currentEpochProgress - value.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
+            logger.warn(s"Device with reward address ${rewardAddress.value.value} didn't make a check in in the last 24 hours")
+            acc
+          } else {
+            val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
+            val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)
+            val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
+            taxesToValidatorNodes += deviceTaxToValidatorNodes
+
+            if (rewardValue > 0) {
+              acc.get(rewardAddress) match {
+                case Some(currentReward) =>
+                  logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} already have a reward, increasing value")
+                  val newValue = currentReward.amount.value.value + rewardValue
+                  logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} new value: $newValue")
+                  acc + (rewardAddress -> RewardTransaction(rewardAddress, TransactionAmount(PosLong.unsafeFrom(newValue))))
+                case None =>
+                  logger.info(s"Device with rewardAddress: ${value.dorAPIResponse.rewardAddress} doesn't have a reward yet, creating with value: $rewardValue")
+                  acc + (rewardAddress -> RewardTransaction(rewardAddress, TransactionAmount(PosLong.unsafeFrom(rewardValue))))
+              }
+            } else {
+              logger.info(s"Ignoring reward, value equals to 0")
+              acc
+            }
+          }
       }
     }.values.filter(_ != null).toList
 

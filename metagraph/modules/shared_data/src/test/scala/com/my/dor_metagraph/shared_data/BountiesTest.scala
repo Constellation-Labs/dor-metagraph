@@ -9,7 +9,7 @@ object BountiesTest extends SimpleIOSuite {
 
   pureTest("Get correctly rewards UnitDeployedBounty") {
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val deviceInfoAPIResponse = DorAPIResponse(address, isInstalled = true, Some("Retail"), Some(10L))
+    val deviceInfoAPIResponse = DorAPIResponse(Some(address), isInstalled = true, Some("Retail"), Some(10L))
     val bountyAmount = UnitDeployedBounty().getBountyRewardAmount(deviceInfoAPIResponse, 0L)
 
     expect.eql(50, bountyAmount)
@@ -17,7 +17,7 @@ object BountiesTest extends SimpleIOSuite {
 
   pureTest("Get correctly rewards CommercialLocationBounty - Retail store") {
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val deviceInfoAPIResponse = DorAPIResponse(address, isInstalled = true, Some("Retail"), Some(10L))
+    val deviceInfoAPIResponse = DorAPIResponse(Some(address), isInstalled = true, Some("Retail"), Some(10L))
     val bountyAmount = CommercialLocationBounty().getBountyRewardAmount(deviceInfoAPIResponse, 1L)
 
     expect.eql(50, bountyAmount)
@@ -25,7 +25,7 @@ object BountiesTest extends SimpleIOSuite {
 
   pureTest("Get correctly rewards CommercialLocationBounty - Residential store") {
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val deviceInfoAPIResponse = DorAPIResponse(address, isInstalled = true, Some("Residential"), Some(10L))
+    val deviceInfoAPIResponse = DorAPIResponse(Some(address), isInstalled = true, Some("Residential"), Some(10L))
     val bountyAmount = CommercialLocationBounty().getBountyRewardAmount(deviceInfoAPIResponse, 1L)
 
     expect.eql(0, bountyAmount)
