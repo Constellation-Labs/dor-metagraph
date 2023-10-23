@@ -5,11 +5,13 @@ import com.my.dor_metagraph.shared_data.types.Types.DeviceCheckInInfo
 import io.bullet.borer.Cbor
 import org.tessellation.schema.ID.Id
 import org.tessellation.security.hex.Hex
+
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
 import _root_.cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import org.tessellation.security.SecurityProvider
 
 object Utils {
@@ -29,10 +31,10 @@ object Utils {
     bodyAsBytes.toArray
   }
 
-  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): IO[Address] = {
+  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): Address = {
     implicit val sp: SecurityProvider[IO] = securityProvider
     val publicKey: Id = Id(Hex(publicKeyHex))
-    publicKey.toAddress[IO]
+    publicKey.toAddress[IO].unsafeRunSync()
   }
   def toCBORHex(hexString: String): Array[Byte] = {
     try {

@@ -36,7 +36,7 @@ object Main
   ) {
   def dataApplication: Option[BaseDataApplicationL0Service[IO]] =
     Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, CheckInUpdate, CheckInStateOnChain, CheckInDataCalculatedState] {
-      override def genesis: DataState[CheckInStateOnChain, CheckInDataCalculatedState] = DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(Map.empty, List.empty, List.empty))
+      override def genesis: DataState[CheckInStateOnChain, CheckInDataCalculatedState] = DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(Map.empty))
 
       override def validateUpdate(update: CheckInUpdate)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
 

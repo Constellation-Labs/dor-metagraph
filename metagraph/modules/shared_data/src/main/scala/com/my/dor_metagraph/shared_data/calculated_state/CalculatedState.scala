@@ -15,7 +15,7 @@ object CalculatedState {
 
   private var maybeCheckInCalculatedState: (SnapshotOrdinal, CheckInDataCalculatedState) = (
     SnapshotOrdinal(NonNegLong(0L)),
-    CheckInDataCalculatedState(Map.empty, List.empty, List.empty)
+    CheckInDataCalculatedState(Map.empty)
   )
 
   def getCalculatedState: IO[(SnapshotOrdinal, CheckInDataCalculatedState)] = {
@@ -32,7 +32,7 @@ object CalculatedState {
 
     maybeCheckInCalculatedState = (
       snapshotOrdinal,
-      CheckInDataCalculatedState(updatedDevices, state.l0ValidatorNodesAddresses, state.l1ValidatorNodesAddresses)
+      CheckInDataCalculatedState(updatedDevices)
     )
 
     logger.info(s"SETTING CALCULATED STATE, NEW STATE: $maybeCheckInCalculatedState CURRENT ORDINAL: ${snapshotOrdinal}")

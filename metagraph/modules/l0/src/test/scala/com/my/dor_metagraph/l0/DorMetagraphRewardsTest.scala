@@ -39,10 +39,10 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
 
-    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances)
+    val rewardsIO = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
 
     for {
@@ -63,11 +63,11 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val state = CheckInDataCalculatedState(Map(
       currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress),
       currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)
-    ),getValidatorNodesL0, getValidatorNodesL1)
+    ))
 
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances)
+    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
 
     for {
@@ -84,10 +84,10 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1441L
 
-    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
+    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances)
+    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
 
     for {
@@ -104,10 +104,10 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1500L
 
-    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), getValidatorNodesL0, getValidatorNodesL1)
+    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances)
+    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
 
     for {
       rewards <- rewardsIO

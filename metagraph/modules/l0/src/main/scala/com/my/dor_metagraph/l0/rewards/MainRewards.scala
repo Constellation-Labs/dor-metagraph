@@ -1,9 +1,10 @@
 package com.my.dor_metagraph.l0.rewards
 
-import cats.effect.Async
+import cats.effect.{Async, IO}
 import cats.syntax.all._
 import com.my.dor_metagraph.l0.rewards.BountyRewards.getBountyRewardsTransactions
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
+import com.my.dor_metagraph.shared_data.combiners.ValidatorNodes.getValidatorNodes
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, EPOCH_PROGRESS_1_DAY}
 import org.slf4j.LoggerFactory
 import org.tessellation.currency.dataApplication.DataCalculatedState
@@ -16,6 +17,7 @@ import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
 import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
+import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 
 import scala.collection.immutable.{SortedMap, SortedSet}
@@ -23,7 +25,7 @@ import scala.collection.immutable.{SortedMap, SortedSet}
 object MainRewards {
   private val logger = LoggerFactory.getLogger("MainRewards")
 
-  def make[F[_] : Async]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
+  def make[F[_] : Async](implicit sp: SecurityProvider[IO]): Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
     (lastArtifact: Signed[CurrencyIncrementalSnapshot], lastBalances: SortedMap[Address, Balance], _: SortedSet[Signed[Transaction]], consensusTrigger: ConsensusTrigger, _: Set[CurrencySnapshotEvent], maybeCalculatedState: Option[DataCalculatedState]) => {
       consensusTrigger match {
         case trigger.EventTrigger =>
@@ -36,33 +38,29 @@ object MainRewards {
               logger.error("Could not get calculatedState, skipping rewards.")
               SortedSet.empty[transaction.RewardTransaction].pure
             case Some(calculatedState) =>
-              logger.info(s"Calculated state got: $calculatedState")
-              buildRewards(calculatedState.asInstanceOf[CheckInDataCalculatedState], lastArtifact.epochProgress.value.value + 1, lastBalances)
+              val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
+              val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
+
+              if (epochProgressModulus > 2) {
+                val emptyTransactions: SortedSet[RewardTransaction] = SortedSet.empty
+                emptyTransactions.pure
+              } else {
+                logger.info(s"Calculated state got: $calculatedState")
+                val (l0ValidatorNodes, l1ValidatorNodes) = getValidatorNodes
+                logInitialRewardDistribution(epochProgressModulus)
+                buildRewards(calculatedState.asInstanceOf[CheckInDataCalculatedState], currentEpochProgress, lastBalances, l0ValidatorNodes, l1ValidatorNodes)
+              }
           }
       }
     }
 
-  def buildRewards[F[_] : Async](state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): F[SortedSet[RewardTransaction]] = {
-    val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
-
-    /**
-     * We have 3 bounties and they should be distributed in different snapshots. That's the reason for the conditional below:
-     * UnitDeployed:                epochProgressModulus = 0
-     * CommercialLocation:          epochProgressModulus = 1
-     * RetailAnalyticsSubscription: epochProgressModulus = 2
-     * */
-    if (epochProgressModulus > 2) {
-      val emptyTransactions: SortedSet[RewardTransaction] = SortedSet.empty
-      return emptyTransactions.pure
-    }
-
-    logInitialRewardDistribution(epochProgressModulus)
+  def buildRewards[F[_] : Async](state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance], l0ValidatorNodes: List[Address], l1ValidatorNodes: List[Address]): F[SortedSet[RewardTransaction]] = {
     val bountyRewards = getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
 
     val bountyTransactions = bountyRewards._1
     val taxesToValidatorNodes = bountyRewards._2
 
-    val validatorNodesTransactions = getValidatorNodesTransactions(state.l0ValidatorNodesAddresses, state.l1ValidatorNodesAddresses, taxesToValidatorNodes)
+    val validatorNodesTransactions = getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, taxesToValidatorNodes)
     buildRewardsTransactionsSortedSet(bountyTransactions, validatorNodesTransactions).pure
   }
 

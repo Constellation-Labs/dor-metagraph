@@ -9,7 +9,7 @@ import weaver.SimpleIOSuite
 object CombinersTest extends SimpleIOSuite {
   pureTest("Create a new check in on state") {
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
-    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty, List.empty, List.empty)
+    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty)
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val deviceInfoAPIResponse = DorAPIResponse(address, isInstalled = true, Some("Retail"), Some(10L))
@@ -36,7 +36,7 @@ object CombinersTest extends SimpleIOSuite {
     var currentEpochProgress = 1440L
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
-    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)), List.empty, List.empty)
+    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)

@@ -36,7 +36,7 @@ object DeviceCheckIn {
 
     DataState(
       CheckInStateOnChain(updates),
-      CheckInDataCalculatedState(devices, acc.calculated.l0ValidatorNodesAddresses, acc.calculated.l1ValidatorNodesAddresses)
+      CheckInDataCalculatedState(devices)
     )
   }
 }

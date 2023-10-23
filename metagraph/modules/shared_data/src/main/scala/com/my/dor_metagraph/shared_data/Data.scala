@@ -6,7 +6,6 @@ import org.tessellation.currency.dataApplication.{DataState, L0NodeContext}
 import org.tessellation.security.signature.Signed
 import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.combiners.Combiners.combineDeviceCheckIn
-import com.my.dor_metagraph.shared_data.combiners.ValidatorNodes.getValidatorNodes
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import com.my.dor_metagraph.shared_data.validations.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
 import fs2.Compiler.Target.forSync
@@ -41,15 +40,7 @@ object Data {
         throw new Exception(message)
     }
 
-    val validatorNodesIO = for {
-      epochProgress <- epochProgressIO
-    } yield getValidatorNodes(epochProgress + 1, oldState.calculated, sp)
-
-    val newStateIO = for {
-      validatorNodes <- validatorNodesIO
-      l0ValidatorNodes <- validatorNodes._1
-      l1ValidatorNodes <- validatorNodes._2
-    } yield DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(oldState.calculated.devices, l0ValidatorNodes, l1ValidatorNodes))
+    val newStateIO = IO(DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(oldState.calculated.devices)))
 
     if (updates.isEmpty) {
       logger.info("Snapshot without any check-ins, updating the state to empty updates")

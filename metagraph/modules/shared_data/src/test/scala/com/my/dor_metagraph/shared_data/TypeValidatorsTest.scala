@@ -10,7 +10,7 @@ object TypeValidatorsTest extends SimpleIOSuite {
 
   pureTest("Return update valid - validateCheckInTimestampIsGreaterThanLastCheckIn") {
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
-    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty, List.empty, List.empty)
+    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty)
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val cborString = "BF6261639F188F38B43925B8FF636474731A63875B2461659F9F1B00000184A0C9AF5E01FF9F1B00000194A0CD649601FF9F1B00000184A0CE08A701FF9F1B00000184A0D0CF9801FF9F1B00000184A0D3254101FF9F1B00000184A0D3968A01FF9F1B00000184A0D3C95301FF9F1B00000184A0D3F06401FF9F1B00000184A0D47D0501FF9F1B00000184A0D48CA601FFFFFF"
@@ -28,7 +28,7 @@ object TypeValidatorsTest extends SimpleIOSuite {
     val currentEpochProgress = 1440L
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val cborString = "BF6261639F188F38B43925B8FF636474731A63875B2461659F9F1B00000184A0C9AF5E01FF9F1B00000194A0CD649601FF9F1B00000184A0CE08A701FF9F1B00000184A0D0CF9801FF9F1B00000184A0D3254101FF9F1B00000184A0D3968A01FF9F1B00000184A0D3C95301FF9F1B00000184A0D3F06401FF9F1B00000184A0D47D0501FF9F1B00000184A0D48CA601FFFFFF"
-    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, deviceInfoAPIResponse, currentEpochProgress)), List.empty, List.empty)
+    val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, deviceInfoAPIResponse, currentEpochProgress)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val checkInRaw = CheckInUpdate("123", "456", 1, cborString, Some(deviceInfoAPIResponse))

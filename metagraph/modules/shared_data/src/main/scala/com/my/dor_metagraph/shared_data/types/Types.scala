@@ -40,7 +40,7 @@ object Types {
   case class CheckInStateOnChain(updates: List[CheckInStateUpdate]) extends DataOnChainState
 
   @derive(decoder, encoder)
-  case class CheckInDataCalculatedState(devices: Map[Address, DeviceInfo], l0ValidatorNodesAddresses: List[Address], l1ValidatorNodesAddresses: List[Address]) extends DataCalculatedState
+  case class CheckInDataCalculatedState(devices: Map[Address, DeviceInfo]) extends DataCalculatedState
 
   @derive(decoder, encoder)
   case class CheckInUpdate(publicId: String, signature: String, dts: Long, dtmCheckInHash: String, maybeDorAPIResponse: Option[DorAPIResponse]) extends DataUpdate
