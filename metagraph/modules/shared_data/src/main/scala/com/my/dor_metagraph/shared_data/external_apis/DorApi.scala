@@ -21,6 +21,7 @@ object DorApi {
         "ac" -> checkInInfo.ac,
         "dts" -> checkInInfo.dts,
         "e" -> checkInInfo.e,
+        "hash" -> deviceCheckIn.hash,
         "signature" -> deviceCheckIn.sig
       ).render()
 
