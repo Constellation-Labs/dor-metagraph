@@ -13,13 +13,14 @@ import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
-import org.tessellation.currency.dataApplication.{BaseDataApplicationL1Service, DataApplicationL1Service, DataState, DataUpdate, L0NodeContext, L1NodeContext}
+import org.tessellation.currency.dataApplication.{BaseDataApplicationL1Service, DataApplicationL1Service, DataState, DataUpdate, L1NodeContext}
 import org.tessellation.currency.l1.CurrencyL1App
 import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.security.signature.Signed
 import org.http4s.EntityDecoder
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.security.hash.Hash
+import io.circe.generic.auto._
 
 import java.util.UUID
 

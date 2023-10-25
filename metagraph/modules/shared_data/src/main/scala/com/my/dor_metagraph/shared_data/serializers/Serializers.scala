@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import org.tessellation.currency.dataApplication.DataUpdate
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationBlock
 import org.tessellation.security.signature.Signed
-
+import io.circe.generic.auto._
 import java.nio.charset.StandardCharsets
 
 object Serializers {

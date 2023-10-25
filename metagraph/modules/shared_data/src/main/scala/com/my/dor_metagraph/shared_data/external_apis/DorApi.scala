@@ -5,6 +5,7 @@ import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInWithSignature,
 import io.circe.parser.decode
 import org.slf4j.LoggerFactory
 import ujson.Obj
+import io.circe.generic.auto._
 
 object DorApi {
   private val logger = LoggerFactory.getLogger("DorAPI")

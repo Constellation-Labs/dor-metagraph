@@ -7,6 +7,7 @@ import io.circe.syntax.EncoderOps
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.security.hash.Hash
+import io.circe.generic.auto._
 
 import java.security.MessageDigest
 
