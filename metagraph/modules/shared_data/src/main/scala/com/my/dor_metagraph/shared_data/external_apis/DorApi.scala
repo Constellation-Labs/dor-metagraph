@@ -28,7 +28,7 @@ object DorApi {
 
       val response = requests.post(
         url = s"https://api.getdor.com/metagraph/device/$publicKey/check-in",
-        headers = Map("Content-Type" -> "application/json"),
+        headers = Map("Content-Type" -> "application/json", "version" -> "2"),
         data = requestBody
       )
 
