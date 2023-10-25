@@ -7,7 +7,6 @@ import io.circe.parser.decode
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
-import io.circe.generic.auto._
 
 object ClusterApi {
   private val logger = LoggerFactory.getLogger("ClusterAPI")

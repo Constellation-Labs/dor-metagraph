@@ -20,7 +20,6 @@ import org.tessellation.security.signature.Signed
 import org.http4s.EntityDecoder
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.security.hash.Hash
-import io.circe.generic.auto._
 
 import java.util.UUID
 

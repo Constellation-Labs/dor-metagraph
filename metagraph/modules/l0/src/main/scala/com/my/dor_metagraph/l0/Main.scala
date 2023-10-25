@@ -24,7 +24,6 @@ import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hash.Hash
 import org.tessellation.security.signature.Signed
-import io.circe.generic.auto._
 
 import java.util.UUID
 
