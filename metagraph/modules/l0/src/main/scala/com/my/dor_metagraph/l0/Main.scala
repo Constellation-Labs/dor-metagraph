@@ -3,6 +3,7 @@ package com.my.dor_metagraph.l0
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits.catsSyntaxValidatedIdBinCompat0
+import com.my.dor_metagraph.l0.custom_routes.CustomRoutes.getLatestCalculatedState
 import com.my.dor_metagraph.l0.rewards.MainRewards
 import com.my.dor_metagraph.shared_data.Data
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedState
@@ -25,6 +26,8 @@ import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hash.Hash
 import org.tessellation.security.signature.Signed
 
+import org.http4s.dsl.io._
+
 import java.util.UUID
 
 object Main
@@ -43,8 +46,6 @@ object Main
       override def validateData(state: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: NonEmptyList[Signed[CheckInUpdate]])(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateData(state, updates)
 
       override def combine(state: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: List[Signed[CheckInUpdate]])(implicit context: L0NodeContext[IO]): IO[DataState[CheckInStateOnChain, CheckInDataCalculatedState]] = Data.combine(state, updates)
-
-      override def routes(implicit context: L0NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.empty
 
       override def dataEncoder: Encoder[CheckInUpdate] = implicitly[Encoder[CheckInUpdate]]
 
@@ -73,6 +74,10 @@ object Main
       override def setCalculatedState(ordinal: SnapshotOrdinal, state: CheckInDataCalculatedState)(implicit context: L0NodeContext[IO]): IO[Boolean] = CalculatedState.setCalculatedState(ordinal, state)
 
       override def hashCalculatedState(state: CheckInDataCalculatedState)(implicit context: L0NodeContext[IO]): IO[Hash] = CalculatedState.hashCalculatedState(state)
+
+      override def routes(implicit context: L0NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.of {
+        case GET -> Root / "calculated-state" / "latest" => getLatestCalculatedState
+      }
     }))
 
   def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] = Some(
