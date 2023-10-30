@@ -1,4 +1,4 @@
-package com.my.dor_metagraph.l0
+package com.my.dor_metagraph.l0.rewards
 
 import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
@@ -8,13 +8,8 @@ import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount
 import scala.collection.mutable.ListBuffer
 
 object ValidatorNodesRewards {
-  private val validatorNodesRewards = ValidatorNodesRewards()
-  def getValidatorNodesTransactions(validatorNodesL0: List[Address], validatorNodesL1: List[Address], taxesToValidatorNodes: Long): List[RewardTransaction] = {
-    validatorNodesRewards.getValidatorNodesTransactions(validatorNodesL0, validatorNodesL1, taxesToValidatorNodes)
-  }
-}
-case class ValidatorNodesRewards() {
-  private val logger = LoggerFactory.getLogger(classOf[ValidatorNodesRewards])
+  private val logger = LoggerFactory.getLogger("ValidatorNodeRewards")
+
   private def getRewardsValidatorNodes(addresses: List[Address], taxToEachLayer: Long, layer: String): List[RewardTransaction] = {
     val numberOfAddresses = addresses.size
     val amountToEachAddress = taxToEachLayer / numberOfAddresses

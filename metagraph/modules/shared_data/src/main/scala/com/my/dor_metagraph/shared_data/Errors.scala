@@ -6,14 +6,12 @@ object Errors {
   case object RepeatedCheckIn extends DataApplicationValidationError {
     val message = "Repeated Check In"
   }
-  case object CouldNotGetLatestCurrencySnapshot extends DataApplicationValidationError {
-    val message = "Could not get last currency snapshot"
-  }
-  case object CouldNotGetLatestState extends DataApplicationValidationError {
-    val message = "Could not get latest state"
-  }
 
   case object CheckInOlderThanAllowed extends DataApplicationValidationError {
     val message = "CheckIn is older than allowed"
+  }
+
+  case object DeviceNotRegisteredOnDorApi extends DataApplicationValidationError {
+    val message = "Device not registered on Dor API"
   }
 }

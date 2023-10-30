@@ -1,20 +1,15 @@
-package com.my.dor_metagraph.shared_data
+package com.my.dor_metagraph.shared_data.external_apis
 
-import com.my.dor_metagraph.shared_data.Types.{DeviceCheckInWithSignature, DeviceInfoAPIResponseWithHash}
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
+import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInWithSignature, DorAPIResponse}
 import io.circe.parser.decode
 import org.slf4j.LoggerFactory
-import ujson.{Arr, Obj}
+import ujson.Obj
 
 object DorApi {
-  private val dorApi = DorApi()
-  def saveDeviceCheckIn(publicKey: String, deviceCheckIn: DeviceCheckInWithSignature): Option[DeviceInfoAPIResponseWithHash] = {
-    dorApi.saveDeviceCheckIn(publicKey, deviceCheckIn)
-  }
-}
-case class DorApi() {
-  private val logger = LoggerFactory.getLogger(classOf[DorApi])
-  def saveDeviceCheckIn(publicKey: String, deviceCheckIn: DeviceCheckInWithSignature): Option[DeviceInfoAPIResponseWithHash] = {
+  private val logger = LoggerFactory.getLogger("DorAPI")
+
+  def saveDeviceCheckIn(publicKey: String, deviceCheckIn: DeviceCheckInWithSignature): Option[DorAPIResponse] = {
     val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
 
     logger.info(s"Decoded CBOR field before check-in to DOR Server AC ${checkInInfo.ac}")
@@ -26,6 +21,7 @@ case class DorApi() {
         "ac" -> checkInInfo.ac,
         "dts" -> checkInInfo.dts,
         "e" -> checkInInfo.e,
+        "hash" -> deviceCheckIn.hash,
         "signature" -> deviceCheckIn.sig
       ).render()
 
@@ -33,14 +29,14 @@ case class DorApi() {
 
       val response = requests.post(
         url = s"https://api.getdor.com/metagraph/device/$publicKey/check-in",
-        headers = Map("Content-Type" -> "application/json"),
+        headers = Map("Content-Type" -> "application/json", "version" -> "2"),
         data = requestBody
       )
 
       val body = response.text()
       logger.info(s"API response $body")
 
-      decode[DeviceInfoAPIResponseWithHash](body) match {
+      decode[DorAPIResponse](body) match {
         case Left(err) =>
           logger.warn(s"Error when decoding ${err.getMessage}")
           None
