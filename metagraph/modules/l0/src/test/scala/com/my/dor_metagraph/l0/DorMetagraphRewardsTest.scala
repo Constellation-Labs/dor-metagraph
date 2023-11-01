@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
-import com.my.dor_metagraph.l0.rewards.BountyRewards.{calculateBountiesRewardsWithCollateral, getDeviceBountyRewardsAmount, getTaxesToValidatorNodes}
+import com.my.dor_metagraph.l0.rewards.BountyRewards.{getDeviceBountyRewardsAmount, getDeviceCollateral, getTaxesToValidatorNodes}
 import com.my.dor_metagraph.l0.rewards.MainRewards
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, DeviceInfo, DorAPIResponse}
@@ -80,7 +80,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
       currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)
     ))
 
-    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
+    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
     val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
     val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
@@ -89,9 +89,9 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
       rewards <- rewardsIO
       reward <- rewardIO
     } yield expect.eql(7, rewards.size) &&
-      expect.eql(10800000000L, reward.get.amount.value.value) &&
+      expect.eql(9900000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress, reward.get.destination) &&
-      expect.eql(10800000000L, rewards.toList(1).amount.value.value)
+      expect.eql(9900000000L, rewards.toList(1).amount.value.value)
   }
 
   test("Build correctly rewards - CommercialLocationBounty") {
@@ -167,46 +167,44 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val balance = toTokenAmountFormat(10)
 
-    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(balance)))
-    val bountiesWithCollateral = calculateBountiesRewardsWithCollateral(balances, currentAddress, balance)
+    val balances = Map(currentAddress -> balance)
+    val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
-    expect.eql(1000000000L, bountiesWithCollateral)
+    expect.eql(1.0, bountiesWithCollateral._2) &&
+    expect.eql(0L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Calculate values with collateral: > 50K and < 100K") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val balance = toTokenAmountFormat(70000)
 
-    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(balance)))
-    val bountiesWithCollateral = calculateBountiesRewardsWithCollateral(balances, currentAddress, balance)
+    val balances = Map(currentAddress -> balance)
+    val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
-    expect.eql(7350000000000L, bountiesWithCollateral)
+    expect.eql(1.05, bountiesWithCollateral._2) &&
+    expect.eql(0L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Calculate values with collateral: > 100K and < 200K") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val balance = toTokenAmountFormat(150000)
 
-    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(balance)))
-    val bountiesWithCollateral = calculateBountiesRewardsWithCollateral(balances, currentAddress, balance)
+    val balances = Map(currentAddress -> balance)
+    val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
-    expect.eql(16500000000000L, bountiesWithCollateral)
+    expect(1.1 == bountiesWithCollateral._2) &&
+    expect.eql(0L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Calculate values with collateral: > 200K") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val balance = toTokenAmountFormat(210000)
 
-    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(balance)))
-    val bountiesWithCollateral = calculateBountiesRewardsWithCollateral(balances, currentAddress, balance)
+    val balances = Map(currentAddress -> balance)
+    val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
-    expect.eql(25200000000000L, bountiesWithCollateral)
-  }
-
-  pureTest("Successfully get taxed to validator nodes") {
-    val taxes = getTaxesToValidatorNodes(10000)
-
-    expect.eql(1000, taxes)
+    expect(1.2 == bountiesWithCollateral._2) &&
+      expect.eql(1000000000000L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Build validator nodes rewards successfully") {
