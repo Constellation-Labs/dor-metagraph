@@ -4,14 +4,12 @@ import cats.effect.IO
 import com.my.dor_metagraph.shared_data.types.Types.CheckInDataCalculatedState
 import eu.timepit.refined.types.numeric.NonNegLong
 import io.circe.syntax.EncoderOps
-import org.slf4j.LoggerFactory
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.security.hash.Hash
 
 import java.security.MessageDigest
 
 object CalculatedState {
-  private val logger = LoggerFactory.getLogger("CalculatedState")
 
   private var maybeCheckInCalculatedState: (SnapshotOrdinal, CheckInDataCalculatedState) = (
     SnapshotOrdinal(NonNegLong(0L)),
@@ -19,7 +17,6 @@ object CalculatedState {
   )
 
   def getCalculatedState: IO[(SnapshotOrdinal, CheckInDataCalculatedState)] = {
-    logger.info(s"GETTING CALCULATED STATE: $maybeCheckInCalculatedState")
     IO(maybeCheckInCalculatedState)
   }
 
@@ -34,8 +31,6 @@ object CalculatedState {
       snapshotOrdinal,
       CheckInDataCalculatedState(updatedDevices)
     )
-
-    logger.info(s"SETTING CALCULATED STATE, NEW STATE: $maybeCheckInCalculatedState CURRENT ORDINAL: ${snapshotOrdinal}")
 
     IO(true)
   }
