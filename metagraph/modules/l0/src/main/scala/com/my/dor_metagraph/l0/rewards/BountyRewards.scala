@@ -12,14 +12,11 @@ import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount
 object BountyRewards {
   private val logger = LoggerFactory.getLogger("BountyRewards")
 
-  private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): Long = {
+  private def getDeviceBountiesRewards(device: DeviceInfo, currentEpochProgress: Long, collateralMultiplierFactor: Double): Long = {
     val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
-    device.dorAPIResponse.rewardAddress match {
-      case Some(rewardAddress) => calculateBountiesRewardsWithCollateral(lastBalances, rewardAddress, deviceBountiesRewardsAmount)
-      case None =>
-        logger.warn(s"Could not get bounty rewards, nullable reward address!")
-        0L
-    }
+    val rewardsWithCollateral = deviceBountiesRewardsAmount * collateralMultiplierFactor
+
+    rewardsWithCollateral.toLong
   }
 
   def getDeviceBountyRewardsAmount(device: DeviceInfo, currentEpochProgress: Long): Long = {
@@ -44,32 +41,14 @@ object BountyRewards {
     0L
   }
 
-  def calculateBountiesRewardsWithCollateral(lastBalances: Map[Address, Balance], rewardAddress: Address, deviceTotalRewards: Long): Long = {
-    val updatedBalance = lastBalances.get(rewardAddress) match {
-      case Some(rewardAddressBalance) =>
-        val balance = rewardAddressBalance.value.value
-        if (balance < COLLATERAL_50K) {
-          deviceTotalRewards * COLLATERAL_LESS_THAN_50K_MULTIPLIER
-        } else if (balance >= COLLATERAL_50K && balance < COLLATERAL_100K) {
-          deviceTotalRewards * COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER
-        } else if (balance >= COLLATERAL_100K && balance < COLLATERAL_200K) {
-          deviceTotalRewards * COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER
-        } else {
-          deviceTotalRewards * COLLATERAL_GREATER_THAN_200K_MULTIPLIER
-        }
-      case None => deviceTotalRewards.toDouble
-    }
-
-    updatedBalance.toLong
-  }
-
   def getTaxesToValidatorNodes(deviceTotalRewards: Long): Long = {
     (deviceTotalRewards * 0.1).toLong
   }
 
-  def getBountyRewardsTransactions(state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalances: Map[Address, Balance]): (List[RewardTransaction], Long) = {
+  def getBountyRewardsTransactions(state: CheckInDataCalculatedState, currentEpochProgress: Long, lastBalancesRaw: Map[Address, Balance]): (List[RewardTransaction], Long) = {
     var taxesToValidatorNodes = 0L
     val allRewards: Map[Address, RewardTransaction] = Map.empty
+    var lastBalances = lastBalancesRaw.map { case (address, balance) => address -> balance.value.value }
 
     val rewardsTransactions = state.devices.foldLeft(allRewards) { case (acc, (_, value)) =>
       value.dorAPIResponse.rewardAddress match {
@@ -81,7 +60,11 @@ object BountyRewards {
             logger.warn(s"Device with reward address ${rewardAddress.value.value} didn't make a check in in the last 24 hours")
             acc
           } else {
-            val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, lastBalances)
+            val deviceCollateral = getDeviceCollateral(lastBalances, rewardAddress)
+            lastBalances = deviceCollateral._1
+            val collateralMultiplierFactor = deviceCollateral._2
+
+            val deviceTotalRewards = getDeviceBountiesRewards(value, currentEpochProgress, collateralMultiplierFactor)
             val deviceTaxToValidatorNodes = getTaxesToValidatorNodes(deviceTotalRewards)
             val rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
             taxesToValidatorNodes += deviceTaxToValidatorNodes
@@ -106,5 +89,26 @@ object BountyRewards {
     }.values.filter(_ != null).toList
 
     (rewardsTransactions, taxesToValidatorNodes)
+  }
+
+  def getDeviceCollateral(lastBalances: Map[Address, Long], rewardAddress: Address): (Map[Address, Long], Double) = {
+    lastBalances.get(rewardAddress) match {
+      case None => (lastBalances, COLLATERAL_LESS_THAN_50K_MULTIPLIER)
+      case Some(balance) =>
+        val (value, collateralMultiplierFactor) = if (balance < COLLATERAL_50K) {
+          (balance, COLLATERAL_LESS_THAN_50K_MULTIPLIER)
+        } else if (balance >= COLLATERAL_50K && balance < COLLATERAL_100K) {
+          (balance, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER)
+        } else if (balance >= COLLATERAL_100K && balance < COLLATERAL_200K) {
+          (balance, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER)
+        } else {
+          (toTokenAmountFormat(200000), COLLATERAL_GREATER_THAN_200K_MULTIPLIER)
+        }
+
+        val updatedBalance = balance - value
+        val updatedLastBalances = lastBalances + (rewardAddress -> updatedBalance)
+
+        (updatedLastBalances, collateralMultiplierFactor)
+    }
   }
 }
