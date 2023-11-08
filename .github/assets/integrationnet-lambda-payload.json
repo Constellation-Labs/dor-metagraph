@@ -32,10 +32,7 @@
     "additional_data_l1_env_variables": []
   },
   "network": {
-    "name": "integrationnet",
-    "gl0_node_ip": "52.53.216.201",
-    "gl0_node_id": "3458a688925a4bd89f2ac2c695362e44d2e0c2903bdbb41b341a4d39283b22d8c85b487bd33cc5d36dbe5e31b5b00a10a6eab802718ead4ed7192ade5a5d1941",
-    "gl0_node_port": "9000"
+    "name": "integrationnet"
   },
   "aws": {
     "region": "us-west-2",

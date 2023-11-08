@@ -32,10 +32,7 @@
     "additional_data_l1_env_variables": []
   },
   "network": {
-    "name": "testnet",
-    "gl0_node_ip": "13.57.186.140",
-    "gl0_node_id": "e2f4496e5872682d7a55aa06e507a58e96b5d48a5286bfdff7ed780fa464d9e789b2760ecd840f4cb3ee6e1c1d81b2ee844c88dbebf149b1084b7313eb680714",
-    "gl0_node_port": "9000"
+    "name": "testnet"
   },
   "aws": {
     "region": "us-west-2",
