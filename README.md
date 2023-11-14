@@ -18,10 +18,10 @@ Project Structure
 
 This project consists of two main subdirectories:
 
-### API
-
-The API subdirectory houses a "fake API" designed to simulate returns from the official DOR API. This mock API serves the purpose of testing returns from the API before integrating them into the metagraph. It was developed using NodeJS with Typescript and Express.
-
 ### Metagraph
 
 The Metagraph folder contains all the content of the metagraph and is constructed on top of the Data API provided by Constellation Network. For more detailed information about this metagraph, please refer to the README.md file within this folder.
+
+### API
+
+The API subdirectory houses a "mock API" designed to simulate returns from the official DOR API. This mock API serves the purpose of testing returns from the API before integrating them into the metagraph. It was developed using NodeJS with Typescript and Express.
