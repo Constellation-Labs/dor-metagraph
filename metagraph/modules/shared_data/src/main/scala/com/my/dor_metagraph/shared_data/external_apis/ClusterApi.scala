@@ -1,65 +1,36 @@
 package com.my.dor_metagraph.shared_data.external_apis
 
 import cats.effect.IO
-import cats.implicits.{catsSyntaxOptionId, none}
 import com.my.dor_metagraph.shared_data.Utils.getDagAddressFromPublicKey
 import com.my.dor_metagraph.shared_data.types.Types.ClusterInfoResponse
 import io.circe.parser.decode
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
-import scala.concurrent.duration._
 import eu.timepit.refined.auto._
 
 object ClusterApi {
   private val logger = LoggerFactory.getLogger("ClusterAPI")
 
-  private def fetchUrl(url: String): Option[String] = {
-    var idx: Long = 0
-    var keepSearching: Boolean = true
-
-    var response: Option[String] = None
-    while (keepSearching) {
-      try {
-        val apiResponse = requests.get(url)
-        response = apiResponse.text().some
-        keepSearching = false
-      } catch {
-        case _: Exception =>
-          if (idx == 5L) {
-            response = none
-            keepSearching = false
-          }
-          idx += 1
-          Thread.sleep(1.second.toMillis)
-      }
-    }
-
-    response
-  }
-
   private def getValidatorNodesAddressesFromClusterInfo(url: String, sp: SecurityProvider[IO]): List[Address] = {
     try {
       logger.info(s"Fetching $url")
-      val response = fetchUrl(url)
+      val response = requests.get(url)
+      val body = response.text()
 
-      response match {
-        case None => throw new Exception(s"Could not fetch information from URL after 5 tries: $url")
-        case Some(body) =>
-          logger.info(s"API ($url) response $body")
+      logger.info(s"API ($url) response $body")
 
-          decode[List[ClusterInfoResponse]](body) match {
-            case Left(err) =>
-              logger.warn(s"Error when decoding ${err.getMessage}")
-              null
-            case Right(clusterInfo) =>
-              clusterInfo.map(nodeInfo => getDagAddressFromPublicKey(nodeInfo.id, sp))
-          }
+      decode[List[ClusterInfoResponse]](body) match {
+        case Left(err) =>
+          logger.warn(s"Error when decoding ${err.getMessage}")
+          null
+        case Right(clusterInfo) =>
+          clusterInfo.map(nodeInfo => getDagAddressFromPublicKey(nodeInfo.id, sp))
       }
     } catch {
       case x: Exception =>
         logger.warn(s"Error when fetching API: ${x.getMessage}")
-        throw x
+        List.empty
     }
   }
 
