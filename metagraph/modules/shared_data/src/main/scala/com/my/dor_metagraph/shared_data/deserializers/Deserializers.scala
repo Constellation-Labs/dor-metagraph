@@ -10,21 +10,17 @@ import java.nio.charset.StandardCharsets
 
 object Deserializers {
 
-  def deserializeUpdate(bytes: Array[Byte]): Either[Throwable, CheckInUpdate] = {
+  private def deserialize[A: Decoder](bytes: Array[Byte]): Either[Throwable, A] =
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[CheckInUpdate]
+      json.as[A]
     }
-  }
 
-  def deserializeState(bytes: Array[Byte]): Either[Throwable, CheckInStateOnChain] = {
-    parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[CheckInStateOnChain]
-    }
-  }
+  def deserializeUpdate(bytes: Array[Byte]): Either[Throwable, CheckInUpdate] =
+    deserialize[CheckInUpdate](bytes)
 
-  def deserializeBlock(bytes: Array[Byte])(implicit e: Decoder[DataUpdate]): Either[Throwable, Signed[DataApplicationBlock]] = {
-    parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
-      json.as[Signed[DataApplicationBlock]]
-    }
-  }
+  def deserializeState(bytes: Array[Byte]): Either[Throwable, CheckInStateOnChain] =
+    deserialize[CheckInStateOnChain](bytes)
+
+  def deserializeBlock(bytes: Array[Byte])(implicit e: Decoder[DataUpdate]): Either[Throwable, Signed[DataApplicationBlock]] =
+    deserialize[Signed[DataApplicationBlock]](bytes)
 }

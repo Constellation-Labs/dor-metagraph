@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
-import com.my.dor_metagraph.l0.rewards.BountyRewards.{getDeviceBountyRewardsAmount, getDeviceCollateral, getTaxesToValidatorNodes}
+import com.my.dor_metagraph.l0.rewards.BountyRewards.{getDeviceBountyRewardsAmount, getDeviceCollateral}
 import com.my.dor_metagraph.l0.rewards.MainRewards
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, DeviceInfo, DorAPIResponse}
@@ -34,7 +34,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     )
   }
 
-  test("Build correctly rewards - UnitDeployedBounty") {
+  pureTest("Build correctly rewards - UnitDeployedBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentDeviceInfoAPIResponse = DorAPIResponse(Some(currentAddress), isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
@@ -42,18 +42,15 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
-    val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
+    val rewards = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val reward = rewards.find(reward => reward.destination == currentAddress)
 
-    for {
-      rewards <- rewardsIO
-      reward <- rewardIO
-    } yield expect.eql(7, rewards.size) &&
+    expect.eql(7, rewards.size) &&
       expect.eql(5400000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress, reward.get.destination)
   }
 
-  test("Build correctly rewards - reward address null") {
+  pureTest("Build correctly rewards - reward address null") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentDeviceInfoAPIResponse = DorAPIResponse(None, isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1440L
@@ -61,14 +58,12 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val rewards = MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
 
-    for {
-      rewards <- rewardsIO
-    } yield expect.eql(0, rewards.size)
+    expect.eql(0, rewards.size)
   }
 
-  test("Build correctly rewards - multiple wallets with same reward address") {
+  pureTest("Build correctly rewards - multiple wallets with same reward address") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentAddress2 = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRM2".getBytes)
 
@@ -82,19 +77,16 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
 
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
-    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
-    val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
+    val rewards = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val reward = rewards.find(reward => reward.destination == currentAddress)
 
-    for {
-      rewards <- rewardsIO
-      reward <- rewardIO
-    } yield expect.eql(7, rewards.size) &&
+    expect.eql(7, rewards.size) &&
       expect.eql(9900000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress, reward.get.destination) &&
       expect.eql(9900000000L, rewards.toList(1).amount.value.value)
   }
 
-  test("Build correctly rewards - CommercialLocationBounty") {
+  pureTest("Build correctly rewards - CommercialLocationBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentDeviceInfoAPIResponse = DorAPIResponse(Some(currentAddress), isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1441L
@@ -102,19 +94,15 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
-    val rewardIO = rewardsIO.map(rewards => rewards.find(reward => reward.destination == currentAddress))
+    val rewards = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    val reward = rewards.find(reward => reward.destination == currentAddress)
 
-    for {
-      rewards <- rewardsIO
-      reward <- rewardIO
-    } yield
-      expect.eql(7, rewards.size) &&
+    expect.eql(7, rewards.size) &&
       expect.eql(5400000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress.value.value, "DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
   }
 
-  test("Empty rewards when epochProgress does not complete 1 day") {
+  pureTest("Empty rewards when epochProgress does not complete 1 day") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DorAPIResponse(Some(currentAddress), isInstalled = true, Some("Retail"), Some(10L))
     val currentEpochProgress = 1500L
@@ -122,11 +110,8 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-    val rewardsIO = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
-
-    for {
-      rewards <- rewardsIO
-    } yield expect.eql(0, rewards.size)
+    val rewards = MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
+    expect.eql(0, rewards.size)
   }
 
   pureTest("Get bounty reward amount - UnitDeployedBounty") {
@@ -171,7 +156,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
     expect.eql(1.0, bountiesWithCollateral._2) &&
-    expect.eql(0L, bountiesWithCollateral._1(currentAddress))
+      expect.eql(0L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Calculate values with collateral: > 50K and < 100K") {
@@ -182,7 +167,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
     expect.eql(1.05, bountiesWithCollateral._2) &&
-    expect.eql(0L, bountiesWithCollateral._1(currentAddress))
+      expect.eql(0L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Calculate values with collateral: > 100K and < 200K") {
@@ -193,7 +178,7 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     val bountiesWithCollateral = getDeviceCollateral(balances, currentAddress)
 
     expect(1.1 == bountiesWithCollateral._2) &&
-    expect.eql(0L, bountiesWithCollateral._1(currentAddress))
+      expect.eql(0L, bountiesWithCollateral._1(currentAddress))
   }
 
   pureTest("Calculate values with collateral: > 200K") {

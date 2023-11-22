@@ -10,9 +10,10 @@ import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
-import _root_.cats.effect.IO
-import cats.effect.unsafe.implicits.global
+import cats.data.NonEmptySet
+import cats.effect.kernel.Async
 import org.tessellation.security.SecurityProvider
+import org.tessellation.security.signature.signature.SignatureProof
 
 object Utils {
   private val logger = LoggerFactory.getLogger("Utils")
@@ -31,11 +32,11 @@ object Utils {
     bodyAsBytes.toArray
   }
 
-  def getDagAddressFromPublicKey(publicKeyHex: String, securityProvider: SecurityProvider[IO]): Address = {
-    implicit val sp: SecurityProvider[IO] = securityProvider
+  def getDagAddressFromPublicKey[F[_] : Async: SecurityProvider](publicKeyHex: String): F[Address] = {
     val publicKey: Id = Id(Hex(publicKeyHex))
-    publicKey.toAddress[IO].unsafeRunSync()
+    publicKey.toAddress[F]
   }
+
   def toCBORHex(hexString: String): Array[Byte] = {
     try {
       if ((hexString.length & 1) != 0) {
@@ -49,6 +50,7 @@ object Utils {
         throw new IllegalArgumentException(s"`$hexString` is not a valid hex string", e)
     }
   }
+
   def toTokenAmountFormat(balance: Double): Long = {
     (balance * 10e7).toLong
   }
@@ -72,4 +74,7 @@ object Utils {
     sb.toString
   }
 
+  def getFirstAddressFromProofs[F[_] : Async : SecurityProvider](proofs: NonEmptySet[SignatureProof]): F[Address] = {
+    proofs.map(_.id).head.toAddress[F]
+  }
 }

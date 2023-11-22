@@ -2,8 +2,8 @@ package com.my.dor_metagraph.data_l1
 
 import cats.data.NonEmptyList
 import cats.effect.IO
-import cats.implicits.catsSyntaxValidatedIdBinCompat0
-import com.my.dor_metagraph.shared_data.Data
+import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxValidatedIdBinCompat0}
+import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedState
 import com.my.dor_metagraph.shared_data.decoders.Decoders
 import com.my.dor_metagraph.shared_data.deserializers.Deserializers
@@ -32,11 +32,11 @@ object Main
   ) {
   override def dataApplication: Option[BaseDataApplicationL1Service[IO]] = Option(BaseDataApplicationL1Service(new DataApplicationL1Service[IO, CheckInUpdate, CheckInStateOnChain, CheckInDataCalculatedState] {
 
-    override def validateData(state: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: NonEmptyList[Signed[CheckInUpdate]])(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
+    override def validateData(state: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: NonEmptyList[Signed[CheckInUpdate]])(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = ().validNec.pure[IO]
 
-    override def validateUpdate(update: CheckInUpdate)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = Data.validateUpdate(update)
+    override def validateUpdate(update: CheckInUpdate)(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = LifecycleSharedFunctions.validateUpdate[IO](update)
 
-    override def combine(state: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: List[Signed[CheckInUpdate]])(implicit context: L1NodeContext[IO]): IO[DataState[CheckInStateOnChain, CheckInDataCalculatedState]] = IO.pure(state)
+    override def combine(state: DataState[CheckInStateOnChain, CheckInDataCalculatedState], updates: List[Signed[CheckInUpdate]])(implicit context: L1NodeContext[IO]): IO[DataState[CheckInStateOnChain, CheckInDataCalculatedState]] = state.pure[IO]
 
     override def routes(implicit context: L1NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.empty
 
@@ -62,10 +62,10 @@ object Main
 
     override def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, CheckInUpdate]] = IO(Deserializers.deserializeUpdate(bytes))
 
-    override def getCalculatedState(implicit context: L1NodeContext[IO]): IO[(SnapshotOrdinal, CheckInDataCalculatedState)] = CalculatedState.getCalculatedState
+    override def getCalculatedState(implicit context: L1NodeContext[IO]): IO[(SnapshotOrdinal, CheckInDataCalculatedState)] = CalculatedState.getCalculatedState[IO]
 
-    override def setCalculatedState(ordinal: SnapshotOrdinal, state: CheckInDataCalculatedState)(implicit context: L1NodeContext[IO]): IO[Boolean] = CalculatedState.setCalculatedState(ordinal, state)
+    override def setCalculatedState(ordinal: SnapshotOrdinal, state: CheckInDataCalculatedState)(implicit context: L1NodeContext[IO]): IO[Boolean] = CalculatedState.setCalculatedState[IO](ordinal, state)
 
-    override def hashCalculatedState(state: CheckInDataCalculatedState)(implicit context: L1NodeContext[IO]): IO[Hash] = CalculatedState.hashCalculatedState(state)
+    override def hashCalculatedState(state: CheckInDataCalculatedState)(implicit context: L1NodeContext[IO]): IO[Hash] = CalculatedState.hashCalculatedState[IO](state)
   }))
 }

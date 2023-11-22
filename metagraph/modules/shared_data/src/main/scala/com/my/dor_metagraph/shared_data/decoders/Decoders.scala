@@ -1,7 +1,8 @@
 package com.my.dor_metagraph.shared_data.decoders
 
 import cats.data.NonEmptySet
-import cats.effect.IO
+import cats.effect.Async
+import cats.implicits.{catsSyntaxApplicativeId, toFlatMapOps, toFunctorOps}
 import com.my.dor_metagraph.shared_data.Utils.{getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.external_apis.DorApi.saveDeviceCheckIn
 import com.my.dor_metagraph.shared_data.types.Types._
@@ -19,6 +20,7 @@ import scala.collection.immutable.SortedSet
 
 object Decoders {
   private val logger = LoggerFactory.getLogger("Decoders")
+
   private def buildSignedUpdate(cborData: Array[Byte]): Signed[CheckInUpdate] = {
     val decodedCheckInWithSignature = Cbor.decode(cborData).to[DeviceCheckInWithSignature].value
 
@@ -46,17 +48,18 @@ object Decoders {
     Signed(checkInUpdate, proofs)
   }
 
-  def signedDataEntityDecoder: EntityDecoder[IO, Signed[CheckInUpdate]] = {
-    EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
-      val rawText = msg.as[String]
-      val signed = rawText.flatMap { text =>
-        logger.info(s"Received RAW request: $text")
-        val bodyAsBytes = getByteArrayFromRequestBody(text)
-        IO(buildSignedUpdate(bodyAsBytes))
-      }
-      logger.info(s"PARSED RAW request: $signed")
-      DecodeResult.success(signed)
-    }
-  }
+  def signedDataEntityDecoder[F[_] : Async]: EntityDecoder[F, Signed[CheckInUpdate]] = EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
+    val signedUpdate = for {
+      text <- msg.as[String]
+      _ = logger.info(s"Received RAW request: $text")
+      bodyAsBytes = getByteArrayFromRequestBody(text)
+      signedUpdate = buildSignedUpdate(bodyAsBytes)
+      _ = logger.info(s"PARSED RAW request: Value:${signedUpdate.value} Proofs: ${signedUpdate.proofs}")
+    } yield signedUpdate
 
+    logger.info("TEST")
+    val t = DecodeResult.success(signedUpdate)
+    logger.info("TEST2")
+    t
+  }
 }

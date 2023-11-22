@@ -1,8 +1,8 @@
 package com.my.dor_metagraph.shared_data.types
 
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import derevo.circe.magnolia.{decoder, encoder}
+import derevo.derive
 import org.tessellation.currency.dataApplication.{DataCalculatedState, DataOnChainState, DataUpdate}
 import org.tessellation.schema.address.Address
 
@@ -21,66 +21,33 @@ object Types {
   val COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER: Double = 1.1
   val COLLATERAL_GREATER_THAN_200K_MULTIPLIER: Double = 1.2
 
+  @derive(encoder, decoder)
   case class CheckInProof(id: String, signature: String)
-  object CheckInProof {
-    implicit val encoder: Encoder[CheckInProof] = deriveEncoder
-    implicit val decoder: Decoder[CheckInProof] = deriveDecoder
-  }
 
+  @derive(encoder, decoder)
   case class CheckInStateUpdate(deviceId: Address, dts: Long, proof: CheckInProof, checkInHash: String)
 
-  object CheckInStateUpdate {
-    implicit val encoder: Encoder[CheckInStateUpdate] = deriveEncoder
-    implicit val decoder: Decoder[CheckInStateUpdate] = deriveDecoder
-  }
-
+  @derive(encoder, decoder)
   case class DeviceInfo(lastCheckIn: Long, dorAPIResponse: DorAPIResponse, nextEpochProgressToReward: Long)
 
-  object DeviceInfo {
-    implicit val encoder: Encoder[DeviceInfo] = deriveEncoder
-    implicit val decoder: Decoder[DeviceInfo] = deriveDecoder
-  }
-
+  @derive(encoder, decoder)
   case class DeviceCheckInWithSignature(cbor: String, hash: String, id: String, sig: String)
 
-  object DeviceCheckInWithSignature {
-    implicit val encoder: Encoder[DeviceCheckInWithSignature] = deriveEncoder
-    implicit val decoder: Decoder[DeviceCheckInWithSignature] = deriveDecoder
-  }
+  @derive(encoder, decoder)
   case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
 
-  object DeviceCheckInInfo {
-    implicit val encoder: Encoder[DeviceCheckInInfo] = deriveEncoder
-    implicit val decoder: Decoder[DeviceCheckInInfo] = deriveDecoder
-  }
+  @derive(encoder, decoder)
   case class CheckInStateOnChain(updates: List[CheckInStateUpdate]) extends DataOnChainState
 
-  object CheckInStateOnChain {
-    implicit val encoder: Encoder[CheckInStateOnChain] = deriveEncoder
-    implicit val decoder: Decoder[CheckInStateOnChain] = deriveDecoder
-  }
+  @derive(encoder, decoder)
   case class CheckInDataCalculatedState(devices: Map[Address, DeviceInfo]) extends DataCalculatedState
 
-  object CheckInDataCalculatedState {
-    implicit val encoder: Encoder[CheckInDataCalculatedState] = deriveEncoder
-    implicit val decoder: Decoder[CheckInDataCalculatedState] = deriveDecoder
-  }
+  @derive(encoder, decoder)
   case class CheckInUpdate(publicId: String, signature: String, dts: Long, dtmCheckInHash: String, maybeDorAPIResponse: Option[DorAPIResponse]) extends DataUpdate
 
-  object CheckInUpdate {
-    implicit val encoder: Encoder[CheckInUpdate] = deriveEncoder
-    implicit val decoder: Decoder[CheckInUpdate] = deriveDecoder
-  }
+  @derive(encoder, decoder)
   case class ClusterInfoResponse(id: String, ip: String, publicPort: Long, p2pPort: Long, session: String, state: String)
 
-  object ClusterInfoResponse {
-    implicit val encoder: Encoder[ClusterInfoResponse] = deriveEncoder
-    implicit val decoder: Decoder[ClusterInfoResponse] = deriveDecoder
-  }
+  @derive(encoder, decoder)
   case class DorAPIResponse(rewardAddress: Option[Address], isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long])
-
-  object DorAPIResponse {
-    implicit val encoder: Encoder[DorAPIResponse] = deriveEncoder
-    implicit val decoder: Decoder[DorAPIResponse] = deriveDecoder
-  }
 }
