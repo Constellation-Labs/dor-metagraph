@@ -3,23 +3,27 @@ package com.my.dor_metagraph.shared_data.types
 import com.my.dor_metagraph.shared_data.Utils.convertBytesToHex
 import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInInfo, DeviceCheckInWithSignature}
 import io.bullet.borer.Codec
-import io.bullet.borer.derivation.MapBasedCodecs.deriveCodec
+import io.bullet.borer.derivation.MapBasedCodecs.{deriveCodec, deriveEncoder}
+import io.bullet.borer.{Decoder, Encoder, Reader}
 
 object Codecs {
-  implicit val decoderCheckInWithSignatureRaw: io.bullet.borer.Decoder[DeviceCheckInWithSignature] = io.bullet.borer.Decoder { reader =>
+  private def readNextString(reader: Reader): String = {
+    reader.readString()
+    convertBytesToHex(reader.readByteArray())
+  }
+
+  implicit val decoderCheckInWithSignatureRaw:Decoder[DeviceCheckInWithSignature] = Decoder { reader =>
     val unbounded = reader.readMapOpen(4)
-    reader.readString()
-    val cbor = convertBytesToHex(reader.readByteArray())
-    reader.readString()
-    val hash = convertBytesToHex(reader.readByteArray())
-    reader.readString()
-    val id = convertBytesToHex(reader.readByteArray())
-    reader.readString()
-    val signature = convertBytesToHex(reader.readByteArray())
+    val cbor = readNextString(reader)
+    val hash = readNextString(reader)
+    val id = readNextString(reader)
+    val signature = readNextString(reader)
 
     val deviceCheckingWithSignature = DeviceCheckInWithSignature(cbor, hash, id, signature)
     reader.readArrayClose(unbounded, deviceCheckingWithSignature)
   }
-  implicit val encoderCheckInWithSignatureRaw: io.bullet.borer.Encoder[DeviceCheckInWithSignature] = io.bullet.borer.derivation.MapBasedCodecs.deriveEncoder
+
+  implicit val encoderCheckInWithSignatureRaw: Encoder[DeviceCheckInWithSignature] = deriveEncoder
+
   implicit val checkInfoCodec: Codec[DeviceCheckInInfo] = deriveCodec[DeviceCheckInInfo]
 }
