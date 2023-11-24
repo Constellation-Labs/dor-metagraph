@@ -13,12 +13,12 @@ import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction
 import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
-import org.tessellation.node.shared.domain.rewards.Rewards
-import org.tessellation.node.shared.infrastructure.consensus.trigger
-import org.tessellation.node.shared.infrastructure.consensus.trigger.ConsensusTrigger
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 import cats.implicits.toFunctorOps
+import org.tessellation.sdk.domain.rewards.Rewards
+import org.tessellation.sdk.infrastructure.consensus.trigger
+import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

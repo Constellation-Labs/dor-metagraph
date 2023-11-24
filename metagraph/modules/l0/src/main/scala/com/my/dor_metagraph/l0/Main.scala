@@ -20,7 +20,7 @@ import org.tessellation.currency.l0.CurrencyL0App
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.ext.cats.effect.ResourceIO
-import org.tessellation.node.shared.domain.rewards.Rewards
+import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.security.SecurityProvider

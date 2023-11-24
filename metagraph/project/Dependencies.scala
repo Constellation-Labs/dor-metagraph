@@ -15,7 +15,7 @@ object Dependencies {
   object Libraries {
     val tessellationKernel = tessellation("kernel")
     val tessellationDAGL1 = tessellation("dag-l1")
-    val tessellationNodeShared = tessellation("node-shared")
+    val tessellationSDK = tessellation("sdk")
     val tessellationShared = tessellation("shared")
     val tessellationKeytool = tessellation("keytool")
     val tessellationCurrencyL0 = tessellation("currency-l0")
