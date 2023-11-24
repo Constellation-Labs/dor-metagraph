@@ -1,16 +1,24 @@
 package com.my.dor_metagraph.l0.rewards
 
+import cats.effect.Async
+import cats.implicits.catsSyntaxApplicativeId
 import eu.timepit.refined.types.all.PosLong
-import org.slf4j.LoggerFactory
+import cats.implicits.{toFlatMapOps, toFunctorOps}
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
+import org.typelevel.log4cats.SelfAwareStructuredLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.collection.mutable.ListBuffer
 
 object ValidatorNodesRewards {
-  private val logger = LoggerFactory.getLogger("ValidatorNodeRewards")
+  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("ValidatorNodesRewards")
 
-  private def getRewardsValidatorNodes(addresses: List[Address], taxToEachLayer: Long, layer: String): List[RewardTransaction] = {
+  private def getRewardsValidatorNodes[F[_] : Async](
+    addresses     : List[Address],
+    taxToEachLayer: Long,
+    layer         : String
+  ): F[List[RewardTransaction]] = {
     val numberOfAddresses = addresses.size
     val amountToEachAddress = taxToEachLayer / numberOfAddresses
     val validatorNodesRewards = new ListBuffer[RewardTransaction]()
@@ -20,30 +28,28 @@ object ValidatorNodesRewards {
         TransactionAmount(PosLong.unsafeFrom(amountToEachAddress))
       )
     }
-    logger.info(s"[Validator Nodes $layer] Total Rewards to be distributed: $taxToEachLayer")
-    logger.info(s"[Validator Nodes $layer] Number of addresses: $numberOfAddresses")
-    logger.info(s"[Validator Nodes $layer] Distributing $amountToEachAddress to each one of the $numberOfAddresses addresses")
 
-    validatorNodesRewards.toList
+    for {
+      _ <- logger.info(s"[Validator Nodes $layer] Total Rewards to be distributed: $taxToEachLayer")
+      _ <- logger.info(s"[Validator Nodes $layer] Number of addresses: $numberOfAddresses")
+      _ <- logger.info(s"[Validator Nodes $layer] Distributing $amountToEachAddress to each one of the $numberOfAddresses addresses")
+    } yield validatorNodesRewards.toList
   }
 
-  def getValidatorNodesTransactions(validatorNodesL0: List[Address], validatorNodesL1: List[Address], taxesToValidatorNodes: Long): List[RewardTransaction] = {
+  def getValidatorNodesTransactions[F[_] : Async](
+    validatorNodesL0     : List[Address],
+    validatorNodesL1     : List[Address],
+    taxesToValidatorNodes: Long
+  ): F[List[RewardTransaction]] = {
     if (taxesToValidatorNodes <= 0) {
-      return List.empty
+      return List.empty[RewardTransaction].pure[F]
     }
 
     val taxToEachLayer = taxesToValidatorNodes / 2
 
-    logger.info(s"Rewards to distribute between validator nodes: $taxesToValidatorNodes")
-    logger.info(s"Rewards to distribute between validator nodes L0: $taxToEachLayer")
-    logger.info(s"Rewards to distribute between validator nodes L1: $taxToEachLayer")
-
-    //Validator nodes L0
-    val validatorNodesL0Rewards = getRewardsValidatorNodes(validatorNodesL0, taxToEachLayer, "L0")
-
-    //Validator nodes L1
-    val validatorNodesL1Rewards = getRewardsValidatorNodes(validatorNodesL1, taxToEachLayer, "L1")
-
-    validatorNodesL0Rewards ::: validatorNodesL1Rewards
+    for {
+      validatorNodesL0Rewards <- getRewardsValidatorNodes(validatorNodesL0, taxToEachLayer, "L0")
+      validatorNodesL1Rewards <- getRewardsValidatorNodes(validatorNodesL1, taxToEachLayer, "L1")
+    } yield validatorNodesL0Rewards ::: validatorNodesL1Rewards
   }
 }

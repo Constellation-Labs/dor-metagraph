@@ -5,7 +5,7 @@ import org.tessellation.currency.dataApplication.DataApplicationValidationError
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 
 object Errors {
-  type DataApplicationValidationType = DataApplicationValidationErrorOr[Unit]
+  private type DataApplicationValidationType = DataApplicationValidationErrorOr[Unit]
 
   val valid: DataApplicationValidationType = ().validNec[DataApplicationValidationError]
 

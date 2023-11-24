@@ -7,12 +7,20 @@ import org.tessellation.schema.address.Address
 
 object TypeValidators {
 
-  def validateCheckInTimestampIsGreaterThanLastCheckIn(state: CheckInDataCalculatedState, checkInUpdate: CheckInUpdate, address: Address): DataApplicationValidationErrorOr[Unit] =
+  def validateCheckInTimestampIsGreaterThanLastCheckIn(
+    state        : CheckInDataCalculatedState,
+    checkInUpdate: CheckInUpdate,
+    address      : Address
+  ): DataApplicationValidationErrorOr[Unit] =
     RepeatedCheckIn.whenA(state.devices.get(address).exists(_.lastCheckIn >= checkInUpdate.dts))
 
-  def validateCheckInLimitTimestamp(checkInUpdate: CheckInUpdate): DataApplicationValidationErrorOr[Unit] =
+  def validateCheckInLimitTimestamp(
+    checkInUpdate: CheckInUpdate
+  ): DataApplicationValidationErrorOr[Unit] =
     CheckInOlderThanAllowed.whenA(MINIMUM_CHECK_IN_TIMESTAMP > checkInUpdate.dts)
 
-  def validateIfDeviceIsRegisteredOnDORApi(checkInUpdate: CheckInUpdate): DataApplicationValidationErrorOr[Unit] =
+  def validateIfDeviceIsRegisteredOnDORApi(
+    checkInUpdate: CheckInUpdate
+  ): DataApplicationValidationErrorOr[Unit] =
     DeviceNotRegisteredOnDorApi.unlessA(checkInUpdate.maybeDorAPIResponse.isDefined)
 }

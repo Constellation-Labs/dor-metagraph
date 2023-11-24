@@ -7,23 +7,28 @@ import io.bullet.borer.derivation.MapBasedCodecs.{deriveCodec, deriveEncoder}
 import io.bullet.borer.{Decoder, Encoder, Reader}
 
 object Codecs {
-  private def readNextString(reader: Reader): String = {
+  private def readNextString(
+    reader: Reader
+  ): String = {
     reader.readString()
     convertBytesToHex(reader.readByteArray())
   }
 
-  implicit val decoderCheckInWithSignatureRaw:Decoder[DeviceCheckInWithSignature] = Decoder { reader =>
-    val unbounded = reader.readMapOpen(4)
-    val cbor = readNextString(reader)
-    val hash = readNextString(reader)
-    val id = readNextString(reader)
-    val signature = readNextString(reader)
+  implicit val decoderCheckInWithSignatureRaw: Decoder[DeviceCheckInWithSignature] =
+    Decoder { reader =>
+      val unbounded = reader.readMapOpen(4)
+      val cbor = readNextString(reader)
+      val hash = readNextString(reader)
+      val id = readNextString(reader)
+      val signature = readNextString(reader)
 
-    val deviceCheckingWithSignature = DeviceCheckInWithSignature(cbor, hash, id, signature)
-    reader.readArrayClose(unbounded, deviceCheckingWithSignature)
-  }
+      val deviceCheckingWithSignature = DeviceCheckInWithSignature(cbor, hash, id, signature)
+      reader.readArrayClose(unbounded, deviceCheckingWithSignature)
+    }
 
-  implicit val encoderCheckInWithSignatureRaw: Encoder[DeviceCheckInWithSignature] = deriveEncoder
+  implicit val encoderCheckInWithSignatureRaw: Encoder[DeviceCheckInWithSignature] =
+    deriveEncoder
 
-  implicit val checkInfoCodec: Codec[DeviceCheckInInfo] = deriveCodec[DeviceCheckInInfo]
+  implicit val checkInfoCodec: Codec[DeviceCheckInInfo] =
+    deriveCodec[DeviceCheckInInfo]
 }

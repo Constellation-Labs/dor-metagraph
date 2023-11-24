@@ -11,7 +11,11 @@ import org.tessellation.security.signature.signature.SignatureProof
 import com.my.dor_metagraph.shared_data.Utils.getFirstAddressFromProofs
 
 object Validations {
-  def deviceCheckInValidationsL0[F[_] : Async](checkInUpdate: CheckInUpdate, proofs: NonEmptySet[SignatureProof], state: CheckInDataCalculatedState)(implicit sp: SecurityProvider[F]): F[DataApplicationValidationErrorOr[Unit]] =
+  def deviceCheckInValidationsL0[F[_] : Async](
+    checkInUpdate: CheckInUpdate,
+    proofs       : NonEmptySet[SignatureProof],
+    state        : CheckInDataCalculatedState
+  )(implicit sp: SecurityProvider[F]): F[DataApplicationValidationErrorOr[Unit]] =
     for {
       address <- getFirstAddressFromProofs(proofs)
       validatedAddress = validateCheckInTimestampIsGreaterThanLastCheckIn(state, checkInUpdate, address)
@@ -20,7 +24,9 @@ object Validations {
     } yield validatedAddress.productR(validateCheckInLimit).productR(validateIfDeviceDORApi)
 
 
-  def deviceCheckInValidationsL1[F[_] : Async](checkInUpdate: CheckInUpdate): F[DataApplicationValidationErrorOr[Unit]] = {
+  def deviceCheckInValidationsL1[F[_] : Async](
+    checkInUpdate: CheckInUpdate
+  ): F[DataApplicationValidationErrorOr[Unit]] = {
     val validateCheckInLimit = validateCheckInLimitTimestamp(checkInUpdate)
     val validateIfDeviceDORApi = validateIfDeviceIsRegisteredOnDORApi(checkInUpdate)
     Async[F].delay(validateCheckInLimit.productR(validateIfDeviceDORApi))
