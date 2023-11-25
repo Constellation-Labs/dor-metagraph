@@ -45,13 +45,13 @@ object Utils {
 
   private def toCBORHex[F[_] : Async](
     hexString: String
-  ): Array[Byte] = {
+  ): F[Array[Byte]] = {
     if ((hexString.length & 1) != 0) {
       val message = "string length is not even"
       logger.error(message) >> new Exception(message).raiseError[F, Array[Byte]]
     }
     val byteArray = hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
-    byteArray
+    Async[F].delay(byteArray)
   }
 
   def toTokenAmountFormat(
@@ -64,7 +64,7 @@ object Utils {
     cborData: String
   ): F[DeviceCheckInInfo] = {
     for {
-      checkInCborData <- Async[F].pure(toCBORHex(cborData)).handleErrorWith { err =>
+      checkInCborData <- toCBORHex(cborData).handleErrorWith { err =>
         val message = s"`$cborData` is not a valid hex string. Message: ${err.getMessage}"
         logger.error(message) >> new Exception(message).raiseError[F, Array[Byte]]
       }

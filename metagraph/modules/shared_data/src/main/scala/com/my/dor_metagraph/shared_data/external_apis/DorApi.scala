@@ -12,10 +12,10 @@ import ujson.Obj
 object DorApi {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("DorApi")
 
-  def saveDeviceCheckIn[F[_] : Async](
+  private def saveDeviceCheckIn[F[_] : Async](
     publicKey    : String,
     deviceCheckIn: DeviceCheckInWithSignature
-  ): F[DorAPIResponse] = {
+  ): F[Option[DorAPIResponse]] = {
     val apiUrl = "https://api.getdor.com/metagraph/device"
     val endpoint = s"$apiUrl/$publicKey/check-in"
     val headers = Map("Content-Type" -> "application/json", "version" -> "2")
@@ -45,9 +45,18 @@ object DorApi {
       _ <- logger.info(s"API response $body")
 
       decodedResponse <- decode[DorAPIResponse](body).fold(
-        err => Async[F].raiseError[DorAPIResponse](new Exception(err.getMessage)),
-        Async[F].pure
+        err => logger.warn(s"Failing when decoding: ${err.getMessage}").as(none),
+        response => Async[F].pure(response.some)
       )
     } yield decodedResponse
+  }
+
+  def handleCheckIn[F[_] : Async](
+    publicKey    : String,
+    deviceCheckIn: DeviceCheckInWithSignature
+  ): F[Option[DorAPIResponse]] = {
+    saveDeviceCheckIn(publicKey, deviceCheckIn).handleErrorWith { err =>
+      logger.warn(s"Failing when check in: ${err.getMessage}").as(none)
+    }
   }
 }

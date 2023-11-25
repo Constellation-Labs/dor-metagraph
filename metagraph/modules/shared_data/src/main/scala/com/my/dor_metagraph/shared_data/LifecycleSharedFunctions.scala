@@ -58,7 +58,7 @@ object LifecycleSharedFunctions {
         for {
           epochProgress <- epochProgressF
           address <- getFirstAddressFromProofs(signedUpdate.proofs)
-          _ <- logger.debug(s"New checkIn for the device: $signedUpdate")
+          _ <- logger.info(s"New checkIn for the device: $signedUpdate")
         } yield combineDeviceCheckIn(acc, signedUpdate, address, epochProgress.next)
       }
     }

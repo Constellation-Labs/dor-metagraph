@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.data_l1
 
 import cats.data.NonEmptyList
-import cats.effect.{Async, IO, Resource}
+import cats.effect.{IO, Resource}
 import cats.implicits._
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
