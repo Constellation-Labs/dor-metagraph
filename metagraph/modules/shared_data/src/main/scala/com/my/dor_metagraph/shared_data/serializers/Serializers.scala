@@ -28,7 +28,7 @@ object Serializers {
   def serializeBlock(
     block: Signed[DataApplicationBlock]
   )(implicit e: Encoder[DataUpdate]): Array[Byte] =
-    serialize[DataApplicationBlock](block)
+    serialize[Signed[DataApplicationBlock]](block)
 
   def serializeCalculatedState(
     calculatedState: CheckInDataCalculatedState
