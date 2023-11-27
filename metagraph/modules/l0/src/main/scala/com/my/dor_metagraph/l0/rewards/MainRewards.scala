@@ -6,6 +6,7 @@ import com.my.dor_metagraph.l0.rewards.BountyRewards.getBountyRewardsTransaction
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.combiners.ValidatorNodes.getValidatorNodes
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, EPOCH_PROGRESS_1_DAY}
+import eu.timepit.refined.types.all.PosLong
 import org.slf4j.LoggerFactory
 import org.tessellation.currency.dataApplication.DataCalculatedState
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
@@ -13,13 +14,14 @@ import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, C
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction
-import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
+import org.tessellation.schema.transaction.{RewardTransaction, Transaction, TransactionAmount}
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
 import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 
+import scala.collection.MapView
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object MainRewards {
@@ -64,11 +66,25 @@ object MainRewards {
     buildRewardsTransactionsSortedSet(bountyTransactions, validatorNodesTransactions).pure
   }
 
-  private def buildRewardsTransactionsSortedSet(bountyTransactions: List[RewardTransaction], validatorNodesTransactions: List[RewardTransaction]): SortedSet[RewardTransaction] = {
+  private def buildRewardsTransactionsSortedSet(
+    bountyTransactions        : List[RewardTransaction],
+    validatorNodesTransactions: List[RewardTransaction]
+  ): SortedSet[RewardTransaction] = {
     val allTransactions = bountyTransactions ::: validatorNodesTransactions
-    val allTransactionsFiltered = allTransactions.filter(_.amount.value.value > 0)
+    val groupedTransactions: MapView[Address, Long] =
+      allTransactions
+        .filter(_.amount.value.value > 0)
+        .groupBy(_.destination)
+        .view
+        .mapValues(_.map(_.amount.value.value).sum)
 
-    SortedSet(allTransactionsFiltered: _*)
+    val summedTransactions: List[RewardTransaction] =
+      groupedTransactions.map {
+        case (address, totalAmount) =>
+          RewardTransaction(address, TransactionAmount(PosLong.unsafeFrom(totalAmount)))
+      }.toList
+
+    SortedSet(summedTransactions: _*)
   }
 
   private def logInitialRewardDistribution(epochProgressModulus: Long): Unit = {
