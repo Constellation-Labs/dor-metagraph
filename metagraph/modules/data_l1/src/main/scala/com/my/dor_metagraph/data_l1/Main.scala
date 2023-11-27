@@ -31,7 +31,7 @@ object Main
     ClusterId(UUID.fromString("517c3a05-9219-471b-a54c-21b7d72f4ae5")),
     version = BuildInfo.version
   ) {
-  private def makeBaseDataApplicationL0Service(
+  private def makeBaseDataApplicationL1Service(
     calculatedStateService: CalculatedStateService[IO]
   ): BaseDataApplicationL1Service[IO] =
     BaseDataApplicationL1Service(new DataApplicationL1Service[IO, CheckInUpdate, CheckInStateOnChain, CheckInDataCalculatedState] {
@@ -80,7 +80,7 @@ object Main
   private def makeL1Service: IO[BaseDataApplicationL1Service[IO]] = {
     for {
       calculatedStateService <- CalculatedStateService.make[IO]
-      dataApplicationL1Service = makeBaseDataApplicationL0Service(calculatedStateService)
+      dataApplicationL1Service = makeBaseDataApplicationL1Service(calculatedStateService)
     } yield dataApplicationL1Service
   }
 
