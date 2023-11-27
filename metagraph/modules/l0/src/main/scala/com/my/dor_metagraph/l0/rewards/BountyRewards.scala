@@ -14,7 +14,8 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 object BountyRewards {
-  private val VALIDATOR_NODES_TAXES_PERCENT: Double = 0.1
+  //Validator nodes should have 10%
+  private val ValidatorNodeTaxPercent: Double = 10D / 100
 
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("BountyRewards")
 
@@ -23,14 +24,11 @@ object BountyRewards {
     currentEpochProgress: Long
   ): Long = {
     val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
-    if (epochModulus == 0L) {
-      toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
-    } else if (epochModulus == 1L) {
-      toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
-    } else if (epochModulus == 2L) {
-      toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
-    } else {
-      0L
+    epochModulus match {
+      case 0L => toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      case 1L => toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      case 2L => toTokenAmountFormat(RetailAnalyticsSubscriptionBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      case _ => 0L
     }
   }
 
@@ -49,29 +47,25 @@ object BountyRewards {
     rawRewardValue: Long,
     acc           : Map[Address, RewardTransaction],
     rewardAddress : Address
-  ): F[Map[Address, RewardTransaction]] = {
-    if (rawRewardValue <= 0) {
-      logger.warn(s"Ignoring reward, value equals to 0").as(acc)
-    } else {
-      val rewardValue = acc
-        .get(rewardAddress)
-        .map { current =>
-          val currentAmount: Long = current.amount.value.value
-          currentAmount + rawRewardValue
+  ): F[Map[Address, RewardTransaction]] =
+    rawRewardValue match {
+      case value if value <= 0 =>
+        logger.warn(s"Ignoring reward, value equals to 0").as(acc)
+      case value =>
+        val updatedAcc = acc.updatedWith(rewardAddress) {
+          _.map { current =>
+            val currentAmount = current.amount.value.value
+            val rewardValue = currentAmount + value
+            val rewardValueFormatted: PosLong = PosLong.unsafeFrom(rewardValue)
+            RewardTransaction(rewardAddress, TransactionAmount(rewardValueFormatted))
+          }.orElse {
+            val rewardValueFormatted: PosLong = PosLong.unsafeFrom(value)
+            Some(RewardTransaction(rewardAddress, TransactionAmount(rewardValueFormatted)))
+          }
         }
-        .getOrElse(rawRewardValue)
 
-      for {
-        rewardValueFormatted <- PosLong.from(rewardValue) match {
-          case Left(value) =>
-            logger.warn(s"Error when parsing the value: $rewardValue. Response: $value").as(PosLong.MinValue)
-          case Right(value) => value.pure[F]
-        }
-        rewardTransaction = RewardTransaction(rewardAddress, TransactionAmount(rewardValueFormatted))
-        updatedTransactions = acc + (rewardAddress -> rewardTransaction)
-      } yield updatedTransactions
+        Async[F].delay(updatedAcc)
     }
-  }
 
   def getBountyRewardsTransactions[F[_] : Async](
     state               : CheckInDataCalculatedState,
@@ -98,7 +92,7 @@ object BountyRewards {
                 collateralMultiplierFactor: Double = deviceCollateral._2
 
                 deviceTotalRewards: Long <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
-                deviceTaxToValidatorNodes: Long = (deviceTotalRewards * VALIDATOR_NODES_TAXES_PERCENT).toLong
+                deviceTaxToValidatorNodes: Long = (deviceTotalRewards * ValidatorNodeTaxPercent).toLong
 
                 rewardValue: Long = deviceTotalRewards - deviceTaxToValidatorNodes
 
@@ -110,7 +104,7 @@ object BountyRewards {
         }
     }.map { rewardTransactionsWitValidatorsTaxes =>
       RewardTransactionsAndValidatorsTaxes(
-        rewardTransactionsWitValidatorsTaxes.rewardTransactions.values.filter(_ != null).toList,
+        rewardTransactionsWitValidatorsTaxes.rewardTransactions.values.toList,
         rewardTransactionsWitValidatorsTaxes.validatorsTaxes
       )
     }

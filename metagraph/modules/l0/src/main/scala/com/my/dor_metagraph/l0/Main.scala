@@ -144,8 +144,6 @@ object Main extends CurrencyL0App(
     makeL0Service.asResource.some
 
   override def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] =
-    Some(
-      MainRewards.make[IO]
-    )
+    MainRewards.make[IO].some
 }
 

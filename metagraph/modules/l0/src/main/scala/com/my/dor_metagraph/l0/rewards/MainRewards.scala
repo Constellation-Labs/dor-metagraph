@@ -12,16 +12,18 @@ import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, C
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction
-import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
+import org.tessellation.schema.transaction.{RewardTransaction, Transaction, TransactionAmount}
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 import cats.implicits.toFunctorOps
+import eu.timepit.refined.types.all.PosLong
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
 import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+import scala.collection.MapView
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object MainRewards {
@@ -86,9 +88,20 @@ object MainRewards {
     validatorNodesTransactions: List[RewardTransaction]
   ): SortedSet[RewardTransaction] = {
     val allTransactions = bountyTransactions ::: validatorNodesTransactions
-    val allTransactionsFiltered = allTransactions.filter(_.amount.value.value > 0)
+    val groupedTransactions: MapView[Address, Long] =
+      allTransactions
+        .filter(_.amount.value.value > 0)
+        .groupBy(_.destination)
+        .view
+        .mapValues(_.map(_.amount.value.value).sum)
 
-    SortedSet(allTransactionsFiltered: _*)
+    val summedTransactions: List[RewardTransaction] =
+      groupedTransactions.map {
+        case (address, totalAmount) =>
+          RewardTransaction(address, TransactionAmount(PosLong.unsafeFrom(totalAmount)))
+      }.toList
+
+    SortedSet(summedTransactions: _*)
   }
 
   private def logAllDevicesRewards[F[_] : Async](
