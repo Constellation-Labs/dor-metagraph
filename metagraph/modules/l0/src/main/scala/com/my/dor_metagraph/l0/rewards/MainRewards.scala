@@ -5,7 +5,7 @@ import cats.syntax.all._
 import com.my.dor_metagraph.l0.rewards.BountyRewards.getBountyRewardsTransactions
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
 import ValidatorNodes.getValidatorNodes
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, EPOCH_PROGRESS_1_DAY, RewardTransactionsAndValidatorsTaxes}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, EpochProgress1Day, RewardTransactionsAndValidatorsTaxes}
 import org.tessellation.currency.dataApplication.DataCalculatedState
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
@@ -50,7 +50,7 @@ object MainRewards {
     maybeCalculatedState: Option[DataCalculatedState]
   ): F[SortedSet[RewardTransaction]] = {
     val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
-    val epochProgressModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
+    val epochProgressModulus = currentEpochProgress % EpochProgress1Day
     if (epochProgressModulus > 2) {
       SortedSet.empty[RewardTransaction].pure[F]
     } else {

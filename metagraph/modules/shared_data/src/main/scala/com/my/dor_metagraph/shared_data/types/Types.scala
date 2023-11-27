@@ -9,19 +9,19 @@ import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
 
 object Types {
-  val EPOCH_PROGRESS_1_DAY: Long = 60 * 24
+  val EpochProgress1Day: Long = 60 * 24
 
   //Friday, 1 September 2023 00:00:00
-  val MINIMUM_CHECK_IN_TIMESTAMP = 1693526400L
+  val MinimumCheckInTimestamp: Long = 1693526400L
 
-  val COLLATERAL_50K: Long = toTokenAmountFormat(50000)
-  val COLLATERAL_100K: Long = toTokenAmountFormat(100000)
-  val COLLATERAL_200K: Long = toTokenAmountFormat(200000)
+  val Collateral50K: Long = toTokenAmountFormat(50 * 1000)
+  val Collateral100K: Long = toTokenAmountFormat(100 * 1000)
+  val Collateral200K: Long = toTokenAmountFormat(200 * 1000)
 
-  val COLLATERAL_LESS_THAN_50K_MULTIPLIER: Double = 1
-  val COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER: Double = 1.05
-  val COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER: Double = 1.1
-  val COLLATERAL_GREATER_THAN_200K_MULTIPLIER: Double = 1.2
+  val CollateralLessThan50KMultiplier: Double = 1D
+  val CollateralBetween50KAnd100KMultiplier: Double = 1.05D
+  val CollateralBetween100KAnd200KMultiplier: Double = 1.1D
+  val CollateralGreaterThan200KMultiplier: Double = 1.2D
 
   @derive(encoder, decoder)
   case class CheckInProof(

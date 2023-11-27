@@ -12,17 +12,17 @@ object Collateral {
     rewardAddress: Address
   ): (Map[Address, Balance], Double) = {
     lastBalances.get(rewardAddress) match {
-      case None => (lastBalances, COLLATERAL_LESS_THAN_50K_MULTIPLIER)
+      case None => (lastBalances, CollateralLessThan50KMultiplier)
       case Some(rawBalance) =>
         val balance = rawBalance.value.value
-        val (value, collateralMultiplierFactor) = if (balance < COLLATERAL_50K) {
-          (balance, COLLATERAL_LESS_THAN_50K_MULTIPLIER)
-        } else if (balance >= COLLATERAL_50K && balance < COLLATERAL_100K) {
-          (balance, COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER)
-        } else if (balance >= COLLATERAL_100K && balance < COLLATERAL_200K) {
-          (balance, COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER)
+        val (value, collateralMultiplierFactor) = if (balance < Collateral50K) {
+          (balance, CollateralLessThan50KMultiplier)
+        } else if (balance >= Collateral50K && balance < Collateral100K) {
+          (balance, CollateralBetween50KAnd100KMultiplier)
+        } else if (balance >= Collateral100K && balance < Collateral200K) {
+          (balance, CollateralBetween100KAnd200KMultiplier)
         } else {
-          (toTokenAmountFormat(200000), COLLATERAL_GREATER_THAN_200K_MULTIPLIER)
+          (toTokenAmountFormat(200000), CollateralGreaterThan200KMultiplier)
         }
 
         val newBalance = NonNegLong.from(balance - value) match {

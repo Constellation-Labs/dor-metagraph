@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data.combiners
 
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInProof, CheckInStateOnChain, CheckInStateUpdate, CheckInUpdate, DeviceInfo, EPOCH_PROGRESS_1_DAY}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInProof, CheckInStateOnChain, CheckInStateUpdate, CheckInUpdate, DeviceInfo, EpochProgress1Day}
 import org.tessellation.currency.dataApplication.DataState
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.epoch.EpochProgress
@@ -15,8 +15,8 @@ object DeviceCheckIn {
     val state = acc.calculated.devices.get(address)
 
     val currentEpoch: Long = epochProgress.value.value
-    val currentEpochModulus: Long = currentEpoch % EPOCH_PROGRESS_1_DAY
-    val nextRewardEpoch: Long = currentEpoch - currentEpochModulus + EPOCH_PROGRESS_1_DAY
+    val currentEpochModulus: Long = currentEpoch % EpochProgress1Day
+    val nextRewardEpoch: Long = currentEpoch - currentEpochModulus + EpochProgress1Day
 
     val nextRewardEpochProgress: Long = state
       .filter(currentEpoch < _.nextEpochProgressToReward)

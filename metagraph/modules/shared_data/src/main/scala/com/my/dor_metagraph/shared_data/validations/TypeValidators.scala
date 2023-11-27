@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.shared_data.validations
 
 import com.my.dor_metagraph.shared_data.Errors.{CheckInOlderThanAllowed, DeviceNotRegisteredOnDorApi, RepeatedCheckIn}
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInUpdate, MINIMUM_CHECK_IN_TIMESTAMP}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInUpdate, MinimumCheckInTimestamp}
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 import org.tessellation.schema.address.Address
 
@@ -17,7 +17,7 @@ object TypeValidators {
   def validateCheckInLimitTimestamp(
     checkInUpdate: CheckInUpdate
   ): DataApplicationValidationErrorOr[Unit] =
-    CheckInOlderThanAllowed.whenA(MINIMUM_CHECK_IN_TIMESTAMP > checkInUpdate.dts)
+    CheckInOlderThanAllowed.whenA(MinimumCheckInTimestamp > checkInUpdate.dts)
 
   def validateIfDeviceIsRegisteredOnDORApi(
     checkInUpdate: CheckInUpdate

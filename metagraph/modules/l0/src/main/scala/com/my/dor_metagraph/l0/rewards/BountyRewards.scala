@@ -23,7 +23,7 @@ object BountyRewards {
     device              : DeviceInfo,
     currentEpochProgress: Long
   ): Long = {
-    val epochModulus = currentEpochProgress % EPOCH_PROGRESS_1_DAY
+    val epochModulus = currentEpochProgress % EpochProgress1Day
     epochModulus match {
       case 0L => toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
       case 1L => toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
@@ -81,7 +81,7 @@ object BountyRewards {
           case None =>
             logger.warn(s"Device doesn't have rewardAddress") >> accF
           case Some(rewardAddress) =>
-            if (currentEpochProgress - deviceInfo.nextEpochProgressToReward > EPOCH_PROGRESS_1_DAY) {
+            if (currentEpochProgress - deviceInfo.nextEpochProgressToReward > EpochProgress1Day) {
               logger.warn(s"Device with reward address ${rewardAddress.value.value} didn't make a check in in the last 24 hours") >> accF
             } else {
               for {
