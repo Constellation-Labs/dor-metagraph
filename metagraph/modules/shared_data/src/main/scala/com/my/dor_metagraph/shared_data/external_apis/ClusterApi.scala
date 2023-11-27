@@ -7,6 +7,7 @@ import io.circe.parser.decode
 import org.slf4j.LoggerFactory
 import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
+import eu.timepit.refined.auto._
 
 object ClusterApi {
   private val logger = LoggerFactory.getLogger("ClusterAPI")
@@ -37,6 +38,20 @@ object ClusterApi {
     logger.info(s"Starting to fetch validator nodes of env $metagraphL0NodeUrl and $dataL1NodeUrl")
     val l0ValidatorNodes = getValidatorNodesAddressesFromClusterInfo(metagraphL0NodeUrl, securityProvider)
     val l1ValidatorNodes = getValidatorNodesAddressesFromClusterInfo(dataL1NodeUrl, securityProvider)
-    (l0ValidatorNodes, l1ValidatorNodes)
+
+    val validatorNodesL0 = if(l0ValidatorNodes.isEmpty){
+      val addresses: List[Address] = List(Address("DAG0o6WSyvc7XfzujwJB1e25mfyzgXoLYDD6wqnk"), Address("DAG4YD6rkExLwYyAZzwjYJMxe36PAptKuUKq9uc7"), Address("DAG4nBD5J3Pr2uHgtS1sa16PqemHrwCcvjdR31Xe"))
+      addresses
+    } else{
+      l0ValidatorNodes
+    }
+    val validatorNodesL1 = if (l1ValidatorNodes.isEmpty) {
+      val addresses: List[Address] = List(Address("DAG5fqiGq9L5iLH5R5eV7gBjkucewrcaQ1jVnKYD"), Address("DAG6B5mBMoEu3Habtb2ts3QGUD2UquywrQSLSubU"), Address("DAG5uDuGhPuh4mQZGNLFCEcdy69txSF4iSfFbdWJ"))
+      addresses
+    } else {
+      l1ValidatorNodes
+    }
+
+    (validatorNodesL0, validatorNodesL1)
   }
 }

@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data.deserializers
 
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInStateOnChain, CheckInUpdate}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, parser}
 import org.tessellation.currency.dataApplication.DataUpdate
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationBlock
@@ -25,6 +25,12 @@ object Deserializers {
   def deserializeBlock(bytes: Array[Byte])(implicit e: Decoder[DataUpdate]): Either[Throwable, Signed[DataApplicationBlock]] = {
     parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
       json.as[Signed[DataApplicationBlock]]
+    }
+  }
+
+  def deserializeCalculatedState(bytes: Array[Byte]): Either[Throwable, CheckInDataCalculatedState] = {
+    parser.parse(new String(bytes, StandardCharsets.UTF_8)).flatMap { json =>
+      json.as[CheckInDataCalculatedState]
     }
   }
 }
