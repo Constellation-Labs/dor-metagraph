@@ -1,12 +1,12 @@
 package com.my.dor_metagraph.l0
 
 import cats.data.NonEmptyList
-import cats.effect.IO
-import cats.implicits.catsSyntaxValidatedIdBinCompat0
+import cats.effect.{IO, Resource}
+import cats.implicits.{catsSyntaxOptionId, catsSyntaxValidatedIdBinCompat0}
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes.getLatestCalculatedState
 import com.my.dor_metagraph.l0.rewards.MainRewards
 import com.my.dor_metagraph.shared_data.Data
-import com.my.dor_metagraph.shared_data.calculated_state.CalculatedState
+import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
 import com.my.dor_metagraph.shared_data.deserializers.Deserializers
 import com.my.dor_metagraph.shared_data.serializers.Serializers
@@ -25,8 +25,8 @@ import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hash.Hash
 import org.tessellation.security.signature.Signed
-
 import org.http4s.dsl.io._
+import org.tessellation.ext.cats.effect.ResourceIO
 
 import java.util.UUID
 
@@ -37,8 +37,10 @@ object Main
     ClusterId(UUID.fromString("517c3a05-9219-471b-a54c-21b7d72f4ae5")),
     version = BuildInfo.version
   ) {
-  def dataApplication: Option[BaseDataApplicationL0Service[IO]] =
-    Option(BaseDataApplicationL0Service(new DataApplicationL0Service[IO, CheckInUpdate, CheckInStateOnChain, CheckInDataCalculatedState] {
+  private def makeBaseDataApplicationL0Service(
+    calculatedStateService: CalculatedStateService[IO]
+  ): BaseDataApplicationL0Service[IO] =
+    BaseDataApplicationL0Service(new DataApplicationL0Service[IO, CheckInUpdate, CheckInStateOnChain, CheckInDataCalculatedState] {
       override def genesis: DataState[CheckInStateOnChain, CheckInDataCalculatedState] = DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(Map.empty))
 
       override def validateUpdate(update: CheckInUpdate)(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] = IO.pure(().validNec)
@@ -69,18 +71,31 @@ object Main
 
       override def deserializeUpdate(bytes: Array[Byte]): IO[Either[Throwable, CheckInUpdate]] = IO(Deserializers.deserializeUpdate(bytes))
 
-      override def getCalculatedState(implicit context: L0NodeContext[IO]): IO[(SnapshotOrdinal, CheckInDataCalculatedState)] = CalculatedState.getCalculatedState
+      override def getCalculatedState(implicit context: L0NodeContext[IO]): IO[(SnapshotOrdinal, CheckInDataCalculatedState)] = calculatedStateService.getCalculatedState.map(calculatedState => (calculatedState.ordinal, calculatedState.state))
 
-      override def setCalculatedState(ordinal: SnapshotOrdinal, state: CheckInDataCalculatedState)(implicit context: L0NodeContext[IO]): IO[Boolean] = CalculatedState.setCalculatedState(ordinal, state)
+      override def setCalculatedState(ordinal: SnapshotOrdinal, state: CheckInDataCalculatedState)(implicit context: L0NodeContext[IO]): IO[Boolean] = calculatedStateService.setCalculatedState(ordinal, state)
 
-      override def hashCalculatedState(state: CheckInDataCalculatedState)(implicit context: L0NodeContext[IO]): IO[Hash] = CalculatedState.hashCalculatedState(state)
+      override def hashCalculatedState(state: CheckInDataCalculatedState)(implicit context: L0NodeContext[IO]): IO[Hash] = calculatedStateService.hashCalculatedState(state)
 
       override def routes(implicit context: L0NodeContext[IO]): HttpRoutes[IO] = HttpRoutes.of {
-        case GET -> Root / "calculated-state" / "latest" => getLatestCalculatedState
+        case GET -> Root / "calculated-state" / "latest" => getLatestCalculatedState(calculatedStateService)
       }
-    }))
 
-  def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] = Some(
-    MainRewards.make[IO]
-  )
+      override def serializeCalculatedState(state: CheckInDataCalculatedState): IO[Array[Byte]] = IO(Serializers.serializeCalculatedState(state))
+
+      override def deserializeCalculatedState(bytes: Array[Byte]): IO[Either[Throwable, CheckInDataCalculatedState]] = IO(Deserializers.deserializeCalculatedState(bytes))
+    })
+
+  private def makeL0Service: IO[BaseDataApplicationL0Service[IO]] = {
+    for {
+      calculatedStateService <- CalculatedStateService.make[IO]
+      dataApplicationL0Service = makeBaseDataApplicationL0Service(calculatedStateService)
+    } yield dataApplicationL0Service
+  }
+
+  override def dataApplication: Option[Resource[IO, BaseDataApplicationL0Service[IO]]] =
+    makeL0Service.asResource.some
+
+  override def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] =
+    MainRewards.make[IO].some
 }

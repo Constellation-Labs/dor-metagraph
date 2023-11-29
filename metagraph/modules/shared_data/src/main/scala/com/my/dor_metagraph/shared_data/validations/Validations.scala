@@ -19,11 +19,6 @@ object Validations {
     val validateCheckInLimit = validateCheckInLimitTimestamp(checkInUpdate)
     val validateIfDeviceDORApi = validateIfDeviceIsRegisteredOnDORApi(checkInUpdate)
 
-    logger.info(s"[L0 Validation] Received Update: $checkInUpdate")
-    logger.info(s"[L0 Validation] validateCurrentCheckInGreaterThanLast: ${validateCurrentCheckInGreaterThanLast.isValid}")
-    logger.info(s"[L0 Validation] validateCheckInLimit: ${validateCheckInLimit.isValid}")
-    logger.info(s"[L0 Validation] validateIfDeviceDORApi: ${validateIfDeviceDORApi.isValid}")
-
     IO {
       validateCurrentCheckInGreaterThanLast.productR(validateCheckInLimit).productR(validateIfDeviceDORApi)
     }
@@ -32,10 +27,6 @@ object Validations {
   def deviceCheckInValidationsL1(checkInUpdate: CheckInUpdate): IO[DataApplicationValidationErrorOr[Unit]] = {
     val validateCheckInLimit = validateCheckInLimitTimestamp(checkInUpdate)
     val validateIfDeviceDORApi = validateIfDeviceIsRegisteredOnDORApi(checkInUpdate)
-
-    logger.info(s"[L1 Validation] Received Update: $checkInUpdate")
-    logger.info(s"[L1 Validation] validateCheckInLimit: ${validateCheckInLimit.isValid}")
-    logger.info(s"[L1 Validation] validateIfDeviceDORApi: ${validateIfDeviceDORApi.isValid}")
 
     IO {
       validateCheckInLimit.productR(validateIfDeviceDORApi)
