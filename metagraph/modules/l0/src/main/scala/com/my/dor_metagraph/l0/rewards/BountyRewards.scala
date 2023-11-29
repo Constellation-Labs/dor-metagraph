@@ -53,6 +53,7 @@ object BountyRewards {
     acc.updatedWith(rewardAddress) {
       _.map(_.amount.value.value + rawRewardValue)
         .orElse(rawRewardValue.some)
+        .filter(v => v > 0L)
         .map(v =>
           (rewardAddress, v.toPosLongUnsafe).toRewardTransaction
         )
