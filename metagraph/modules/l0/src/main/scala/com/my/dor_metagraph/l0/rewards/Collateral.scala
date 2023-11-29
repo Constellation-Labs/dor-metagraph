@@ -17,18 +17,15 @@ object Collateral {
         val balance = rawBalance.value.value
         val (value, collateralMultiplierFactor) = if (balance < Collateral50K) {
           (balance, CollateralLessThan50KMultiplier)
-        } else if (balance >= Collateral50K && balance < Collateral100K) {
+        } else if (balance < Collateral100K) {
           (balance, CollateralBetween50KAnd100KMultiplier)
-        } else if (balance >= Collateral100K && balance < Collateral200K) {
+        } else if (balance < Collateral200K) {
           (balance, CollateralBetween100KAnd200KMultiplier)
         } else {
-          (toTokenAmountFormat(200000), CollateralGreaterThan200KMultiplier)
+          (toTokenAmountFormat(200_000), CollateralGreaterThan200KMultiplier)
         }
 
-        val newBalance = NonNegLong.from(balance - value) match {
-          case Left(_) => NonNegLong.MinValue
-          case Right(value) => value
-        }
+        val newBalance = NonNegLong.from(balance - value).getOrElse(NonNegLong.MinValue)
 
         val updatedLastBalances = lastBalances + (rewardAddress -> Balance(newBalance))
         (updatedLastBalances, collateralMultiplierFactor)

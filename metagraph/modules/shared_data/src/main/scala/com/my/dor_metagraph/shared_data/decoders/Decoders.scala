@@ -2,7 +2,8 @@ package com.my.dor_metagraph.shared_data.decoders
 
 import cats.data.NonEmptySet
 import cats.effect.Async
-import cats.implicits.{toFlatMapOps, toFunctorOps}
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.Utils.{getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.external_apis.DorApi.handleCheckIn
 import com.my.dor_metagraph.shared_data.types.Types._
@@ -27,8 +28,7 @@ object Decoders {
     val hexId = Hex(decodedCheckInWithSignature.id)
     val hexSignature = Hex(decodedCheckInWithSignature.sig)
 
-    val signatureProof = SignatureProof(Id(hexId), Signature(hexSignature))
-    val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
+    val proofs = NonEmptySet.one(SignatureProof(Id(hexId), Signature(hexSignature)))
 
     for {
       _ <- logger.info(s"Decoded CBOR field ${decodedCheckInWithSignature.cbor}")

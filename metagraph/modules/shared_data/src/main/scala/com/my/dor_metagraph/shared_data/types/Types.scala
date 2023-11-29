@@ -11,8 +11,8 @@ import org.tessellation.schema.transaction.RewardTransaction
 object Types {
   val EpochProgress1Day: Long = 60 * 24
 
-  //Friday, 1 September 2023 00:00:00
-  val MinimumCheckInTimestamp: Long = 1693526400L
+  val MinimumCheckInSeconds: Long =
+    java.time.Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
 
   val Collateral50K: Long = toTokenAmountFormat(50 * 1000)
   val Collateral100K: Long = toTokenAmountFormat(100 * 1000)

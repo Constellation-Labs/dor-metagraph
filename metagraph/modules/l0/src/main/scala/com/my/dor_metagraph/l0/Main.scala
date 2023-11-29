@@ -2,7 +2,9 @@ package com.my.dor_metagraph.l0
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId, catsSyntaxValidatedIdBinCompat0}
+import cats.syntax.validated._
+import cats.syntax.applicative._
+import cats.syntax.option._
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
 import com.my.dor_metagraph.l0.rewards.MainRewards
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions

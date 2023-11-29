@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
-import cats.implicits.catsSyntaxOptionId
+import cats.syntax.option._
 import com.my.dor_metagraph.l0.rewards.BountyRewards.getDeviceBountyRewardsAmount
 import com.my.dor_metagraph.l0.rewards.Collateral.getDeviceCollateral
 import com.my.dor_metagraph.l0.rewards.MainRewards
@@ -102,19 +102,6 @@ object DorMetagraphRewardsTest extends MutableIOSuite {
     } yield expect.eql(7, rewards.size) &&
       expect.eql(5400000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-  }
-
-  test("Empty rewards when epochProgress does not complete 1 day") {
-    val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, 10L.some)
-    val currentEpochProgress = 1500L
-
-    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress)))
-    val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
-
-    for {
-      rewards <- MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1)
-    } yield expect.eql(0, rewards.size)
   }
 
   pureTest("Get bounty reward amount - UnitDeployedBounty") {

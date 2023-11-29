@@ -1,5 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
+import cats.ApplicativeError
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.bullet.borer.Cbor
 import org.tessellation.schema.ID.Id
@@ -9,8 +10,13 @@ import scala.collection.mutable.ListBuffer
 import org.tessellation.schema.address.Address
 import cats.data.NonEmptySet
 import cats.effect.Async
-import cats.implicits._
+import cats.syntax.applicativeError._
+import cats.syntax.flatMap._
+import cats.syntax.bifunctor._
+import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.types.Codecs.checkInfoCodec
+import eu.timepit.refined.types.all.PosLong
+import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.signature.SignatureProof
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -49,9 +55,9 @@ object Utils {
     if ((hexString.length & 1) != 0) {
       val message = "string length is not even"
       logger.error(message) >> new Exception(message).raiseError[F, Array[Byte]]
+    } else {
+      Async[F].delay(hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray)
     }
-    val byteArray = hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
-    Async[F].delay(byteArray)
   }
 
   def toTokenAmountFormat(
@@ -75,19 +81,26 @@ object Utils {
     } yield decodedCheckIn
   }
 
-  def convertBytesToHex(
-    bytes: Array[Byte]
-  ): String = {
-    val sb = new StringBuilder
-    for (b <- bytes) {
-      sb.append(String.format("%02x", Byte.box(b)))
-    }
-    sb.toString
-  }
-
   def getFirstAddressFromProofs[F[_] : Async : SecurityProvider](
     proofs: NonEmptySet[SignatureProof]
   ): F[Address] = {
     proofs.map(_.id).head.toAddress[F]
+  }
+
+  implicit class RewardTransactionOps(tuple: (Address, PosLong)) {
+    def toRewardTransaction: RewardTransaction = {
+      val (address, amount) = tuple
+      RewardTransaction(address, TransactionAmount(amount))
+    }
+  }
+
+  implicit class PosLongEffectOps[F[_]](value: Long)(implicit AE: ApplicativeError[F, Throwable]) {
+    def toPosLong: F[PosLong] =
+      AE.fromEither(PosLong.from(value).leftMap(m => new RuntimeException(m)))
+  }
+
+  implicit class PosLongOps(value: Long) {
+    def toPosLongUnsafe: PosLong =
+      PosLong.unsafeFrom(value)
   }
 }

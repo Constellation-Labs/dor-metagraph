@@ -1,7 +1,8 @@
 package com.my.dor_metagraph.l0.custom_routes
 
 import cats.effect.Async
-import cats.implicits.toFunctorOps
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.types.Types.CalculatedStateResponse
 import org.http4s.{HttpRoutes, Response}
@@ -14,9 +15,9 @@ import org.tessellation.http.routes.internal.{InternalUrlPrefix, PublicRoutes}
 case class CustomRoutes[F[_] : Async](calculatedStateService: CalculatedStateService[F]) extends Http4sDsl[F] with PublicRoutes[F] {
 
   private def getLatestCalculatedState: F[Response[F]] = {
-    val calculatedState = calculatedStateService.getCalculatedState
-    val response = calculatedState.map(state => CalculatedStateResponse(state.ordinal.value.value, state.state))
-    Ok(response)
+    calculatedStateService.getCalculatedState
+      .map(state => CalculatedStateResponse(state.ordinal.value.value, state.state))
+      .flatMap(Ok(_))
   }
 
   private val routes: HttpRoutes[F] = HttpRoutes.of[F] {

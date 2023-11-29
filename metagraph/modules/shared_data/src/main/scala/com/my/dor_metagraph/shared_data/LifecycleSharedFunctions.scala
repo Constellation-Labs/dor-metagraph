@@ -17,8 +17,6 @@ import org.tessellation.security.SecurityProvider
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import scala.language.postfixOps
-
 object LifecycleSharedFunctions {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("LifecycleSharedFunctions")
 

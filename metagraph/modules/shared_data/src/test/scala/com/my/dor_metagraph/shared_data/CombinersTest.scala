@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.shared_data
 
-import cats.implicits.catsSyntaxOptionId
+import cats.syntax.option._
 import com.my.dor_metagraph.shared_data.combiners.DeviceCheckIn.combineDeviceCheckIn
 import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.currency.dataApplication.DataState

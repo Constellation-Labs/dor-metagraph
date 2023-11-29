@@ -1,7 +1,10 @@
 package com.my.dor_metagraph.shared_data.external_apis
 
 import cats.effect.Async
-import cats.implicits._
+import cats.syntax.option._
+import cats.syntax.functor._
+import cats.syntax.flatMap._
+import cats.syntax.applicativeError._
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
 import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInWithSignature, DorAPIResponse}
 import io.circe.parser.decode

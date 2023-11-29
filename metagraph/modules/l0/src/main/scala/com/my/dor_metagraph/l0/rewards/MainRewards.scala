@@ -5,69 +5,70 @@ import cats.syntax.all._
 import com.my.dor_metagraph.l0.rewards.BountyRewards.getBountyRewardsTransactions
 import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
 import ValidatorNodes.getValidatorNodes
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, EpochProgress1Day, RewardTransactionsAndValidatorsTaxes}
+import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.currency.dataApplication.DataCalculatedState
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction
-import org.tessellation.schema.transaction.{RewardTransaction, Transaction, TransactionAmount}
+import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
-import cats.implicits.toFunctorOps
-import eu.timepit.refined.types.all.PosLong
+import cats.syntax.functor.toFunctorOps
+import com.my.dor_metagraph.shared_data.Utils.{PosLongOps, RewardTransactionOps}
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
 import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import scala.collection.MapView
+import scala.collection.{MapView, View}
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object MainRewards {
-  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("ValidatorNodesRewards")
+  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("MainRewards")
 
-  def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
+  //TODO: Migrate the functions buildRewards, buildRewardsTransactionsSortedSet, logAllDevicesRewards, and logInitialRewardDistribution to inside make context. Tests need to be adapted
+  def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] = {
     (
       lastArtifact        : Signed[CurrencyIncrementalSnapshot],
       lastBalances        : SortedMap[Address, Balance],
       _                   : SortedSet[Signed[Transaction]],
-      consensusTrigger    : ConsensusTrigger
-      , _                 : Set[CurrencySnapshotEvent],
+      consensusTrigger    : ConsensusTrigger,
+      _                   : Set[CurrencySnapshotEvent],
       maybeCalculatedState: Option[DataCalculatedState]
     ) => {
+      def distributeRewards(
+        lastArtifact        : Signed[CurrencyIncrementalSnapshot],
+        lastBalances        : SortedMap[Address, Balance],
+        maybeCalculatedState: Option[DataCalculatedState]
+      ): F[SortedSet[RewardTransaction]] = {
+        val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
+        val epochProgressModulus = currentEpochProgress % EpochProgress1Day
+        if (epochProgressModulus > 2) {
+          SortedSet.empty[RewardTransaction].pure[F]
+        } else {
+          maybeCalculatedState.foldLeftM(SortedSet.empty[RewardTransaction]) { (_, calculatedState) =>
+            for {
+              _ <- logger.info("Starting the rewards...")
+              (l0ValidatorNodes, l1ValidatorNodes) <- getValidatorNodes
+              _ <- logInitialRewardDistribution(epochProgressModulus)
+              checkInCalculatedState: CheckInDataCalculatedState = calculatedState.asInstanceOf[CheckInDataCalculatedState]
+              rewards <- buildRewards(checkInCalculatedState, currentEpochProgress, lastBalances, l0ValidatorNodes, l1ValidatorNodes)
+            } yield rewards
+          }
+
+        }
+      }
+
       consensusTrigger match {
-        case trigger.EventTrigger => SortedSet.empty[transaction.RewardTransaction].pure[F]
+        case trigger.EventTrigger => SortedSet.empty[RewardTransaction].pure[F]
         case trigger.TimeTrigger => distributeRewards(lastArtifact, lastBalances, maybeCalculatedState)
       }
     }
-
-  private def distributeRewards[F[_] : Async : SecurityProvider](
-    lastArtifact        : Signed[CurrencyIncrementalSnapshot],
-    lastBalances        : SortedMap[Address, Balance],
-    maybeCalculatedState: Option[DataCalculatedState]
-  ): F[SortedSet[RewardTransaction]] = {
-    val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
-    val epochProgressModulus = currentEpochProgress % EpochProgress1Day
-    if (epochProgressModulus > 2) {
-      SortedSet.empty[RewardTransaction].pure[F]
-    } else {
-      maybeCalculatedState.foldLeftM(SortedSet.empty[transaction.RewardTransaction]) { (_, calculatedState) =>
-        for {
-          _ <- logger.info("Starting the rewards...")
-          (l0ValidatorNodes, l1ValidatorNodes) <- getValidatorNodes
-          _ <- logInitialRewardDistribution(epochProgressModulus)
-          checkInCalculatedState: CheckInDataCalculatedState = calculatedState.asInstanceOf[CheckInDataCalculatedState]
-          rewards <- buildRewards(checkInCalculatedState, currentEpochProgress, lastBalances, l0ValidatorNodes, l1ValidatorNodes)
-        } yield rewards
-      }
-
-    }
   }
 
-  def buildRewards[F[_] : Async](
+  def buildRewards[F[_]: Async](
     state               : CheckInDataCalculatedState,
     currentEpochProgress: Long,
     lastBalances        : Map[Address, Balance],
@@ -83,7 +84,7 @@ object MainRewards {
     } yield buildRewardsTransactionsSortedSet(bountyTransactions, validatorNodesTransactions)
   }
 
-  private def buildRewardsTransactionsSortedSet(
+  private def buildRewardsTransactionsSortedSet[F[_]: Async](
     bountyTransactions        : List[RewardTransaction],
     validatorNodesTransactions: List[RewardTransaction]
   ): SortedSet[RewardTransaction] = {
@@ -95,16 +96,16 @@ object MainRewards {
         .view
         .mapValues(_.map(_.amount.value.value).sum)
 
-    val summedTransactions: List[RewardTransaction] =
+    val summedTransactions: View[RewardTransaction] =
       groupedTransactions.map {
         case (address, totalAmount) =>
-          RewardTransaction(address, TransactionAmount(PosLong.unsafeFrom(totalAmount)))
-      }.toList
+          (address, totalAmount.toPosLongUnsafe).toRewardTransaction
+      }
 
-    SortedSet(summedTransactions: _*)
+    SortedSet.from(summedTransactions)
   }
 
-  private def logAllDevicesRewards[F[_] : Async](
+  private def logAllDevicesRewards[F[_]: Async](
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
     def logRewardTransaction: RewardTransaction => F[Unit] = rewardTransaction =>
@@ -117,14 +118,14 @@ object MainRewards {
     } yield ()
   }
 
-  private def logInitialRewardDistribution[F[_] : Async](
+  private def logInitialRewardDistribution[F[_]: Async](
     epochProgressModulus: Long
   ): F[Unit] = {
     epochProgressModulus match {
       case 0L => logger.info("Starting UnitDeployed bounty distribution")
       case 1L => logger.info("Starting CommercialLocation bounty distribution")
       case 2L => logger.info("Starting RetailAnalyticsSubscription bounty distribution")
-      case _ => logger.info("Invalid")
+      case _ => logger.info(s"Invalid epochProgressModulus $epochProgressModulus")
     }
   }
 }

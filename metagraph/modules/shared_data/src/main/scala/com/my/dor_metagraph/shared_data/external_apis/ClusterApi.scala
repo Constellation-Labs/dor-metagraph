@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.shared_data.external_apis
 
 import cats.effect.Async
-import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps, toTraverseOps}
+import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Utils.getDagAddressFromPublicKey
 import com.my.dor_metagraph.shared_data.types.Types.ClusterInfoResponse
 import io.circe.parser.decode
@@ -21,11 +21,8 @@ object ClusterApi {
       response <- Async[F].delay(requests.get(url))
       body = response.text()
       _ <- logger.info(s"API ($url) response $body")
-      decoded <- decode[List[ClusterInfoResponse]](body) match {
-        case Left(err) => throw err
-        case Right(clusterInfo) =>
-          clusterInfo.traverse(nodeInfo => getDagAddressFromPublicKey(nodeInfo.id))
-      }
+      clusterInfo <- Async[F].fromEither(decode[List[ClusterInfoResponse]](body))
+      decoded <- clusterInfo.traverse(nodeInfo => getDagAddressFromPublicKey(nodeInfo.id))
     } yield decoded
   }
 
