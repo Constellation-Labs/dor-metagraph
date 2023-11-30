@@ -1,0 +1,45 @@
+name: Deploy Mainnet
+
+on:
+  push:
+    branches:
+      - "deploy/mainnet"
+jobs:
+  deploy-mainnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy Mainnet
+        uses: "./.github/templates/deploy"
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_MAINNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_MAINNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_MAINNET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          EC2_INSTANCE_1_ID: ${{ secrets.EC2_INSTANCE_1_ID_MAINNET }}
+          EC2_INSTANCE_2_ID: ${{ secrets.EC2_INSTANCE_2_ID_MAINNET }}
+          EC2_INSTANCE_3_ID: ${{ secrets.EC2_INSTANCE_3_ID_MAINNET }}
+
+      - name: Inject information to JSON
+        uses: Lambdaspire/action-substitute-secrets-in-file@v1.0.0
+        with:
+          file: .github/assets/mainnet-lambda-payload.json
+          tokenPattern: ${TOKEN}
+          secretsJson: ${{ toJSON(secrets) }}
+
+      - name: Trigger Auto Restart Lambda - Mainnet
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_MAINNET }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_MAINNET }}
+          AWS_REGION: ${{ secrets.AWS_REGION_MAINNET }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_MAINNET }}
+        run: |
+          echo "test"
+          aws lambda invoke \
+          --function-name MetagraphMonitor \
+          --invocation-type Event \
+          --cli-binary-format raw-in-base64-out \
+          --payload file://.github/assets/mainnet-lambda-payload.json \
+          response.json

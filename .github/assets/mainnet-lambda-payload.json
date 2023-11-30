@@ -1,0 +1,59 @@
+{
+  "metagraph": {
+    "id": "DAG0CyySf35ftDQDQBnd1bdQ9aPyUdacMghpnCuM",
+    "name": "DOR",
+    "include_currency_l1_layer": true,
+    "include_data_l1_layer": true,
+    "file_system": {
+      "base_metagraph_l0_directory": "/home/ubuntu/code/metagraph-l0",
+      "base_currency_l1_directory": "/home/ubuntu/code/currency-l1",
+      "base_data_l1_directory": "/home/ubuntu/code/data-l1"
+    },
+    "ports": {
+      "metagraph_l0_public_port": 7000,
+      "metagraph_l0_p2p_port": 7001,
+      "metagraph_l0_cli_port": 7002,
+      "currency_l1_public_port": 8000,
+      "currency_l1_p2p_port": 8001,
+      "currency_l1_cli_port": 8002,
+      "data_l1_public_port": 9000,
+      "data_l1_p2p_port": 9001,
+      "data_l1_cli_port": 9002
+    },
+    "required_env_variables": {
+      "cl_app_env": "mainnet",
+      "cl_collateral": 0
+    },
+    "additional_metagraph_l0_env_variables": [
+      "METAGRAPH_L0_NODE_URL=http://54.191.143.191:7000/cluster/info",
+      "DATA_L1_NODE_URL=http://54.191.143.191:9000/cluster/info"
+    ],
+    "additional_currency_l1_env_variables": [],
+    "additional_data_l1_env_variables": []
+  },
+  "network": {
+    "name": "mainnet"
+  },
+  "aws": {
+    "region": "us-west-2",
+    "ec2": {
+      "instances": {
+        "genesis": {
+          "id": "${EC2_INSTANCE_1_ID_MAINNET}",
+          "ip": "${EC2_INSTANCE_1_IP_MAINNET}"
+        },
+        "validators": [
+          {
+            "id": "${EC2_INSTANCE_2_ID_MAINNET}",
+            "ip": "${EC2_INSTANCE_2_IP_MAINNET}"
+          },
+          {
+            "id": "${EC2_INSTANCE_3_ID_MAINNET}",
+            "ip": "${EC2_INSTANCE_3_IP_MAINNET}"
+          }
+        ]
+      }
+    }
+  },
+  "force_metagraph_restart": true
+}
