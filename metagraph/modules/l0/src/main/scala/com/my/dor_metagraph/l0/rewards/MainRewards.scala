@@ -113,7 +113,7 @@ object MainRewards {
 
     for {
       _ <- logger.info("All rewards to be distributed to devices")
-      _ <- bountyRewards.rewardTransactions.traverse(logRewardTransaction)
+      _ <- bountyRewards.rewardTransactions.traverse_(logRewardTransaction)
       _ <- logger.info(s"Validators taxes to be distributed between validators: ${bountyRewards.validatorsTaxes}")
     } yield ()
   }

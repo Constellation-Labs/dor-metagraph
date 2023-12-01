@@ -8,14 +8,13 @@ case class RetailAnalyticsSubscriptionBounty() extends Bounty {
     epochModulus: Long
   ): Double = {
     if (epochModulus != 2L) {
-      return 0D
+      0D
+    } else {
+      deviceInfo.billedAmountMonthly match {
+        case None => 0D
+        case Some(billedAmountMonthly) =>
+          billedAmountMonthly * 25D
+      }
     }
-
-    deviceInfo.billedAmountMonthly match {
-      case None => 0D
-      case Some(billedAmountMonthly) =>
-        billedAmountMonthly * 25D
-    }
-
   }
 }

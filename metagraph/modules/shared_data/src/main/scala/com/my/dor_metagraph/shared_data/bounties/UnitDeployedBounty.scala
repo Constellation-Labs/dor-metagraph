@@ -8,10 +8,10 @@ case class UnitDeployedBounty() extends Bounty {
     epochModulus: Long
   ): Double = {
     if (epochModulus != 0L) {
-      return 0D
+      0D
+    } else {
+      50D
     }
-
-    50D
   }
 }
 

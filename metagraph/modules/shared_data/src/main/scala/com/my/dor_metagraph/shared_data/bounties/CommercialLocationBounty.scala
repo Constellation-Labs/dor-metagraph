@@ -8,17 +8,17 @@ case class CommercialLocationBounty() extends Bounty {
     epochModulus: Long
   ): Double = {
     if (epochModulus != 1L) {
-      return 0D
-    }
-
-    deviceInfo.locationType match {
-      case None => 0D
-      case Some(storeType) =>
-        if (storeType != "Residential") {
-          50D
-        } else {
-          0D
-        }
+      0D
+    } else {
+      deviceInfo.locationType match {
+        case None => 0D
+        case Some(storeType) =>
+          if (storeType != "Residential") {
+            50D
+          } else {
+            0D
+          }
+      }
     }
 
   }

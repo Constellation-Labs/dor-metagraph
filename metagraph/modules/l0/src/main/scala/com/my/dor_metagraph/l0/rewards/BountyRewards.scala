@@ -16,8 +16,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 
 object BountyRewards {
-  //Validator nodes should have 10%
-  private val ValidatorNodeTaxPercent: Double = 10D / 100
+  private val ValidatorNodeTaxRate: Double = 0.10
 
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("BountyRewards")
 
@@ -39,10 +38,11 @@ object BountyRewards {
     currentEpochProgress      : Long,
     collateralMultiplierFactor: Double
   ): F[Long] = {
-    val deviceBountiesRewardsAmount = getDeviceBountyRewardsAmount(device, currentEpochProgress)
-    val rewardsWithCollateral = (deviceBountiesRewardsAmount * collateralMultiplierFactor).toLong
-    logger.info(s"Device with reward address ${device.dorAPIResponse.rewardAddress}. Raw amount: $deviceBountiesRewardsAmount. Amount with collateral: ${rewardsWithCollateral}")
-      .as(rewardsWithCollateral)
+    for {
+      deviceBountiesRewardsAmount <- Async[F].delay(getDeviceBountyRewardsAmount(device, currentEpochProgress))
+      rewardsWithCollateral = (deviceBountiesRewardsAmount * collateralMultiplierFactor).toLong
+      _ <- logger.info(s"Device with reward address ${device.dorAPIResponse.rewardAddress}. Raw amount: $deviceBountiesRewardsAmount. Amount with collateral: ${rewardsWithCollateral}")
+    } yield rewardsWithCollateral
   }
 
   private def buildDeviceReward(
@@ -81,7 +81,7 @@ object BountyRewards {
 
             deviceTotalRewards <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
 
-            deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxPercent).toLong
+            deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxRate).toLong
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
 
             deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, rewardAddress)
