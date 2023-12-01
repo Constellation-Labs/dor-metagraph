@@ -45,10 +45,10 @@ object MainRewards {
       ): F[SortedSet[RewardTransaction]] = {
         val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
         val epochProgressModulus = currentEpochProgress % EpochProgress1Day
-        if (epochProgressModulus > 2) {
-          SortedSet.empty[RewardTransaction].pure[F]
-        } else {
-          maybeCalculatedState.foldLeftM(SortedSet.empty[RewardTransaction]) { (_, calculatedState) =>
+
+        maybeCalculatedState
+          .filterNot( _ => epochProgressModulus < 0 || epochProgressModulus > 2)
+          .map { calculatedState =>
             for {
               _ <- logger.info("Starting the rewards...")
               (l0ValidatorNodes, l1ValidatorNodes) <- getValidatorNodes
@@ -57,8 +57,7 @@ object MainRewards {
               rewards <- buildRewards(checkInCalculatedState, currentEpochProgress, lastBalances, l0ValidatorNodes, l1ValidatorNodes)
             } yield rewards
           }
-
-        }
+          .getOrElse(SortedSet.empty[RewardTransaction].pure[F])
       }
 
       consensusTrigger match {
@@ -68,7 +67,7 @@ object MainRewards {
     }
   }
 
-  def buildRewards[F[_]: Async](
+  def buildRewards[F[_] : Async](
     state               : CheckInDataCalculatedState,
     currentEpochProgress: Long,
     lastBalances        : Map[Address, Balance],
@@ -84,7 +83,7 @@ object MainRewards {
     } yield buildRewardsTransactionsSortedSet(bountyTransactions, validatorNodesTransactions)
   }
 
-  private def buildRewardsTransactionsSortedSet[F[_]: Async](
+  private def buildRewardsTransactionsSortedSet[F[_] : Async](
     bountyTransactions        : List[RewardTransaction],
     validatorNodesTransactions: List[RewardTransaction]
   ): SortedSet[RewardTransaction] = {
@@ -105,7 +104,7 @@ object MainRewards {
     SortedSet.from(summedTransactions)
   }
 
-  private def logAllDevicesRewards[F[_]: Async](
+  private def logAllDevicesRewards[F[_] : Async](
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
     def logRewardTransaction: RewardTransaction => F[Unit] = rewardTransaction =>
@@ -118,7 +117,7 @@ object MainRewards {
     } yield ()
   }
 
-  private def logInitialRewardDistribution[F[_]: Async](
+  private def logInitialRewardDistribution[F[_] : Async](
     epochProgressModulus: Long
   ): F[Unit] = {
     epochProgressModulus match {
