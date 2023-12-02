@@ -1,38 +1,34 @@
 package com.my.dor_metagraph.shared_data.combiners
 
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInProof, CheckInStateOnChain, CheckInStateUpdate, CheckInUpdate, DeviceInfo, EPOCH_PROGRESS_1_DAY}
-import org.slf4j.LoggerFactory
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInProof, CheckInStateOnChain, CheckInStateUpdate, CheckInUpdate, DeviceInfo, EpochProgress1Day}
 import org.tessellation.currency.dataApplication.DataState
 import org.tessellation.schema.address.Address
+import org.tessellation.schema.epoch.EpochProgress
 
 object DeviceCheckIn {
-  private val logger = LoggerFactory.getLogger("DeviceCheckIn")
-
-  def getNewCheckIn(acc: DataState[CheckInStateOnChain, CheckInDataCalculatedState], address: Address, checkInUpdate: CheckInUpdate, currentEpoch: Long): DataState[CheckInStateOnChain, CheckInDataCalculatedState] = {
+  def combineDeviceCheckIn(
+    acc          : DataState[CheckInStateOnChain, CheckInDataCalculatedState],
+    checkInUpdate: CheckInUpdate,
+    address      : Address,
+    epochProgress: EpochProgress
+  ): DataState[CheckInStateOnChain, CheckInDataCalculatedState] = {
     val state = acc.calculated.devices.get(address)
 
-    val currentEpochModulus = currentEpoch % EPOCH_PROGRESS_1_DAY
-    val nextRewardEpoch = currentEpoch - currentEpochModulus + EPOCH_PROGRESS_1_DAY
+    val currentEpoch: Long = epochProgress.value.value
+    val currentEpochModulus: Long = currentEpoch % EpochProgress1Day
+    val nextRewardEpoch: Long = currentEpoch - currentEpochModulus + EpochProgress1Day
 
-    val nextRewardEpochProgress = state match {
-      case Some(current) =>
-        if (currentEpoch >= current.nextEpochProgressToReward) {
-          nextRewardEpoch
-        } else {
-          current.nextEpochProgressToReward
-        }
-      case None => nextRewardEpoch
-    }
+    val nextRewardEpochProgress: Long = state
+      .filter(currentEpoch < _.nextEpochProgressToReward)
+      .map(_.nextEpochProgressToReward)
+      .getOrElse(nextRewardEpoch)
 
     val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
     val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
-
     val checkIn = DeviceInfo(checkInUpdate.dts, checkInUpdate.maybeDorAPIResponse.get, nextRewardEpochProgress)
 
-    logger.info(s"New checkIn for the device: $checkIn")
-
-    val devices = acc.calculated.devices.updated(address, checkIn)
-    val updates = checkInStateUpdate :: acc.onChain.updates
+    val devices: Map[Address, DeviceInfo] = acc.calculated.devices.updated(address, checkIn)
+    val updates: List[CheckInStateUpdate] = checkInStateUpdate :: acc.onChain.updates
 
     DataState(
       CheckInStateOnChain(updates),

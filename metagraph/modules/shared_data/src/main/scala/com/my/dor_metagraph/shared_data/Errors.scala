@@ -1,11 +1,11 @@
 package com.my.dor_metagraph.shared_data
 
-import cats.implicits.catsSyntaxValidatedIdBinCompat0
+import cats.syntax.validated.catsSyntaxValidatedIdBinCompat0
 import org.tessellation.currency.dataApplication.DataApplicationValidationError
 import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
 
 object Errors {
-  type DataApplicationValidationType = DataApplicationValidationErrorOr[Unit]
+  private type DataApplicationValidationType = DataApplicationValidationErrorOr[Unit]
 
   val valid: DataApplicationValidationType = ().validNec[DataApplicationValidationError]
 

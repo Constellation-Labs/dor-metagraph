@@ -1,26 +1,35 @@
 package com.my.dor_metagraph.shared_data.external_apis
 
-import cats.implicits.catsSyntaxOptionId
+import cats.effect.Async
+import cats.syntax.option._
+import cats.syntax.functor._
+import cats.syntax.flatMap._
+import cats.syntax.applicativeError._
 import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
 import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInWithSignature, DorAPIResponse}
 import io.circe.parser.decode
-import org.slf4j.LoggerFactory
-import org.tessellation.schema.address.Address
+import org.typelevel.log4cats.SelfAwareStructuredLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import ujson.Obj
-import eu.timepit.refined.auto._
 
 object DorApi {
-  private val logger = LoggerFactory.getLogger("DorAPI")
+  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("DorApi")
 
-  def saveDeviceCheckIn(publicKey: String, deviceCheckIn: DeviceCheckInWithSignature): Option[DorAPIResponse] = {
-    val checkInInfo = getDeviceCheckInInfo(deviceCheckIn.cbor)
+  private def saveDeviceCheckIn[F[_] : Async](
+    publicKey    : String,
+    deviceCheckIn: DeviceCheckInWithSignature
+  ): F[Option[DorAPIResponse]] = {
+    val apiUrl = "https://api.getdor.com/metagraph/device"
+    val endpoint = s"$apiUrl/$publicKey/check-in"
+    val headers = Map("Content-Type" -> "application/json", "version" -> "2")
 
-    logger.info(s"Decoded CBOR field before check-in to DOR Server AC ${checkInInfo.ac}")
-    logger.info(s"Decoded CBOR field before check-in to DOR Server DTS ${checkInInfo.dts}")
-    logger.info(s"Decoded CBOR field before check-in to DOR Server E ${checkInInfo.e}")
+    for {
+      checkInInfo <- getDeviceCheckInInfo(deviceCheckIn.cbor)
+      _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server AC ${checkInInfo.ac}")
+      _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server DTS ${checkInInfo.dts}")
+      _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server E ${checkInInfo.e}")
 
-    try {
-      val requestBody = Obj(
+      requestBody = Obj(
         "ac" -> checkInInfo.ac,
         "dts" -> checkInInfo.dts,
         "e" -> checkInInfo.e,
@@ -28,13 +37,29 @@ object DorApi {
         "signature" -> deviceCheckIn.sig
       ).render()
 
-      logger.info(s"Request body: $requestBody")
+      _ <- logger.info(s"Request body: $requestBody")
 
-      DorAPIResponse(Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb").some, true, None, None).some
-    } catch {
-      case x: Exception =>
-        logger.warn(s"Error when fetching DOR API: ${x.getMessage}")
-        None
+      body = requests.post(
+        url = endpoint,
+        headers = headers,
+        data = requestBody
+      ).text()
+
+      _ <- logger.info(s"API response $body")
+
+      decodedResponse <- decode[DorAPIResponse](body).fold(
+        err => logger.warn(s"Failing when decoding: ${err.getMessage}").as(none),
+        response => Async[F].pure(response.some)
+      )
+    } yield decodedResponse
+  }
+
+  def handleCheckIn[F[_] : Async](
+    publicKey    : String,
+    deviceCheckIn: DeviceCheckInWithSignature
+  ): F[Option[DorAPIResponse]] = {
+    saveDeviceCheckIn(publicKey, deviceCheckIn).handleErrorWith { err =>
+      logger.warn(s"Failing when check in: ${err.getMessage}").as(none)
     }
   }
 }
