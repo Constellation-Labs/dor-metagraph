@@ -10,22 +10,28 @@ import org.tessellation.security.signature.Signed
 import java.nio.charset.StandardCharsets
 
 object Serializers {
-  def serializeUpdate(update: CheckInUpdate): Array[Byte] = {
+  private def serialize[A: Encoder](
+    serializableData: A
+  ): Array[Byte] =
+    serializableData.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
+
+  def serializeUpdate(
+    update: CheckInUpdate
+  ): Array[Byte] =
     update.dtmCheckInHash.getBytes(StandardCharsets.UTF_8)
-  }
 
-  def serializeState(state: CheckInStateOnChain): Array[Byte] = {
-    val jsonState = state.asJson.deepDropNullValues.noSpaces
-    jsonState.getBytes(StandardCharsets.UTF_8)
-  }
+  def serializeState(
+    state: CheckInStateOnChain
+  ): Array[Byte] =
+    serialize[CheckInStateOnChain](state)
 
-  def serializeBlock(state: Signed[DataApplicationBlock])(implicit e: Encoder[DataUpdate]): Array[Byte] = {
-    val jsonState = state.asJson.deepDropNullValues.noSpaces
-    state.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
-  }
+  def serializeBlock(
+    block: Signed[DataApplicationBlock]
+  )(implicit e: Encoder[DataUpdate]): Array[Byte] =
+    serialize[Signed[DataApplicationBlock]](block)
 
-  def serializeCalculatedState(state: CheckInDataCalculatedState): Array[Byte] = {
-    val jsonState = state.asJson.deepDropNullValues.noSpaces
-    state.asJson.deepDropNullValues.noSpaces.getBytes(StandardCharsets.UTF_8)
-  }
+  def serializeCalculatedState(
+    calculatedState: CheckInDataCalculatedState
+  ): Array[Byte] =
+    serialize[CheckInDataCalculatedState](calculatedState)
 }

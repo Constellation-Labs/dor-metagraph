@@ -1,86 +1,115 @@
 package com.my.dor_metagraph.shared_data.types
 
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import derevo.circe.magnolia.{decoder, encoder}
+import derevo.derive
 import org.tessellation.currency.dataApplication.{DataCalculatedState, DataOnChainState, DataUpdate}
 import org.tessellation.schema.address.Address
+import org.tessellation.schema.balance.Balance
+import org.tessellation.schema.transaction.RewardTransaction
 
 object Types {
-  val EPOCH_PROGRESS_1_DAY: Long = 60 * 24
+  val EpochProgress1Day: Long = 60 * 24
 
-  //Friday, 1 September 2023 00:00:00
-  val MINIMUM_CHECK_IN_TIMESTAMP = 1693526400L
+  val MinimumCheckInSeconds: Long =
+    java.time.Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
 
-  val COLLATERAL_50K: Long = toTokenAmountFormat(50000)
-  val COLLATERAL_100K: Long = toTokenAmountFormat(100000)
-  val COLLATERAL_200K: Long = toTokenAmountFormat(200000)
+  val Collateral50K: Long = toTokenAmountFormat(50 * 1000)
+  val Collateral100K: Long = toTokenAmountFormat(100 * 1000)
+  val Collateral200K: Long = toTokenAmountFormat(200 * 1000)
 
-  val COLLATERAL_LESS_THAN_50K_MULTIPLIER: Double = 1
-  val COLLATERAL_BETWEEN_50K_AND_100K_MULTIPLIER: Double = 1.05
-  val COLLATERAL_BETWEEN_100K_AND_200K_MULTIPLIER: Double = 1.1
-  val COLLATERAL_GREATER_THAN_200K_MULTIPLIER: Double = 1.2
+  val CollateralLessThan50KMultiplier: Double = 1D
+  val CollateralBetween50KAnd100KMultiplier: Double = 1.05D
+  val CollateralBetween100KAnd200KMultiplier: Double = 1.1D
+  val CollateralGreaterThan200KMultiplier: Double = 1.2D
 
-  case class CheckInProof(id: String, signature: String)
-  object CheckInProof {
-    implicit val encoder: Encoder[CheckInProof] = deriveEncoder
-    implicit val decoder: Decoder[CheckInProof] = deriveDecoder
-  }
+  @derive(encoder, decoder)
+  case class CheckInProof(
+    id       : String,
+    signature: String
+  )
 
-  case class CheckInStateUpdate(deviceId: Address, dts: Long, proof: CheckInProof, checkInHash: String)
+  @derive(encoder, decoder)
+  case class CheckInStateUpdate(
+    deviceId   : Address,
+    dts        : Long,
+    proof      : CheckInProof,
+    checkInHash: String
+  )
 
-  object CheckInStateUpdate {
-    implicit val encoder: Encoder[CheckInStateUpdate] = deriveEncoder
-    implicit val decoder: Decoder[CheckInStateUpdate] = deriveDecoder
-  }
+  @derive(encoder, decoder)
+  case class DeviceInfo(
+    lastCheckIn              : Long,
+    dorAPIResponse           : DorAPIResponse,
+    nextEpochProgressToReward: Long
+  )
 
-  case class DeviceInfo(lastCheckIn: Long, dorAPIResponse: DorAPIResponse, nextEpochProgressToReward: Long)
+  @derive(encoder, decoder)
+  case class DeviceCheckInWithSignature(
+    cbor: String,
+    hash: String,
+    id  : String,
+    sig : String
+  )
 
-  object DeviceInfo {
-    implicit val encoder: Encoder[DeviceInfo] = deriveEncoder
-    implicit val decoder: Decoder[DeviceInfo] = deriveDecoder
-  }
+  @derive(encoder, decoder)
+  case class DeviceCheckInInfo(
+    ac : List[Long],
+    dts: Long,
+    e  : List[List[Long]]
+  )
 
-  case class DeviceCheckInWithSignature(cbor: String, hash: String, id: String, sig: String)
+  @derive(encoder, decoder)
+  case class CheckInStateOnChain(
+    updates: List[CheckInStateUpdate]
+  ) extends DataOnChainState
 
-  object DeviceCheckInWithSignature {
-    implicit val encoder: Encoder[DeviceCheckInWithSignature] = deriveEncoder
-    implicit val decoder: Decoder[DeviceCheckInWithSignature] = deriveDecoder
-  }
-  case class DeviceCheckInInfo(ac: List[Long], dts: Long, e: List[List[Long]])
+  @derive(encoder, decoder)
+  case class CheckInDataCalculatedState(
+    devices: Map[Address, DeviceInfo]
+  ) extends DataCalculatedState
 
-  object DeviceCheckInInfo {
-    implicit val encoder: Encoder[DeviceCheckInInfo] = deriveEncoder
-    implicit val decoder: Decoder[DeviceCheckInInfo] = deriveDecoder
-  }
-  case class CheckInStateOnChain(updates: List[CheckInStateUpdate]) extends DataOnChainState
+  @derive(encoder, decoder)
+  case class CheckInUpdate(
+    publicId           : String,
+    signature          : String,
+    dts                : Long,
+    dtmCheckInHash     : String,
+    maybeDorAPIResponse: Option[DorAPIResponse]
+  ) extends DataUpdate
 
-  object CheckInStateOnChain {
-    implicit val encoder: Encoder[CheckInStateOnChain] = deriveEncoder
-    implicit val decoder: Decoder[CheckInStateOnChain] = deriveDecoder
-  }
-  case class CheckInDataCalculatedState(devices: Map[Address, DeviceInfo]) extends DataCalculatedState
+  @derive(encoder, decoder)
+  case class ClusterInfoResponse(
+    id        : String,
+    ip        : String,
+    publicPort: Long,
+    p2pPort   : Long,
+    session   : String,
+    state     : String
+  )
 
-  object CheckInDataCalculatedState {
-    implicit val encoder: Encoder[CheckInDataCalculatedState] = deriveEncoder
-    implicit val decoder: Decoder[CheckInDataCalculatedState] = deriveDecoder
-  }
-  case class CheckInUpdate(publicId: String, signature: String, dts: Long, dtmCheckInHash: String, maybeDorAPIResponse: Option[DorAPIResponse]) extends DataUpdate
+  @derive(encoder, decoder)
+  case class DorAPIResponse(
+    rewardAddress      : Option[Address],
+    isInstalled        : Boolean,
+    locationType       : Option[String],
+    billedAmountMonthly: Option[Long]
+  )
 
-  object CheckInUpdate {
-    implicit val encoder: Encoder[CheckInUpdate] = deriveEncoder
-    implicit val decoder: Decoder[CheckInUpdate] = deriveDecoder
-  }
-  case class ClusterInfoResponse(id: String, ip: String, publicPort: Long, p2pPort: Long, session: String, state: String)
+  @derive(encoder, decoder)
+  case class CalculatedStateResponse(
+    ordinal        : Long,
+    calculatedState: CheckInDataCalculatedState
+  )
 
-  object ClusterInfoResponse {
-    implicit val encoder: Encoder[ClusterInfoResponse] = deriveEncoder
-    implicit val decoder: Decoder[ClusterInfoResponse] = deriveDecoder
-  }
-  case class DorAPIResponse(rewardAddress: Option[Address], isInstalled: Boolean, locationType: Option[String], billedAmountMonthly: Option[Long])
+  case class RewardTransactionsInformation(
+    rewardTransactions: Map[Address, RewardTransaction],
+    validatorsTaxes   : Long,
+    lastBalances      : Map[Address, Balance]
+  )
 
-  object DorAPIResponse {
-    implicit val encoder: Encoder[DorAPIResponse] = deriveEncoder
-    implicit val decoder: Decoder[DorAPIResponse] = deriveDecoder
-  }
+  case class RewardTransactionsAndValidatorsTaxes(
+    rewardTransactions: List[RewardTransaction],
+    validatorsTaxes   : Long
+  )
 }
