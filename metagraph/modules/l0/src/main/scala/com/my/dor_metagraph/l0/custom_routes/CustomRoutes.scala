@@ -1,21 +1,34 @@
 package com.my.dor_metagraph.l0.custom_routes
 
-import cats.effect.IO
-import cats.effect.unsafe.implicits.global
+import cats.effect.Async
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
-import com.my.dor_metagraph.shared_data.types.Types.CheckInDataCalculatedState
-import derevo.circe.magnolia.{decoder, encoder}
-import derevo.derive
-import org.http4s.Response
+import com.my.dor_metagraph.shared_data.types.Types.CalculatedStateResponse
+import org.http4s.{HttpRoutes, Response}
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
-import org.http4s.dsl.io._
+import org.http4s.dsl.Http4sDsl
+import eu.timepit.refined.auto._
+import org.http4s.server.middleware.CORS
+import org.tessellation.http.routes.internal.{InternalUrlPrefix, PublicRoutes}
 
-object CustomRoutes {
-  @derive(encoder, decoder)
-  case class CalculatedStateResponse(ordinal: Long, calculatedState:CheckInDataCalculatedState)
-  def getLatestCalculatedState(calculatedStateService: CalculatedStateService[IO]): IO[Response[IO]] = {
-    val calculatedState = calculatedStateService.getCalculatedState
-    val response = calculatedState.map(state => CalculatedStateResponse(state.ordinal.value.value, state.state))
-    Ok(response.unsafeRunSync())
+case class CustomRoutes[F[_] : Async](calculatedStateService: CalculatedStateService[F]) extends Http4sDsl[F] with PublicRoutes[F] {
+
+  private def getLatestCalculatedState: F[Response[F]] = {
+    calculatedStateService.getCalculatedState
+      .map(state => CalculatedStateResponse(state.ordinal.value.value, state.state))
+      .flatMap(Ok(_))
   }
+
+  private val routes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root / "calculated-state" / "latest" => getLatestCalculatedState
+  }
+
+  val public: HttpRoutes[F] =
+    CORS
+      .policy
+      .withAllowCredentials(false)
+      .httpRoutes(routes)
+
+  override protected def prefixPath: InternalUrlPrefix = "/"
 }
