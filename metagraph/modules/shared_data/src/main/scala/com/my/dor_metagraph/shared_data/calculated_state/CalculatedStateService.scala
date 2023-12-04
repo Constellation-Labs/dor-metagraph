@@ -2,7 +2,8 @@ package com.my.dor_metagraph.shared_data.calculated_state
 
 import cats.effect.Ref
 import cats.effect.kernel.Async
-import cats.implicits.{catsSyntaxApplicativeId, toFunctorOps}
+import cats.syntax.applicative._
+import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.types.Types.CheckInDataCalculatedState
 import io.circe.syntax.EncoderOps
 import org.tessellation.schema.SnapshotOrdinal
@@ -45,9 +46,9 @@ object CalculatedStateService {
 
         override def hashCalculatedState(
           state: CheckInDataCalculatedState
-        ): F[Hash] = {
+        ): F[Hash] = Async[F].delay {
           val jsonState = state.asJson.deepDropNullValues.noSpaces
-          Hash.fromBytes(jsonState.getBytes(StandardCharsets.UTF_8)).pure[F]
+          Hash.fromBytes(jsonState.getBytes(StandardCharsets.UTF_8))
         }
       }
     }
