@@ -22,6 +22,9 @@ import org.tessellation.security.signature.signature.SignatureProof
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+import scala.collection.{MapView, View}
+import scala.collection.immutable.SortedSet
+
 
 object Utils {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("Utils")
@@ -58,6 +61,27 @@ object Utils {
     } else {
       Async[F].delay(hexString.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray)
     }
+  }
+
+  def buildTransactionsSortedSet(
+    txns : List[RewardTransaction],
+    txns2: List[RewardTransaction]
+  ): SortedSet[RewardTransaction] = {
+    val allTransactions = txns ::: txns2
+    val groupedTransactions: MapView[Address, Long] =
+      allTransactions
+        .filter(_.amount.value.value > 0)
+        .groupBy(_.destination)
+        .view
+        .mapValues(_.map(_.amount.value.value).sum)
+
+    val summedTransactions: View[RewardTransaction] =
+      groupedTransactions.map {
+        case (address, totalAmount) =>
+          (address, totalAmount.toPosLongUnsafe).toRewardTransaction
+      }
+
+    SortedSet.from(summedTransactions)
   }
 
   def toTokenAmountFormat(

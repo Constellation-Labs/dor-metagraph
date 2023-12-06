@@ -1,5 +1,6 @@
-package com.my.dor_metagraph.shared_data.bounties
+package com.my.dor_metagraph.shared_data.bounties.daily
 
+import com.my.dor_metagraph.shared_data.bounties.Bounty
 import com.my.dor_metagraph.shared_data.types.Types.DorAPIResponse
 
 case class CommercialLocationBounty() extends Bounty {
