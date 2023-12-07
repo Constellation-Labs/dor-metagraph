@@ -23,7 +23,7 @@ case class DailyBountyRewards() extends BountyRewards {
     lastBalancesRaw     : Map[Address, Balance]
   ): F[RewardTransactionsAndValidatorsTaxes] = {
     def noCheckInMade(nextEpochProgressToReward: Long): Boolean =
-      currentEpochProgress - nextEpochProgressToReward > EpochProgress1Day
+      currentEpochProgress - nextEpochProgressToReward >= EpochProgress1Day
 
     def combine(acc: RewardTransactionsInformation, deviceInfo: DeviceInfo): F[RewardTransactionsInformation] =
       deviceInfo.dorAPIResponse.rewardAddress match {
