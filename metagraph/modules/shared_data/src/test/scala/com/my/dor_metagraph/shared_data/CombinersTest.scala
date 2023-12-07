@@ -87,7 +87,7 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql("123", checkIn.checkInHash) &&
           expect.eql(1442L, deviceInfo.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
           expect.eql(deviceInfoAPIResponse.teamId.get, deviceInfo.analyticsBountyInformation.get.teamId) &&
-          expect.eql(deviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo.analyticsBountyInformation.get.billedAmountMonthly)
+          expect.eql(deviceInfoAPIResponse.billedAmount.get, deviceInfo.analyticsBountyInformation.get.billedAmount)
       }
     }
 
@@ -123,7 +123,7 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql("123", checkIn.checkInHash) &&
           expect.eql(1440L, deviceInfo2.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
           expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.analyticsBountyInformation.get.teamId) &&
-          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.analyticsBountyInformation.get.billedAmountMonthly)
+          expect.eql(currentDeviceInfoAPIResponse.billedAmount.get, deviceInfo2.analyticsBountyInformation.get.billedAmount)
       case None =>
         //forcing failure
         expect.eql(1, 2)
@@ -162,7 +162,7 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql("123", checkIn.checkInHash) &&
           expect.eql(4322L, deviceInfo2.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
           expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.analyticsBountyInformation.get.teamId) &&
-          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.analyticsBountyInformation.get.billedAmountMonthly)
+          expect.eql(currentDeviceInfoAPIResponse.billedAmount.get, deviceInfo2.analyticsBountyInformation.get.billedAmount)
       case None =>
         //forcing failure
         expect.eql(1, 2)
@@ -201,7 +201,7 @@ object CombinersTest extends SimpleIOSuite {
           expect.eql("123", checkIn.checkInHash) &&
           expect.eql(20000L, deviceInfo2.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
           expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.analyticsBountyInformation.get.teamId) &&
-          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.analyticsBountyInformation.get.billedAmountMonthly)
+          expect.eql(currentDeviceInfoAPIResponse.billedAmount.get, deviceInfo2.analyticsBountyInformation.get.billedAmount)
       case None =>
         //forcing failure
         expect.eql(1, 2)

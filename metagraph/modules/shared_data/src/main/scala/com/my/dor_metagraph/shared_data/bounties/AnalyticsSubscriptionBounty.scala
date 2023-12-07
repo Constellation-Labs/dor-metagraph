@@ -7,10 +7,10 @@ case class AnalyticsSubscriptionBounty() extends Bounty {
     deviceInfo  : DorAPIResponse,
     epochModulus: Long
   ): Double = {
-    deviceInfo.billedAmountMonthly match {
+    deviceInfo.billedAmount match {
       case None => 0D
-      case Some(billedAmountMonthly) =>
-        billedAmountMonthly * 25D
+      case Some(value) =>
+        value * 25D
     }
   }
 }

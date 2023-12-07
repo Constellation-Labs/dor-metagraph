@@ -16,7 +16,7 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 case class AnalyticsBountyRewards() extends BountyRewards {
-  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("MonthlyBountyRewards")
+  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("AnalyticsBountyRewards")
 
   override def getBountyRewardsTransactions[F[_] : Async](
     state               : CheckInDataCalculatedState,
@@ -64,10 +64,10 @@ case class AnalyticsBountyRewards() extends BountyRewards {
           }
         }
 
-      monthlyRewardTransactionsAndValidatorTaxes = RewardTransactionsAndValidatorsTaxes(txnsInfo.rewardTransactions.values.toList, txnsInfo.validatorsTaxes)
+      analyticsRewardTransactionsAndValidatorTaxes = RewardTransactionsAndValidatorsTaxes(txnsInfo.rewardTransactions.values.toList, txnsInfo.validatorsTaxes)
 
-      _ <- logAllDevicesRewards(monthlyRewardTransactionsAndValidatorTaxes)
-    } yield monthlyRewardTransactionsAndValidatorTaxes
+      _ <- logAllDevicesRewards(analyticsRewardTransactionsAndValidatorTaxes)
+    } yield analyticsRewardTransactionsAndValidatorTaxes
   }
 
   override def getDeviceBountyRewardsAmount(
@@ -91,7 +91,7 @@ case class AnalyticsBountyRewards() extends BountyRewards {
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
     if (bountyRewards.rewardTransactions.isEmpty) {
-      logger.info(s"[ANALYTICS] No commissions to pay monthly on this epochProgress") >> ().pure
+      logger.info(s"[ANALYTICS] No commissions to pay on this epochProgress") >> ().pure
     } else {
       def logRewardTransaction: RewardTransaction => F[Unit] = rewardTransaction =>
         logger.info(s"[ANALYTICS] Device Reward Address: ${rewardTransaction.destination}. Amount: ${rewardTransaction.amount}")

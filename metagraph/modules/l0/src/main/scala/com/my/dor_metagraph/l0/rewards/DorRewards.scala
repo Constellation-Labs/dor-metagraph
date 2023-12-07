@@ -41,8 +41,8 @@ object DorRewards {
         case trigger.TimeTrigger =>
           for {
             dailyRewards <- distributeDailyRewards(lastArtifact, lastBalances, maybeCalculatedState)
-            monthlyRewards <- distributeAnalyticsRewards(lastArtifact, lastBalances, maybeCalculatedState)
-          } yield buildTransactionsSortedSet(dailyRewards.toList, monthlyRewards.toList)
+            analyticsRewards <- distributeAnalyticsRewards(lastArtifact, lastBalances, maybeCalculatedState)
+          } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
       }
     }
   }
@@ -87,7 +87,7 @@ object DorRewards {
       .filter(_ => epochProgressModulus == ModulusAnalyticsBounty)
       .map { calculatedState =>
         for {
-          _ <- logger.info("Trying to distribute monthly rewards...")
+          _ <- logger.info("Trying to distribute analytics rewards...")
           (l0ValidatorNodes, l1ValidatorNodes) <- getValidatorNodes
           checkInCalculatedState: CheckInDataCalculatedState = calculatedState.asInstanceOf[CheckInDataCalculatedState]
           rewards <- buildRewards(

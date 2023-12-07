@@ -43,9 +43,9 @@ object Types {
 
   @derive(encoder, decoder)
   case class DeviceInfo(
-    lastCheckIn              : Long,
-    dorAPIResponse           : DorAPIResponse,
-    nextEpochProgressToReward: Long,
+    lastCheckIn               : Long,
+    dorAPIResponse            : DorAPIResponse,
+    nextEpochProgressToReward : Long,
     analyticsBountyInformation: Option[AnalyticsBountyInformation]
   )
 
@@ -95,12 +95,12 @@ object Types {
 
   @derive(encoder, decoder)
   case class DorAPIResponse(
-    rewardAddress      : Option[Address],
-    isInstalled        : Boolean,
-    locationType       : Option[String],
-    lastBillingId      : Option[String],
-    teamId             : Option[Long],
-    billedAmountMonthly: Option[Long]
+    rewardAddress: Option[Address],
+    isInstalled  : Boolean,
+    locationType : Option[String],
+    lastBillingId: Option[String],
+    teamId       : Option[Long],
+    billedAmount : Option[Long]
   )
 
   @derive(encoder, decoder)
@@ -129,6 +129,6 @@ object Types {
     nextEpochProgressToRewardAnalytics: Long,
     teamId                            : Long,
     lastBillingId                     : String,
-    billedAmountMonthly               : Long
+    billedAmount                      : Long
   )
 }
