@@ -56,7 +56,7 @@ object DorRewards {
     val epochProgressModulus = currentEpochProgress % EpochProgress1Day
 
     maybeCalculatedState
-      .filterNot(_ => epochProgressModulus == ModulusInstallationBounty || epochProgressModulus == ModulusCommercialBounty)
+      .filter(_ => epochProgressModulus == ModulusInstallationBounty || epochProgressModulus == ModulusCommercialBounty)
       .map { calculatedState =>
         for {
           _ <- logger.info("Starting the daily rewards...")
