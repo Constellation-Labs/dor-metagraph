@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.l0
 
 import cats.syntax.option._
-import com.my.dor_metagraph.l0.rewards.bounty.{DailyBountyRewards, MonthlyBountyRewards}
+import com.my.dor_metagraph.l0.rewards.bounties.{DailyBountyRewards, AnalyticsBountyRewards}
 import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.auto._
 import org.tessellation.schema.address.Address
@@ -30,25 +30,25 @@ object BountyRewardsTest extends SimpleIOSuite {
     expect.eql(5000000000L, unitDeployedBountyAmount)
   }
 
-  pureTest("Get bounty reward amount - RetailAnalyticsSubscriptionBounty") {
+  pureTest("Get bounty reward amount - AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
     val currentEpochProgress = 2880L
 
-    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, RetailBountyInformation(2880L, 1L, "123", 10L).some)
+    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(2880L, 1L, "123", 10L).some)
 
-    val unitDeployedBountyAmount = MonthlyBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = AnalyticsBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(25000000000L, unitDeployedBountyAmount)
   }
 
-  pureTest("Get bounty reward amount - RetailAnalyticsSubscriptionBounty - 0L when not reach correct epochProgress") {
+  pureTest("Get bounty reward amount - AnalyticsSubscriptionBounty - 0L when not reach correct epochProgress") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
     val currentEpochProgress = 2880L
 
-    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, RetailBountyInformation(3500L, 1L, "123", 10L).some)
+    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3500L, 1L, "123", 10L).some)
 
-    val unitDeployedBountyAmount = MonthlyBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = AnalyticsBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(0L, unitDeployedBountyAmount)
   }
 

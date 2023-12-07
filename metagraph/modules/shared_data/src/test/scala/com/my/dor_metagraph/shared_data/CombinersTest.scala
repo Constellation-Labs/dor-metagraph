@@ -69,7 +69,7 @@ object CombinersTest extends SimpleIOSuite {
       }
     }
 
-    pureTest("Create a new check in on state - retailBountyInformation") {
+    pureTest("Create a new check in on state - AnalyticsBountyInformation") {
       val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
       val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty)
       val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
@@ -85,20 +85,20 @@ object CombinersTest extends SimpleIOSuite {
         expect.eql(1440L, deviceInfo.nextEpochProgressToReward) &&
           expect.eql(1669815076L, checkIn.dts) &&
           expect.eql("123", checkIn.checkInHash) &&
-          expect.eql(1440L, deviceInfo.retailBountyInformation.get.nextEpochProgressToRewardRetail) &&
-          expect.eql(deviceInfoAPIResponse.teamId.get, deviceInfo.retailBountyInformation.get.teamId) &&
-          expect.eql(deviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo.retailBountyInformation.get.billedAmountMonthly)
+          expect.eql(1442L, deviceInfo.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
+          expect.eql(deviceInfoAPIResponse.teamId.get, deviceInfo.analyticsBountyInformation.get.teamId) &&
+          expect.eql(deviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo.analyticsBountyInformation.get.billedAmountMonthly)
       }
     }
 
-  pureTest("Update check in of device - retailBountyInformation do not update when billingID is the same than last") {
+  pureTest("Update check in of device - AnalyticsBountyInformation do not update when billingID is the same than last") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
     var currentEpochProgress = EpochProgress(1440L)
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, RetailBountyInformation(1440L, 1L, "123", 10L).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, 1L, "123", 10L).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -121,23 +121,23 @@ object CombinersTest extends SimpleIOSuite {
       case Some(checkIn) =>
         expect.eql(4320L, deviceInfo2.nextEpochProgressToReward) &&
           expect.eql("123", checkIn.checkInHash) &&
-          expect.eql(1440L, deviceInfo2.retailBountyInformation.get.nextEpochProgressToRewardRetail) &&
-          expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.retailBountyInformation.get.teamId) &&
-          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.retailBountyInformation.get.billedAmountMonthly)
+          expect.eql(1440L, deviceInfo2.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
+          expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.analyticsBountyInformation.get.teamId) &&
+          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.analyticsBountyInformation.get.billedAmountMonthly)
       case None =>
         //forcing failure
         expect.eql(1, 2)
     }
   }
 
-  pureTest("Update check in of device - retailBountyInformation update when billingID is different than last") {
+  pureTest("Update check in of device - AnalyticsBountyInformation update when billingID is different than last") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
     var currentEpochProgress = EpochProgress(1440L)
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, RetailBountyInformation(1440L, 1L, "123", 10L).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, 1L, "123", 10L).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -160,23 +160,23 @@ object CombinersTest extends SimpleIOSuite {
       case Some(checkIn) =>
         expect.eql(4320L, deviceInfo2.nextEpochProgressToReward) &&
           expect.eql("123", checkIn.checkInHash) &&
-          expect.eql(46080L, deviceInfo2.retailBountyInformation.get.nextEpochProgressToRewardRetail) &&
-          expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.retailBountyInformation.get.teamId) &&
-          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.retailBountyInformation.get.billedAmountMonthly)
+          expect.eql(4322L, deviceInfo2.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
+          expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.analyticsBountyInformation.get.teamId) &&
+          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.analyticsBountyInformation.get.billedAmountMonthly)
       case None =>
         //forcing failure
         expect.eql(1, 2)
     }
   }
 
-  pureTest("Update check in of device - retailBountyInformation do not update when nextEpochProgressToRewardRetail is greater than current") {
+  pureTest("Update check in of device - AnalyticsBountyInformation do not update when nextEpochProgressToRewardAnalytics is greater than current") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
     var currentEpochProgress = EpochProgress(1440L)
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, RetailBountyInformation(20000L, 1L, "123", 10L).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(20000L, 1L, "123", 10L).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -199,9 +199,9 @@ object CombinersTest extends SimpleIOSuite {
       case Some(checkIn) =>
         expect.eql(4320L, deviceInfo2.nextEpochProgressToReward) &&
           expect.eql("123", checkIn.checkInHash) &&
-          expect.eql(20000L, deviceInfo2.retailBountyInformation.get.nextEpochProgressToRewardRetail) &&
-          expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.retailBountyInformation.get.teamId) &&
-          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.retailBountyInformation.get.billedAmountMonthly)
+          expect.eql(20000L, deviceInfo2.analyticsBountyInformation.get.nextEpochProgressToRewardAnalytics) &&
+          expect.eql(currentDeviceInfoAPIResponse.teamId.get, deviceInfo2.analyticsBountyInformation.get.teamId) &&
+          expect.eql(currentDeviceInfoAPIResponse.billedAmountMonthly.get, deviceInfo2.analyticsBountyInformation.get.billedAmountMonthly)
       case None =>
         //forcing failure
         expect.eql(1, 2)

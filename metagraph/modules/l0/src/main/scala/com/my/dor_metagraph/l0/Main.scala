@@ -6,7 +6,7 @@ import cats.syntax.validated._
 import cats.syntax.applicative._
 import cats.syntax.option._
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
-import com.my.dor_metagraph.l0.rewards.MainRewards
+import com.my.dor_metagraph.l0.rewards.DorRewards
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
@@ -146,6 +146,6 @@ object Main extends CurrencyL0App(
     makeL0Service.asResource.some
 
   override def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] =
-    MainRewards.make[IO].some
+    DorRewards.make[IO].some
 }
 

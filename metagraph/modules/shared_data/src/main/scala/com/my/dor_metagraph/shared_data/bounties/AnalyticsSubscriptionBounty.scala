@@ -1,9 +1,8 @@
-package com.my.dor_metagraph.shared_data.bounties.monthly
+package com.my.dor_metagraph.shared_data.bounties
 
-import com.my.dor_metagraph.shared_data.bounties.Bounty
 import com.my.dor_metagraph.shared_data.types.Types.DorAPIResponse
 
-case class RetailAnalyticsSubscriptionBounty() extends Bounty {
+case class AnalyticsSubscriptionBounty() extends Bounty {
   override def getBountyRewardAmount(
     deviceInfo  : DorAPIResponse,
     epochModulus: Long

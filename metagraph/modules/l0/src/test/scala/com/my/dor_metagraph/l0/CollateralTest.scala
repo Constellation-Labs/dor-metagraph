@@ -1,6 +1,6 @@
 package com.my.dor_metagraph.l0
 
-import com.my.dor_metagraph.l0.rewards.Collateral.getDeviceCollateral
+import com.my.dor_metagraph.l0.rewards.collateral.Collateral.getDeviceCollateral
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.numeric.NonNegLong

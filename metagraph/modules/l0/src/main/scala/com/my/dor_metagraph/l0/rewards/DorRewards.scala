@@ -2,8 +2,8 @@ package com.my.dor_metagraph.l0.rewards
 
 import cats.effect.Async
 import cats.syntax.all._
-import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
-import ValidatorNodes.getValidatorNodes
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes.getValidatorNodes
 import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.currency.dataApplication.DataCalculatedState
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
@@ -14,7 +14,7 @@ import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 import cats.syntax.functor.toFunctorOps
-import com.my.dor_metagraph.l0.rewards.bounty.{BountyRewards, DailyBountyRewards, MonthlyBountyRewards}
+import com.my.dor_metagraph.l0.rewards.bounties.{BountyRewards, DailyBountyRewards, AnalyticsBountyRewards}
 import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
@@ -24,10 +24,9 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
-object MainRewards {
+object DorRewards {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("MainRewards")
 
-  //TODO: Migrate the functions buildRewards, buildTransactionsSortedSet, logAllDevicesRewards, and logInitialRewardDistribution to inside make context. Tests need to be adapted
   def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] = {
     (
       lastArtifact        : Signed[CurrencyIncrementalSnapshot],
@@ -42,7 +41,7 @@ object MainRewards {
         case trigger.TimeTrigger =>
           for {
             dailyRewards <- distributeDailyRewards(lastArtifact, lastBalances, maybeCalculatedState)
-            monthlyRewards <- distributeMonthlyRewards(lastArtifact, lastBalances, maybeCalculatedState)
+            monthlyRewards <- distributeAnalyticsRewards(lastArtifact, lastBalances, maybeCalculatedState)
           } yield buildTransactionsSortedSet(dailyRewards.toList, monthlyRewards.toList)
       }
     }
@@ -57,7 +56,7 @@ object MainRewards {
     val epochProgressModulus = currentEpochProgress % EpochProgress1Day
 
     maybeCalculatedState
-      .filterNot(_ => epochProgressModulus < 0 || epochProgressModulus > 1)
+      .filterNot(_ => epochProgressModulus == ModulusInstallationBounty || epochProgressModulus == ModulusCommercialBounty)
       .map { calculatedState =>
         for {
           _ <- logger.info("Starting the daily rewards...")
@@ -76,7 +75,7 @@ object MainRewards {
       .getOrElse(SortedSet.empty[RewardTransaction].pure[F])
   }
 
-  private def distributeMonthlyRewards[F[_] : Async : SecurityProvider](
+  private def distributeAnalyticsRewards[F[_] : Async : SecurityProvider](
     lastArtifact        : Signed[CurrencyIncrementalSnapshot],
     lastBalances        : SortedMap[Address, Balance],
     maybeCalculatedState: Option[DataCalculatedState]
@@ -85,7 +84,7 @@ object MainRewards {
     val epochProgressModulus = currentEpochProgress % EpochProgress1Day
 
     maybeCalculatedState
-      .filter(_ => epochProgressModulus == OffsetRetailBounty)
+      .filter(_ => epochProgressModulus == ModulusAnalyticsBounty)
       .map { calculatedState =>
         for {
           _ <- logger.info("Trying to distribute monthly rewards...")
@@ -97,7 +96,7 @@ object MainRewards {
             lastBalances,
             l0ValidatorNodes,
             l1ValidatorNodes,
-            MonthlyBountyRewards()
+            AnalyticsBountyRewards()
           )
         } yield rewards
       }

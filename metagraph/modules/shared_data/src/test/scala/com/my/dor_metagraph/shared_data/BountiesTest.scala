@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.shared_data
 
 import cats.syntax.option._
-import com.my.dor_metagraph.shared_data.bounties.daily.{CommercialLocationBounty, UnitDeployedBounty}
+import com.my.dor_metagraph.shared_data.bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.types.Types.DorAPIResponse
 import org.tessellation.schema.address.Address
 import weaver.SimpleIOSuite

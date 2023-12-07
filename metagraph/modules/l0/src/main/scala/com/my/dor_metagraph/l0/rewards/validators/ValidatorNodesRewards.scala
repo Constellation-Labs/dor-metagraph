@@ -1,4 +1,4 @@
-package com.my.dor_metagraph.l0.rewards
+package com.my.dor_metagraph.l0.rewards.validators
 
 import cats.effect.Async
 import cats.syntax.applicative._

@@ -10,8 +10,10 @@ import org.tessellation.schema.transaction.RewardTransaction
 
 object Types {
   val EpochProgress1Day: Long = 60 * 24
-  val EpochProgress1Month: Long = EpochProgress1Day * 30
-  val OffsetRetailBounty: Long = 2
+
+  val ModulusInstallationBounty: Long = 0
+  val ModulusCommercialBounty: Long = 1
+  val ModulusAnalyticsBounty: Long = 2
 
   val MinimumCheckInSeconds: Long =
     java.time.Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
@@ -44,7 +46,7 @@ object Types {
     lastCheckIn              : Long,
     dorAPIResponse           : DorAPIResponse,
     nextEpochProgressToReward: Long,
-    retailBountyInformation  : Option[RetailBountyInformation]
+    analyticsBountyInformation: Option[AnalyticsBountyInformation]
   )
 
   @derive(encoder, decoder)
@@ -123,10 +125,10 @@ object Types {
   }
 
   @derive(encoder, decoder)
-  case class RetailBountyInformation(
-    nextEpochProgressToRewardRetail: Long,
-    teamId                         : Long,
-    lastBillingId                  : String,
-    billedAmountMonthly            : Long
+  case class AnalyticsBountyInformation(
+    nextEpochProgressToRewardAnalytics: Long,
+    teamId                            : Long,
+    lastBillingId                     : String,
+    billedAmountMonthly               : Long
   )
 }

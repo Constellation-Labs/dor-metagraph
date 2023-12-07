@@ -16,12 +16,12 @@ object DeviceCheckIn {
     val dorAPIResponse: DorAPIResponse = checkInUpdate.maybeDorAPIResponse.get
 
     val nextRewardEpochProgress: Long = nextEpochProgressToReward(epochProgress, maybeDeviceInfo)
-    val maybeRetailBountyInformation: Option[RetailBountyInformation] = getRetailRewardsInformation(epochProgress, maybeDeviceInfo, dorAPIResponse)
+    val maybeAnalyticsBountyInformation: Option[AnalyticsBountyInformation] = getAnalyticsRewardsInformation(epochProgress, maybeDeviceInfo, dorAPIResponse)
 
     val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
     val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
 
-    val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeRetailBountyInformation)
+    val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation)
 
     val devices: Map[Address, DeviceInfo] = acc.calculated.devices.updated(address, checkIn)
     val updates: List[CheckInStateUpdate] = checkInStateUpdate :: acc.onChain.updates
@@ -32,13 +32,18 @@ object DeviceCheckIn {
     )
   }
 
+  private def getRewardEpoch(epochProgress: EpochProgress): (Long, Long) = {
+    val currentEpoch: Long = epochProgress.value.value
+    val currentEpochModulus: Long = currentEpoch % EpochProgress1Day
+    val nextRewardEpoch: Long = currentEpoch - currentEpochModulus + EpochProgress1Day
+    (currentEpoch, nextRewardEpoch)
+  }
+
   private def nextEpochProgressToReward(
     epochProgress  : EpochProgress,
     maybeDeviceInfo: Option[DeviceInfo]
   ): Long = {
-    val currentEpoch: Long = epochProgress.value.value
-    val currentEpochModulus: Long = currentEpoch % EpochProgress1Day
-    val nextRewardEpoch: Long = currentEpoch - currentEpochModulus + EpochProgress1Day
+    val (currentEpoch: Long, nextRewardEpoch: Long) = getRewardEpoch(epochProgress)
 
     maybeDeviceInfo
       .filter(_.nextEpochProgressToReward > currentEpoch)
@@ -46,54 +51,43 @@ object DeviceCheckIn {
       .getOrElse(nextRewardEpoch)
   }
 
-  private def getRetailRewardsInformation(
+  private def getAnalyticsRewardsInformation(
     epochProgress  : EpochProgress,
     maybeDeviceInfo: Option[DeviceInfo],
     dorAPIResponse : DorAPIResponse
-  ): Option[RetailBountyInformation] =
+  ): Option[AnalyticsBountyInformation] =
     dorAPIResponse.lastBillingId.map { lastBillingId =>
-      maybeDeviceInfo.fold(createFirstRetailBountyInformation(epochProgress, dorAPIResponse)) { deviceInfo =>
-        deviceInfo.retailBountyInformation.fold(createFirstRetailBountyInformation(epochProgress, dorAPIResponse)) { oldRetailBountyInformation =>
-          updateRetailBountyInformation(epochProgress, dorAPIResponse, lastBillingId, oldRetailBountyInformation)
+      maybeDeviceInfo.fold(createAnalyticsBountyInformation(epochProgress, dorAPIResponse)) { deviceInfo =>
+        deviceInfo.analyticsBountyInformation.fold(createAnalyticsBountyInformation(epochProgress, dorAPIResponse)) { oldAnalyticsBountyInformation =>
+          updateAnalyticsBountyInformation(epochProgress, dorAPIResponse, lastBillingId, oldAnalyticsBountyInformation)
         }
       }
     }
 
-  private def createFirstRetailBountyInformation(
+  private def createAnalyticsBountyInformation(
     epochProgress : EpochProgress,
     dorAPIResponse: DorAPIResponse
-  ): RetailBountyInformation = {
-    val currentEpoch: Long = epochProgress.value.value
-    val currentEpochModulus: Long = currentEpoch % EpochProgress1Day
-    val nextRewardEpoch: Long = currentEpoch - currentEpochModulus + EpochProgress1Day + OffsetRetailBounty
+  ): AnalyticsBountyInformation = {
+    val (_, nextRewardEpoch: Long) = getRewardEpoch(epochProgress)
 
-    RetailBountyInformation(
-      nextRewardEpoch,
+    AnalyticsBountyInformation(
+      nextRewardEpoch + ModulusAnalyticsBounty,
       dorAPIResponse.teamId.get,
       dorAPIResponse.lastBillingId.get,
       dorAPIResponse.billedAmountMonthly.get
     )
   }
 
-  private def updateRetailBountyInformation(
-    epochProgress             : EpochProgress,
-    dorAPIResponse            : DorAPIResponse,
-    lastBillingId             : String,
-    oldRetailBountyInformation: RetailBountyInformation
-  ): RetailBountyInformation = {
-    if (oldRetailBountyInformation.lastBillingId == lastBillingId || oldRetailBountyInformation.nextEpochProgressToRewardRetail > epochProgress.value.value) {
-      oldRetailBountyInformation
+  private def updateAnalyticsBountyInformation(
+    epochProgress                : EpochProgress,
+    dorAPIResponse               : DorAPIResponse,
+    lastBillingId                : String,
+    oldAnalyticsBountyInformation: AnalyticsBountyInformation
+  ): AnalyticsBountyInformation = {
+    if (oldAnalyticsBountyInformation.lastBillingId == lastBillingId || oldAnalyticsBountyInformation.nextEpochProgressToRewardAnalytics > epochProgress.value.value) {
+      oldAnalyticsBountyInformation
     } else {
-      val currentEpochProgress = epochProgress.value.value
-      val currentEpochModulus: Long = currentEpochProgress % EpochProgress1Day
-      val nextRewardEpoch: Long = currentEpochProgress - currentEpochModulus + EpochProgress1Month + OffsetRetailBounty
-
-      RetailBountyInformation(
-        nextRewardEpoch,
-        dorAPIResponse.teamId.get,
-        dorAPIResponse.lastBillingId.get,
-        dorAPIResponse.billedAmountMonthly.get
-      )
+      createAnalyticsBountyInformation(epochProgress, dorAPIResponse)
     }
   }
 }

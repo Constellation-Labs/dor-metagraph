@@ -1,12 +1,12 @@
-package com.my.dor_metagraph.l0.rewards.bounty
+package com.my.dor_metagraph.l0.rewards.bounties
 
 import cats.effect.Async
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
-import com.my.dor_metagraph.l0.rewards.Collateral.getDeviceCollateral
+import com.my.dor_metagraph.l0.rewards.collateral.Collateral.getDeviceCollateral
 import com.my.dor_metagraph.shared_data.Utils._
-import com.my.dor_metagraph.shared_data.bounties.daily.{CommercialLocationBounty, UnitDeployedBounty}
+import com.my.dor_metagraph.shared_data.bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
@@ -63,8 +63,8 @@ case class DailyBountyRewards() extends BountyRewards {
   ): Long = {
     val epochModulus = currentEpochProgress % EpochProgress1Day
     epochModulus match {
-      case 0L => toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
-      case 1L => toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      case ModulusInstallationBounty => toTokenAmountFormat(UnitDeployedBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
+      case ModulusCommercialBounty => toTokenAmountFormat(CommercialLocationBounty().getBountyRewardAmount(device.dorAPIResponse, epochModulus))
       case _ => 0L
     }
   }
@@ -74,8 +74,8 @@ case class DailyBountyRewards() extends BountyRewards {
   ): F[Unit] = {
     val epochProgressModulus = currentEpochProgress % EpochProgress1Day
     epochProgressModulus match {
-      case 0L => logger.info("Starting UnitDeployed bounty distribution")
-      case 1L => logger.info("Starting CommercialLocation bounty distribution")
+      case ModulusInstallationBounty => logger.info("Starting UnitDeployed bounty distribution")
+      case ModulusCommercialBounty => logger.info("Starting CommercialLocation bounty distribution")
       case _ => logger.info(s"Invalid epochProgressModulus $epochProgressModulus")
     }
   }

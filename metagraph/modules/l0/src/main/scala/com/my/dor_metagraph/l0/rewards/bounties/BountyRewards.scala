@@ -1,4 +1,4 @@
-package com.my.dor_metagraph.l0.rewards.bounty
+package com.my.dor_metagraph.l0.rewards.bounties
 
 import cats.effect.Async
 import cats.syntax.option.catsSyntaxOptionId

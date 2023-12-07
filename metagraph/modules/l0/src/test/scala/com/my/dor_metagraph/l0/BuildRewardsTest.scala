@@ -2,10 +2,10 @@ package com.my.dor_metagraph.l0
 
 import cats.effect.{IO, Resource}
 import cats.syntax.option._
-import com.my.dor_metagraph.l0.rewards.MainRewards
-import com.my.dor_metagraph.l0.rewards.ValidatorNodesRewards.getValidatorNodesTransactions
-import com.my.dor_metagraph.l0.rewards.bounty.{DailyBountyRewards, MonthlyBountyRewards}
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, DeviceInfo, DorAPIResponse, RetailBountyInformation}
+import com.my.dor_metagraph.l0.rewards.DorRewards
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
+import com.my.dor_metagraph.l0.rewards.bounties.{DailyBountyRewards, AnalyticsBountyRewards}
+import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, DeviceInfo, DorAPIResponse, AnalyticsBountyInformation}
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import eu.timepit.refined.types.numeric.NonNegLong
 import org.tessellation.schema.address.Address
@@ -44,7 +44,7 @@ object BuildRewardsTest extends MutableIOSuite {
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
     for {
-      rewards <- MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+      rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(5400000000L, reward.get.amount.value.value) &&
@@ -60,23 +60,23 @@ object BuildRewardsTest extends MutableIOSuite {
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
     for {
-      rewards <- MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(5400000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
   }
 
-  test("Build correctly rewards - RetailAnalyticsSubscriptionBounty") {
+  test("Build correctly rewards - AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
     val currentEpochProgress = 3000L
 
-    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, RetailBountyInformation(3000L, 1L, "123", 10L).some)))
+    val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, 1L, "123", 10L).some)))
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
     for {
-      rewards <- MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, MonthlyBountyRewards())
+      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards())
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(22500000000L, reward.get.amount.value.value) &&
@@ -92,7 +92,7 @@ object BuildRewardsTest extends MutableIOSuite {
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
     for {
-      rewards <- MainRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+      rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
     } yield expect.eql(0, rewards.size)
   }
 
@@ -111,7 +111,7 @@ object BuildRewardsTest extends MutableIOSuite {
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
     for {
-      rewards <- MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(9900000000L, reward.get.amount.value.value) &&
@@ -144,7 +144,7 @@ object BuildRewardsTest extends MutableIOSuite {
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
     for {
-      rewards <- MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(6, rewards.size) &&
       expect.eql(10083333333L, reward.get.amount.value.value) &&
@@ -152,7 +152,7 @@ object BuildRewardsTest extends MutableIOSuite {
       expect.eql(183333333L, rewards.toList(1).amount.value.value)
   }
 
-  test("Build correctly rewards - pay only for one device of team RetailAnalyticsSubscriptionBounty") {
+  test("Build correctly rewards - pay only for one device of team AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oefAWyRMb")
     val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
 
@@ -160,14 +160,14 @@ object BuildRewardsTest extends MutableIOSuite {
     val currentEpochProgress = 3000L
 
     val state = CheckInDataCalculatedState(Map(
-      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, RetailBountyInformation(3000L, 1L, "123", 10L).some),
-      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, RetailBountyInformation(3000L, 1L, "123", 10L).some)
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, 1L, "123", 10L).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, 1L, "123", 10L).some)
     ))
 
     val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
     for {
-      rewards <- MainRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, MonthlyBountyRewards())
+      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards())
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(22500000000L, reward.get.amount.value.value) &&
