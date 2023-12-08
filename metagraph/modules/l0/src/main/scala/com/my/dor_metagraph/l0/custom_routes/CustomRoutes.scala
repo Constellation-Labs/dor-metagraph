@@ -5,11 +5,11 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.types.Types.CalculatedStateResponse
-import org.http4s.{HttpRoutes, Response}
+import eu.timepit.refined.auto._
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
-import eu.timepit.refined.auto._
 import org.http4s.server.middleware.CORS
+import org.http4s.{HttpRoutes, Response}
 import org.tessellation.http.routes.internal.{InternalUrlPrefix, PublicRoutes}
 
 case class CustomRoutes[F[_] : Async](calculatedStateService: CalculatedStateService[F]) extends Http4sDsl[F] with PublicRoutes[F] {

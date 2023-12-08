@@ -23,15 +23,18 @@ case class AnalyticsBountyRewards() extends BountyRewards {
     currentEpochProgress: Long,
     lastBalancesRaw     : Map[Address, Balance]
   ): F[RewardTransactionsAndValidatorsTaxes] = {
-    def combine(acc: RewardTransactionsInformation, deviceInfo: DeviceInfo): F[RewardTransactionsInformation] =
+    def combine(
+      acc            : RewardTransactionsInformation,
+      deviceInfo     : DeviceInfo,
+      devicesBalances: Map[Address, Balance]
+    ): F[RewardTransactionsInformation] =
       deviceInfo.dorAPIResponse.rewardAddress match {
         case None =>
           logger.warn(s"Device doesn't have rewardAddress").as(acc)
 
         case Some(rewardAddress) =>
           for {
-            //Remember to ask about this
-            (updatedBalances, collateralMultiplierFactor) <- Async[F].delay(getDeviceCollateral(acc.lastBalances, rewardAddress))
+            (updatedBalances, collateralMultiplierFactor) <- Async[F].delay(getDeviceCollateral(devicesBalances, rewardAddress))
 
             deviceTotalRewards <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
 
@@ -47,24 +50,38 @@ case class AnalyticsBountyRewards() extends BountyRewards {
     for {
       _ <- logInitialRewardDistribution(currentEpochProgress)
 
-      filteredDevices = state.devices.collect {
-        case (_, info) if info.analyticsBountyInformation.exists(_.nextEpochProgressToRewardAnalytics == currentEpochProgress) => info
-      }
+      groupedDevices = state.devices.collect {
+          case (_, info) if info.analyticsBountyInformation.exists(_.nextEpochProgressToRewardAnalytics == currentEpochProgress) => info
+        }
+        .groupBy(_.analyticsBountyInformation.map(_.teamId).getOrElse(UndefinedTeamId))
+        .filter(_._1 != UndefinedTeamId)
 
-      txnsInfo <- filteredDevices
-        .groupBy(_.analyticsBountyInformation.map(_.teamId).getOrElse(0L))
-        .filter(_._1 != 0L)
+      analyticsRewardTransactionsAndValidatorTaxes <- groupedDevices
         .toList
         .foldLeftM(RewardTransactionsInformation(Map.empty, 0L, lastBalancesRaw)) { (acc, devices) =>
           val teamDevices = devices._2.toList
           if (teamDevices.isEmpty) {
             acc.pure[F]
           } else {
-            combine(acc, teamDevices.head)
+            teamDevices
+              .find(_.dorAPIResponse.rewardAddress.isDefined)
+              .fold(acc.pure[F]) { deviceToPayCommissions =>
+                val rewardAddress = deviceToPayCommissions.dorAPIResponse.rewardAddress.get
+                val teamId = deviceToPayCommissions.analyticsBountyInformation.get.teamId
+
+                val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices, acc.lastBalances)
+                val newBalancesWithAverage = Map(rewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
+
+                for {
+                  _ <- logger.info(s"[teamId: $teamId] Devices number: ${teamDevices.size}")
+                  _ <- logger.info(s"[teamId: $teamId] Collateral average: $devicesCollateralAverage")
+                  _ <- logger.info(s"[teamId: $teamId] Address to be rewarded: ${rewardAddress.value.value}")
+                  rewardTransactionsInformation <- combine(acc, deviceToPayCommissions, newBalancesWithAverage)
+                } yield rewardTransactionsInformation
+              }
           }
         }
-
-      analyticsRewardTransactionsAndValidatorTaxes = RewardTransactionsAndValidatorsTaxes(txnsInfo.rewardTransactions.values.toList, txnsInfo.validatorsTaxes)
+        .map(info => RewardTransactionsAndValidatorsTaxes(info.rewardTransactions.values.toList, info.validatorsTaxes))
 
       _ <- logAllDevicesRewards(analyticsRewardTransactionsAndValidatorTaxes)
     } yield analyticsRewardTransactionsAndValidatorTaxes
@@ -81,6 +98,21 @@ case class AnalyticsBountyRewards() extends BountyRewards {
         0L
       }
     }
+  }
+
+  private def getDevicesCollateralAverage(
+    devices : List[DeviceInfo],
+    balances: Map[Address, Balance]
+  ): Long = {
+    val devicesBalances = devices.map { device =>
+      device.dorAPIResponse.rewardAddress.fold(0L) { rewardAddress =>
+        balances.get(rewardAddress)
+          .map(_.value.value)
+          .getOrElse(0L)
+      }
+    }.sum
+
+    devicesBalances / devices.size
   }
 
   override def logInitialRewardDistribution[F[_] : Async](

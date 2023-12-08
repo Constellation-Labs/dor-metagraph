@@ -32,10 +32,10 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
     val currentEpochProgress = 2880L
 
-    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(2880L, 1L, "123", 10L).some)
+    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(2880L, "1", "123", 10L).some)
 
     val unitDeployedBountyAmount = AnalyticsBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(25000000000L, unitDeployedBountyAmount)
@@ -43,10 +43,10 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - AnalyticsSubscriptionBounty - 0L when not reach correct epochProgress") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, 1L.some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
     val currentEpochProgress = 2880L
 
-    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3500L, 1L, "123", 10L).some)
+    val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3500L, "1", "123", 10L).some)
 
     val unitDeployedBountyAmount = AnalyticsBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(0L, unitDeployedBountyAmount)

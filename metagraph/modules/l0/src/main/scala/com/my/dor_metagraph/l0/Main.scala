@@ -2,9 +2,9 @@ package com.my.dor_metagraph.l0
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import cats.syntax.validated._
 import cats.syntax.applicative._
 import cats.syntax.option._
+import cats.syntax.validated._
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
 import com.my.dor_metagraph.l0.rewards.DorRewards
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
@@ -17,14 +17,14 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
-import org.tessellation.currency.dataApplication.{BaseDataApplicationL0Service, DataApplicationL0Service, DataState, DataUpdate, L0NodeContext}
+import org.tessellation.currency.dataApplication._
 import org.tessellation.currency.l0.CurrencyL0App
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.ext.cats.effect.ResourceIO
-import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.schema.cluster.ClusterId
+import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hash.Hash
 import org.tessellation.security.signature.Signed

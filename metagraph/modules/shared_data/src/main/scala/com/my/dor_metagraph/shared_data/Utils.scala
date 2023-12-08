@@ -15,7 +15,7 @@ import cats.syntax.flatMap._
 import cats.syntax.bifunctor._
 import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.types.Codecs.checkInfoCodec
-import eu.timepit.refined.types.all.PosLong
+import eu.timepit.refined.types.all.{NonNegLong, PosLong}
 import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.signature.SignatureProof
@@ -126,5 +126,10 @@ object Utils {
   implicit class PosLongOps(value: Long) {
     def toPosLongUnsafe: PosLong =
       PosLong.unsafeFrom(value)
+  }
+
+  implicit class NonNegLongOps(value: Long) {
+    def toNonNegLongUnsafe: NonNegLong =
+      NonNegLong.unsafeFrom(value)
   }
 }

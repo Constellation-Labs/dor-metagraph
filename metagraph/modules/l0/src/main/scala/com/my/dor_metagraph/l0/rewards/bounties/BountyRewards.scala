@@ -1,14 +1,14 @@
 package com.my.dor_metagraph.l0.rewards.bounties
 
 import cats.effect.Async
-import cats.syntax.option.catsSyntaxOptionId
 import cats.syntax.applicative.catsSyntaxApplicativeId
+import cats.syntax.functor._
+import cats.syntax.option.catsSyntaxOptionId
 import com.my.dor_metagraph.shared_data.Utils.{PosLongOps, RewardTransactionOps}
 import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
-import cats.syntax.functor._
 
 abstract class BountyRewards() {
 

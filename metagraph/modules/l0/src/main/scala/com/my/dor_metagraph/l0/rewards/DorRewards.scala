@@ -2,8 +2,11 @@ package com.my.dor_metagraph.l0.rewards
 
 import cats.effect.Async
 import cats.syntax.all._
-import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
+import cats.syntax.functor.toFunctorOps
+import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, BountyRewards, DailyBountyRewards}
 import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes.getValidatorNodes
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
+import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.currency.dataApplication.DataCalculatedState
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
@@ -11,14 +14,11 @@ import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, C
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
-import org.tessellation.security.SecurityProvider
-import org.tessellation.security.signature.Signed
-import cats.syntax.functor.toFunctorOps
-import com.my.dor_metagraph.l0.rewards.bounties.{BountyRewards, DailyBountyRewards, AnalyticsBountyRewards}
-import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.sdk.infrastructure.consensus.trigger
 import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
+import org.tessellation.security.SecurityProvider
+import org.tessellation.security.signature.Signed
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

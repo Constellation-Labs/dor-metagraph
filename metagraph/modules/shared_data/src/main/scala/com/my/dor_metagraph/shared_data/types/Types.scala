@@ -15,6 +15,8 @@ object Types {
   val ModulusCommercialBounty: Long = 1
   val ModulusAnalyticsBounty: Long = 2
 
+  val UndefinedTeamId: String = "Undefined"
+
   val MinimumCheckInSeconds: Long =
     java.time.Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
 
@@ -99,7 +101,7 @@ object Types {
     isInstalled  : Boolean,
     locationType : Option[String],
     lastBillingId: Option[String],
-    teamId       : Option[Long],
+    teamId       : Option[String],
     billedAmount : Option[Long]
   )
 
@@ -127,7 +129,7 @@ object Types {
   @derive(encoder, decoder)
   case class AnalyticsBountyInformation(
     nextEpochProgressToRewardAnalytics: Long,
-    teamId                            : Long,
+    teamId                            : String,
     lastBillingId                     : String,
     billedAmount                      : Long
   )
