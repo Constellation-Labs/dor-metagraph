@@ -15,7 +15,7 @@ object BountyRewardsTest extends SimpleIOSuite {
     val currentEpochProgress = 1440L
 
     val deviceInfo = DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
-    val unitDeployedBountyAmount = DailyBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = DailyBountyRewards.make.getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(5000000000L, unitDeployedBountyAmount)
   }
 
@@ -26,7 +26,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
 
-    val unitDeployedBountyAmount = DailyBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = DailyBountyRewards.make.getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(5000000000L, unitDeployedBountyAmount)
   }
 
@@ -37,7 +37,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(2880L, "1", "123", 10L).some)
 
-    val unitDeployedBountyAmount = AnalyticsBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = AnalyticsBountyRewards.make.getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(25000000000L, unitDeployedBountyAmount)
   }
 
@@ -48,7 +48,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3500L, "1", "123", 10L).some)
 
-    val unitDeployedBountyAmount = AnalyticsBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = AnalyticsBountyRewards.make.getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(0L, unitDeployedBountyAmount)
   }
 
@@ -59,7 +59,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
 
-    val unitDeployedBountyAmount = DailyBountyRewards().getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
+    val unitDeployedBountyAmount = DailyBountyRewards.make.getDeviceBountyRewardsAmount(deviceInfo, currentEpochProgress)
     expect.eql(0L, unitDeployedBountyAmount)
   }
 }

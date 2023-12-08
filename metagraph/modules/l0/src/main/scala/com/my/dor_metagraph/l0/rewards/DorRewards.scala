@@ -68,7 +68,7 @@ object DorRewards {
             lastBalances,
             l0ValidatorNodes,
             l1ValidatorNodes,
-            DailyBountyRewards()
+            DailyBountyRewards.make
           )
         } yield rewards
       }
@@ -96,7 +96,7 @@ object DorRewards {
             lastBalances,
             l0ValidatorNodes,
             l1ValidatorNodes,
-            AnalyticsBountyRewards()
+            AnalyticsBountyRewards.make
           )
         } yield rewards
       }
@@ -109,7 +109,7 @@ object DorRewards {
     lastBalances        : Map[Address, Balance],
     l0ValidatorNodes    : List[Address],
     l1ValidatorNodes    : List[Address],
-    bountyRewards       : BountyRewards
+    bountyRewards       : BountyRewards[F]
   ): F[SortedSet[RewardTransaction]] = {
     for {
       bountyRewardsInfo <- bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)

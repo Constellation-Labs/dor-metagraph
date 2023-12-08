@@ -10,19 +10,19 @@ import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
 
-abstract class BountyRewards() {
+abstract class BountyRewards[F[_]: Async] {
 
   val ValidatorNodeTaxRate: Double = 0.10
 
-  def logInitialRewardDistribution[F[_] : Async](
+  def logInitialRewardDistribution(
     currentEpochProgress: Long
   ): F[Unit] = ().pure[F]
 
-  def logAllDevicesRewards[F[_] : Async](
+  def logAllDevicesRewards(
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = ().pure[F]
 
-  def getBountyRewardsTransactions[F[_] : Async](
+  def getBountyRewardsTransactions(
     state               : CheckInDataCalculatedState,
     currentEpochProgress: Long,
     lastBalancesRaw     : Map[Address, Balance]
@@ -33,7 +33,7 @@ abstract class BountyRewards() {
     currentEpochProgress: Long
   ): Long = 0L
 
-  protected def getDeviceBountiesRewards[F[_] : Async](
+  protected def getDeviceBountiesRewards(
     device                    : DeviceInfo,
     currentEpochProgress      : Long,
     collateralMultiplierFactor: Double

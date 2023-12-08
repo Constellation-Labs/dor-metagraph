@@ -44,7 +44,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
       for {
-        rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+        rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
         reward = rewards.find(reward => reward.destination == currentAddress)
       } yield expect.eql(7, rewards.size) &&
         expect.eql(5400000000L, reward.get.amount.value.value) &&
@@ -60,7 +60,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
       for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
         reward = rewards.find(reward => reward.destination == currentAddress)
       } yield expect.eql(7, rewards.size) &&
         expect.eql(5400000000L, reward.get.amount.value.value) &&
@@ -76,7 +76,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
       for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards())
+        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards.make)
         reward = rewards.find(reward => reward.destination == currentAddress)
       } yield expect.eql(7, rewards.size) &&
         expect.eql(22500000000L, reward.get.amount.value.value) &&
@@ -103,7 +103,7 @@ object BuildRewardsTest extends MutableIOSuite {
     )
 
     for {
-      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards())
+      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards.make)
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(27000000000L, reward.get.amount.value.value) &&
@@ -119,7 +119,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
       for {
-        rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+        rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
       } yield expect.eql(0, rewards.size)
     }
 
@@ -138,7 +138,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
       for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
         reward = rewards.find(reward => reward.destination == currentAddress)
       } yield expect.eql(7, rewards.size) &&
         expect.eql(9900000000L, reward.get.amount.value.value) &&
@@ -171,7 +171,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
       for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards())
+        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
         reward = rewards.find(reward => reward.destination == currentAddress)
       } yield expect.eql(6, rewards.size) &&
         expect.eql(10083333333L, reward.get.amount.value.value) &&
@@ -194,7 +194,7 @@ object BuildRewardsTest extends MutableIOSuite {
       val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
       for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards())
+        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards.make)
         reward = rewards.find(reward => reward.destination == currentAddress)
       } yield expect.eql(7, rewards.size) &&
         expect.eql(22500000000L, reward.get.amount.value.value) &&
