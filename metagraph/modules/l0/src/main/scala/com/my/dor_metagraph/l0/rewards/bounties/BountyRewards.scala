@@ -1,7 +1,6 @@
 package com.my.dor_metagraph.l0.rewards.bounties
 
 import cats.effect.Async
-import cats.syntax.applicative.catsSyntaxApplicativeId
 import cats.syntax.functor._
 import cats.syntax.option.catsSyntaxOptionId
 import com.my.dor_metagraph.shared_data.Utils.{PosLongOps, RewardTransactionOps}
@@ -16,22 +15,22 @@ abstract class BountyRewards[F[_]: Async] {
 
   def logInitialRewardDistribution(
     currentEpochProgress: Long
-  ): F[Unit] = ().pure[F]
+  ): F[Unit]
 
   def logAllDevicesRewards(
     bountyRewards: RewardTransactionsAndValidatorsTaxes
-  ): F[Unit] = ().pure[F]
+  ): F[Unit]
 
   def getBountyRewardsTransactions(
     state               : CheckInDataCalculatedState,
     currentEpochProgress: Long,
     lastBalancesRaw     : Map[Address, Balance]
-  ): F[RewardTransactionsAndValidatorsTaxes] = RewardTransactionsAndValidatorsTaxes.empty.pure[F]
+  ): F[RewardTransactionsAndValidatorsTaxes]
 
   def getDeviceBountyRewardsAmount(
     device              : DeviceInfo,
     currentEpochProgress: Long
-  ): Long = 0L
+  ): Long
 
   protected def getDeviceBountiesRewards(
     device                    : DeviceInfo,

@@ -4,7 +4,7 @@ import cats.effect.Async
 import cats.syntax.all._
 import cats.syntax.functor.toFunctorOps
 import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, BountyRewards, DailyBountyRewards}
-import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes.getValidatorNodes
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes
 import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import com.my.dor_metagraph.shared_data.types.Types._
@@ -15,107 +15,80 @@ import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
 import org.tessellation.sdk.domain.rewards.Rewards
-import org.tessellation.sdk.infrastructure.consensus.trigger
-import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
-import org.tessellation.security.SecurityProvider
+import org.tessellation.sdk.infrastructure.consensus.trigger._
 import org.tessellation.security.signature.Signed
-import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object DorRewards {
-  def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("MainRewards")
-
-  def make[F[_] : Async : SecurityProvider]: Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] = {
+  def make[F[_] : Async](
+    dailyBountyRewards: DailyBountyRewards[F],
+    analyticsBountyRewards: AnalyticsBountyRewards[F],
+    validatorNodes: ValidatorNodes[F]
+  ): Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
     (
       lastArtifact        : Signed[CurrencyIncrementalSnapshot],
       lastBalances        : SortedMap[Address, Balance],
       _                   : SortedSet[Signed[Transaction]],
-      consensusTrigger    : ConsensusTrigger,
+      trigger             : ConsensusTrigger,
       _                   : Set[CurrencySnapshotEvent],
       maybeCalculatedState: Option[DataCalculatedState]
     ) => {
-      consensusTrigger match {
-        case trigger.EventTrigger => SortedSet.empty[RewardTransaction].pure[F]
-        case trigger.TimeTrigger =>
-          for {
-            dailyRewards <- distributeDailyRewards(lastArtifact, lastBalances, maybeCalculatedState)
-            analyticsRewards <- distributeAnalyticsRewards(lastArtifact, lastBalances, maybeCalculatedState)
-          } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
+      val logger = Slf4jLogger.getLoggerFromName[F]("DorRewards")
+
+      val currentEpochProgress: Long = lastArtifact.epochProgress.value.value + 1
+      val epochProgressModulus = currentEpochProgress % EpochProgress1Day
+
+      def noRewards: F[SortedSet[RewardTransaction]] = SortedSet.empty[RewardTransaction].pure[F]
+
+      def toCheckInDataCalculatedState(state: DataCalculatedState): F[CheckInDataCalculatedState] =
+        Async[F].delay(state.asInstanceOf[CheckInDataCalculatedState])
+
+      def distributeDailyRewards(
+        state           : CheckInDataCalculatedState,
+        l0ValidatorNodes: List[Address],
+        l1ValidatorNodes: List[Address]
+      ): F[SortedSet[RewardTransaction]] =
+        if (epochProgressModulus == ModulusInstallationBounty || epochProgressModulus == ModulusCommercialBounty)
+          logger.info("Starting the daily rewards...") >> buildRewards(state, l0ValidatorNodes, l1ValidatorNodes, dailyBountyRewards)
+        else
+          noRewards
+
+      def distributeAnalyticsRewards(
+        state: CheckInDataCalculatedState,
+        l0ValidatorNodes: List[Address],
+        l1ValidatorNodes: List[Address]
+      ): F[SortedSet[RewardTransaction]] =
+        if (epochProgressModulus == ModulusAnalyticsBounty)
+          logger.info("Trying to distribute analytics rewards...") >> buildRewards(state, l0ValidatorNodes, l1ValidatorNodes, analyticsBountyRewards)
+        else
+          noRewards
+
+      def buildRewards(
+        state           : CheckInDataCalculatedState,
+        l0ValidatorNodes: List[Address],
+        l1ValidatorNodes: List[Address],
+        bountyRewards   : BountyRewards[F]
+      ): F[SortedSet[RewardTransaction]] =
+        for {
+          rewardsInfo <- bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
+          validatorNodesTransactions <- getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, rewardsInfo.validatorsTaxes)
+        } yield buildTransactionsSortedSet(rewardsInfo.rewardTransactions, validatorNodesTransactions)
+
+      trigger match {
+        case EventTrigger => noRewards
+        case TimeTrigger =>
+          maybeCalculatedState match {
+            case None => noRewards
+            case Some(dataCalculatedState) =>
+              for {
+                checkInDataCalculatedState <- toCheckInDataCalculatedState(dataCalculatedState)
+                (l0ValidatorNodes, l1ValidatorNodes) <- validatorNodes.getValidatorNodes
+                dailyRewards <- distributeDailyRewards(checkInDataCalculatedState, l0ValidatorNodes, l1ValidatorNodes)
+                analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState, l0ValidatorNodes, l1ValidatorNodes)
+              } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
+          }
       }
     }
-  }
-
-  private def distributeDailyRewards[F[_] : Async : SecurityProvider](
-    lastArtifact        : Signed[CurrencyIncrementalSnapshot],
-    lastBalances        : SortedMap[Address, Balance],
-    maybeCalculatedState: Option[DataCalculatedState]
-  ): F[SortedSet[RewardTransaction]] = {
-    val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
-    val epochProgressModulus = currentEpochProgress % EpochProgress1Day
-
-    maybeCalculatedState
-      .filter(_ => epochProgressModulus == ModulusInstallationBounty || epochProgressModulus == ModulusCommercialBounty)
-      .map { calculatedState =>
-        for {
-          _ <- logger.info("Starting the daily rewards...")
-          (l0ValidatorNodes, l1ValidatorNodes) <- getValidatorNodes
-          checkInCalculatedState: CheckInDataCalculatedState = calculatedState.asInstanceOf[CheckInDataCalculatedState]
-          rewards <- buildRewards(
-            checkInCalculatedState,
-            currentEpochProgress,
-            lastBalances,
-            l0ValidatorNodes,
-            l1ValidatorNodes,
-            DailyBountyRewards.make
-          )
-        } yield rewards
-      }
-      .getOrElse(SortedSet.empty[RewardTransaction].pure[F])
-  }
-
-  private def distributeAnalyticsRewards[F[_] : Async : SecurityProvider](
-    lastArtifact        : Signed[CurrencyIncrementalSnapshot],
-    lastBalances        : SortedMap[Address, Balance],
-    maybeCalculatedState: Option[DataCalculatedState]
-  ): F[SortedSet[RewardTransaction]] = {
-    val currentEpochProgress = lastArtifact.epochProgress.value.value + 1
-    val epochProgressModulus = currentEpochProgress % EpochProgress1Day
-
-    maybeCalculatedState
-      .filter(_ => epochProgressModulus == ModulusAnalyticsBounty)
-      .map { calculatedState =>
-        for {
-          _ <- logger.info("Trying to distribute analytics rewards...")
-          (l0ValidatorNodes, l1ValidatorNodes) <- getValidatorNodes
-          checkInCalculatedState: CheckInDataCalculatedState = calculatedState.asInstanceOf[CheckInDataCalculatedState]
-          rewards <- buildRewards(
-            checkInCalculatedState,
-            currentEpochProgress,
-            lastBalances,
-            l0ValidatorNodes,
-            l1ValidatorNodes,
-            AnalyticsBountyRewards.make
-          )
-        } yield rewards
-      }
-      .getOrElse(SortedSet.empty[RewardTransaction].pure[F])
-  }
-
-  def buildRewards[F[_] : Async](
-    state               : CheckInDataCalculatedState,
-    currentEpochProgress: Long,
-    lastBalances        : Map[Address, Balance],
-    l0ValidatorNodes    : List[Address],
-    l1ValidatorNodes    : List[Address],
-    bountyRewards       : BountyRewards[F]
-  ): F[SortedSet[RewardTransaction]] = {
-    for {
-      bountyRewardsInfo <- bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
-      bountyTransactions = bountyRewardsInfo.rewardTransactions
-      taxesToValidatorNodes = bountyRewardsInfo.validatorsTaxes
-      validatorNodesTransactions <- getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, taxesToValidatorNodes)
-    } yield buildTransactionsSortedSet(bountyTransactions, validatorNodesTransactions)
-  }
 }

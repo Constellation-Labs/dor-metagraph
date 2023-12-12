@@ -56,13 +56,15 @@ object DeviceCheckIn {
     maybeDeviceInfo: Option[DeviceInfo],
     dorAPIResponse : DorAPIResponse
   ): Option[AnalyticsBountyInformation] =
-    dorAPIResponse.lastBillingId.map { lastBillingId =>
-      maybeDeviceInfo.fold(createAnalyticsBountyInformation(epochProgress, dorAPIResponse)) { deviceInfo =>
-        deviceInfo.analyticsBountyInformation.fold(createAnalyticsBountyInformation(epochProgress, dorAPIResponse)) { oldAnalyticsBountyInformation =>
-          updateAnalyticsBountyInformation(epochProgress, dorAPIResponse, lastBillingId, oldAnalyticsBountyInformation)
-        }
+    dorAPIResponse
+      .lastBillingId
+      .map { lastBillingId =>
+        maybeDeviceInfo
+          .flatMap(_.analyticsBountyInformation)
+          .map(updateAnalyticsBountyInformation(epochProgress, dorAPIResponse, lastBillingId, _))
+          .getOrElse(createAnalyticsBountyInformation(epochProgress, dorAPIResponse))
       }
-    }
+
 
   private def createAnalyticsBountyInformation(
     epochProgress : EpochProgress,

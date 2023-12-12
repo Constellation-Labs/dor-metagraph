@@ -46,11 +46,11 @@ object ClusterApi {
       _ <- logger.info(s"Starting to fetch validator nodes of env $metagraphL0NodeUrl and $dataL1NodeUrl")
       l0ValidatorNodes <- getValidatorNodesAddressesFromClusterInfo(metagraphL0NodeUrl).handleErrorWith { err =>
         val message = s"Error when getting validator nodes for l0ValidatorNodes: ${err.getMessage}. Using the default addresses: $defaultAddressesL0"
-        logger.warn(message) >> defaultAddressesL0.pure[F]
+        logger.warn(message).as(defaultAddressesL0)
       }
       l1ValidatorNodes <- getValidatorNodesAddressesFromClusterInfo(dataL1NodeUrl).handleErrorWith { err =>
         val message = s"Error when getting validator nodes for l1ValidatorNodes: ${err.getMessage}. Using the default addresses: $defaultAddressesL1"
-        logger.warn(message) >> defaultAddressesL1.pure[F]
+        logger.warn(message).as(defaultAddressesL1)
       }
     } yield (l0ValidatorNodes, l1ValidatorNodes)
   }

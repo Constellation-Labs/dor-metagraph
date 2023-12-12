@@ -1,23 +1,34 @@
 package com.my.dor_metagraph.l0
 
+import cats.data.NonEmptySet
 import cats.effect.{IO, Resource}
+import cats.implicits.catsSyntaxApplicativeId
 import cats.syntax.option._
 import com.my.dor_metagraph.l0.rewards.DorRewards
-import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
-import com.my.dor_metagraph.l0.rewards.bounties.{DailyBountyRewards, AnalyticsBountyRewards}
-import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, DeviceInfo, DorAPIResponse, AnalyticsBountyInformation}
+import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, DailyBountyRewards}
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
+import com.my.dor_metagraph.shared_data.types.Types.{AnalyticsBountyInformation, CheckInDataCalculatedState, DeviceInfo, DorAPIResponse}
+import eu.timepit.refined.auto._
 import eu.timepit.refined.types.numeric.NonNegLong
+import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
+import org.tessellation.schema.epoch.EpochProgress
+import org.tessellation.schema.height.{Height, SubHeight}
+import org.tessellation.schema.transaction.RewardTransaction
+import org.tessellation.schema.{ActiveTip, BlockReference, DeprecatedTip, ID, SnapshotOrdinal, SnapshotTips}
+import org.tessellation.sdk.infrastructure.consensus.trigger.TimeTrigger
 import org.tessellation.security.SecurityProvider
-import weaver.MutableIOSuite
-import eu.timepit.refined.auto._
+import org.tessellation.security.hash.{Hash, ProofsHash}
+import org.tessellation.security.hex.Hex
+import org.tessellation.security.signature.Signed
+import org.tessellation.security.signature.signature.{Signature, SignatureProof}
+import weaver.SimpleIOSuite
 
-object BuildRewardsTest extends MutableIOSuite {
-  override type Res = SecurityProvider[IO]
+import scala.collection.immutable.{SortedMap, SortedSet}
 
-  override def sharedResource: Resource[IO, SecurityProvider[IO]] = SecurityProvider.forAsync[IO]
+object BuildRewardsTest extends SimpleIOSuite {
 
   def getValidatorNodesL0: List[Address] = {
     List(
@@ -35,53 +46,106 @@ object BuildRewardsTest extends MutableIOSuite {
     )
   }
 
-    test("Build correctly rewards - UnitDeployedBounty") {
-      val currentAddress = Address("DAG0DQPuvVThrCnz66S4V6cocrtpg59oesAWyRMb")
-      val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
-      val currentEpochProgress = 1440L
-
-      val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress, none)))
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
-
-      for {
-        rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
-        reward = rewards.find(reward => reward.destination == currentAddress)
-      } yield expect.eql(7, rewards.size) &&
-        expect.eql(5400000000L, reward.get.amount.value.value) &&
-        expect.eql(currentAddress, reward.get.destination)
+  def getValidatorNodesService: ValidatorNodes[IO] = {
+    new ValidatorNodes[IO] {
+      override def getValidatorNodes: IO[(List[Address], List[Address])] = (
+        getValidatorNodesL1,
+        getValidatorNodesL0
+      ).pure
     }
+  }
 
-    test("Build correctly rewards - CommercialLocationBounty") {
-      val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-      val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
-      val currentEpochProgress = 1441L
+  private def getCurrencyIncrementalSnapshot(
+    hash         : Hash,
+    epochProgress: Long
+  ): Signed[CurrencyIncrementalSnapshot] =
+    Signed(
+      CurrencyIncrementalSnapshot(
+        SnapshotOrdinal(NonNegLong(56L)),
+        Height(123L),
+        SubHeight(1L),
+        hash,
+        SortedSet.empty,
+        SortedSet.empty,
+        SnapshotTips(
+          SortedSet(
+            DeprecatedTip(BlockReference(Height(122L), ProofsHash("aaaa")), SnapshotOrdinal(55L)),
+            DeprecatedTip(BlockReference(Height(122L), ProofsHash("cccc")), SnapshotOrdinal(55L))
+          ),
+          SortedSet(ActiveTip(BlockReference(Height(122L), ProofsHash("bbbb")), 2L, SnapshotOrdinal(55L)))
+        ),
+        stateProof = CurrencySnapshotStateProof(Hash(""), Hash("")),
+        epochProgress = EpochProgress(NonNegLong.unsafeFrom(epochProgress))
+      ),
+      NonEmptySet.one(SignatureProof(ID.Id(Hex("")), Signature(Hex(""))))
+    )
 
-      val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none)))
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
+  private def getRewards(
+    lastArtifactEpochProgress: Long,
+    calculatedState          : CheckInDataCalculatedState,
+    balances                 : SortedMap[Address, Balance]
+  ): IO[SortedSet[RewardTransaction]] = {
+    DorRewards.make[IO](
+      new DailyBountyRewards[IO],
+      new AnalyticsBountyRewards[IO],
+      getValidatorNodesService
+    ).distribute(
+      getCurrencyIncrementalSnapshot(Hash.empty, lastArtifactEpochProgress),
+      balances,
+      SortedSet.empty,
+      TimeTrigger,
+      Set.empty,
+      calculatedState.some
+    )
+  }
 
-      for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
-        reward = rewards.find(reward => reward.destination == currentAddress)
-      } yield expect.eql(7, rewards.size) &&
-        expect.eql(5400000000L, reward.get.amount.value.value) &&
-        expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-    }
+  test("Build correctly rewards - UnitDeployedBounty") {
+    val currentAddress = Address("DAG0DQPuvVThrCnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val lastArtifactEpochProgress = 1439L
 
-    test("Build correctly rewards - AnalyticsSubscriptionBounty") {
-      val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-      val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
-      val currentEpochProgress = 3000L
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-      val state = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, "1", "123", 10L).some)))
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(5400000000L, reward.get.amount.value.value) &&
+      expect.eql(currentAddress, reward.get.destination)
+  }
 
-      for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards.make)
-        reward = rewards.find(reward => reward.destination == currentAddress)
-      } yield expect.eql(7, rewards.size) &&
-        expect.eql(22500000000L, reward.get.amount.value.value) &&
-        expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-    }
+  test("Build correctly rewards - CommercialLocationBounty") {
+    val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val lastArtifactEpochProgress = 1440L
+
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
+
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(5400000000L, reward.get.amount.value.value) &&
+      expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
+  }
+
+  test("Build correctly rewards - AnalyticsSubscriptionBounty") {
+    val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
+    val lastArtifactEpochProgress = 1441L
+
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some)))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
+
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(22500000000L, reward.get.amount.value.value) &&
+      expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
+  }
 
   test("Build correctly rewards - AnalyticsSubscriptionBounty - get collateral average when more than 1 device") {
     val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
@@ -90,115 +154,106 @@ object BuildRewardsTest extends MutableIOSuite {
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
     val currentDeviceInfoAPIResponse2 = DorAPIResponse(currentAddress2.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
 
-    val currentEpochProgress = 3000L
+    val lastArtifactEpochProgress = 1441L
 
-    val state = CheckInDataCalculatedState(Map(
-      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, "1", "123", 10L).some),
-      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse2, currentEpochProgress, AnalyticsBountyInformation(3000L, "1", "123", 10L).some)
+    val calculatedState = CheckInDataCalculatedState(Map(
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse2, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some)
     ))
 
-    val balances = Map(
+    val balances = SortedMap(
       currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(300000))),
       currentAddress2 -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(150000)))
     )
 
     for {
-      rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards.make)
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(7, rewards.size) &&
       expect.eql(27000000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress.value.value, "DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
   }
 
-    test("Build correctly rewards - reward address null") {
-      val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-      val currentDeviceInfoAPIResponse = DorAPIResponse(None, isInstalled = true, "Retail".some, none, none, none)
-      val currentEpochProgress = 1440L
+  test("Build correctly rewards - reward address null") {
+    val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(None, isInstalled = true, "Retail".some, none, none, none)
+    val lastArtifactEpochProgress = 1440L
 
-      val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, currentEpochProgress, none)))
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
 
-      for {
-        rewards <- DorRewards.buildRewards(calculatedState, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
-      } yield expect.eql(0, rewards.size)
-    }
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+    } yield expect.eql(0, rewards.size)
+  }
 
-    test("Build correctly rewards - multiple wallets with same reward address") {
-      val currentAddress = Address("DAG0DCPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-      val currentAddress2 = Address("DAG0DAPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+  test("Build correctly rewards - multiple wallets with same reward address") {
+    val currentAddress = Address("DAG0DCPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentAddress2 = Address("DAG0DAPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
 
-      val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
-      val currentEpochProgress = 1440L
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val lastArtifactEpochProgress = 1440L
 
-      val state = CheckInDataCalculatedState(Map(
-        currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none),
-        currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
-      ))
+    val calculatedState = CheckInDataCalculatedState(Map(
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)
+    ))
 
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
-      for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
-        reward = rewards.find(reward => reward.destination == currentAddress)
-      } yield expect.eql(7, rewards.size) &&
-        expect.eql(9900000000L, reward.get.amount.value.value) &&
-        expect.eql(currentAddress, reward.get.destination) &&
-        expect.eql(183333333L, rewards.toList(1).amount.value.value)
-    }
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(9900000000L, reward.get.amount.value.value) &&
+      expect.eql(currentAddress, reward.get.destination) &&
+      expect.eql(183333333L, rewards.toList(1).amount.value.value)
+  }
 
-    test("Build correctly rewards - validator nodes rewards successfully") {
-      val validatorNodesL0 = getValidatorNodesL0
-      val validatorNodesL1 = getValidatorNodesL1
 
-      for {
-        rewards <- getValidatorNodesTransactions(validatorNodesL0, validatorNodesL1, 50000)
-      } yield expect.eql(6, rewards.size) &&
-        forEach(rewards)(reward => expect.eql(8333L, reward.amount.value.value))
-    }
+  test("Build correctly rewards - same address validatorReward and bountyReward") {
+    val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
 
-    test("Build correctly rewards - same address validatorReward and bountyReward") {
-      val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-      val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val lastArtifactEpochProgress = 1440L
 
-      val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
-      val currentEpochProgress = 1440L
+    val calculatedState = CheckInDataCalculatedState(Map(
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)
+    ))
 
-      val state = CheckInDataCalculatedState(Map(
-        currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none),
-        currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
-      ))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
 
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(210000))))
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(6, rewards.size) &&
+      expect.eql(10083333333L, reward.get.amount.value.value) &&
+      expect.eql(currentAddress, reward.get.destination) &&
+      expect.eql(183333333L, rewards.toList(1).amount.value.value)
+  }
 
-      for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, DailyBountyRewards.make)
-        reward = rewards.find(reward => reward.destination == currentAddress)
-      } yield expect.eql(6, rewards.size) &&
-        expect.eql(10083333333L, reward.get.amount.value.value) &&
-        expect.eql(currentAddress, reward.get.destination) &&
-        expect.eql(183333333L, rewards.toList(1).amount.value.value)
-    }
+  test("Build correctly rewards - pay only for one device of team AnalyticsSubscriptionBounty") {
+    val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oefAWyRMb")
+    val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
 
-    test("Build correctly rewards - pay only for one device of team AnalyticsSubscriptionBounty") {
-      val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oefAWyRMb")
-      val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
+    val lastArtifactEpochProgress = 1441L
 
-      val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
-      val currentEpochProgress = 3000L
+    val calculatedState = CheckInDataCalculatedState(Map(
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some)
+    ))
 
-      val state = CheckInDataCalculatedState(Map(
-        currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, "1", "123", 10L).some),
-        currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3000L, "1", "123", 10L).some)
-      ))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
-      val balances = Map(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
-
-      for {
-        rewards <- DorRewards.buildRewards(state, currentEpochProgress, balances, getValidatorNodesL0, getValidatorNodesL1, AnalyticsBountyRewards.make)
-        reward = rewards.find(reward => reward.destination == currentAddress)
-      } yield expect.eql(7, rewards.size) &&
-        expect.eql(22500000000L, reward.get.amount.value.value) &&
-        expect.eql(currentAddress, reward.get.destination) &&
-        expect.eql(416666666L, rewards.toList(1).amount.value.value)
-    }
+    for {
+      rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(22500000000L, reward.get.amount.value.value) &&
+      expect.eql(currentAddress, reward.get.destination) &&
+      expect.eql(416666666L, rewards.toList(1).amount.value.value)
+  }
 }
