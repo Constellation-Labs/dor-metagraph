@@ -4,10 +4,10 @@ import cats.effect.Async
 import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Utils.getDagAddressFromPublicKey
 import com.my.dor_metagraph.shared_data.types.Types.ClusterInfoResponse
+import eu.timepit.refined.auto._
 import io.circe.parser.decode
 import org.tessellation.schema.address.Address
 import org.tessellation.security.SecurityProvider
-import eu.timepit.refined.auto._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

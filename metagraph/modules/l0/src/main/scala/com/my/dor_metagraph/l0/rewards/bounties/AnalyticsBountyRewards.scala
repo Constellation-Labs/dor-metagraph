@@ -69,7 +69,7 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
                 val rewardAddress = deviceToPayCommissions.dorAPIResponse.rewardAddress.get
                 val teamId = deviceToPayCommissions.analyticsBountyInformation.get.teamId
 
-                val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices.toList, acc.lastBalances)
+                val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices, acc.lastBalances)
                 val newBalancesWithAverage = Map(rewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
 
                 for {

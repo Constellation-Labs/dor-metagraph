@@ -1,29 +1,29 @@
 package com.my.dor_metagraph.shared_data
 
 import cats.ApplicativeError
-import com.my.dor_metagraph.shared_data.types.Types._
-import io.bullet.borer.Cbor
-import org.tessellation.schema.ID.Id
-import org.tessellation.security.hex.Hex
-
-import scala.collection.mutable.ListBuffer
-import org.tessellation.schema.address.Address
-import cats.data.NonEmptySet
+import cats.data.{NonEmptySet, OptionT}
 import cats.effect.Async
+import cats.effect.std.Env
 import cats.syntax.applicativeError._
-import cats.syntax.flatMap._
 import cats.syntax.bifunctor._
+import cats.syntax.flatMap._
 import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.types.Codecs.checkInfoCodec
+import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.types.all.{NonNegLong, PosLong}
+import io.bullet.borer.Cbor
+import org.tessellation.schema.ID.Id
+import org.tessellation.schema.address.Address
 import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
 import org.tessellation.security.SecurityProvider
+import org.tessellation.security.hex.Hex
 import org.tessellation.security.signature.signature.SignatureProof
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import scala.collection.{MapView, View}
 import scala.collection.immutable.SortedSet
+import scala.collection.mutable.ListBuffer
+import scala.collection.{MapView, View}
 
 
 object Utils {
@@ -132,4 +132,8 @@ object Utils {
     def toNonNegLongUnsafe: NonNegLong =
       NonNegLong.unsafeFrom(value)
   }
+
+  def getEnv[F[_] : Async : Env](name: String): F[String] =
+    OptionT(Env[F].get(name))
+      .getOrRaise(new Exception(s"Environment var $name not set"))
 }

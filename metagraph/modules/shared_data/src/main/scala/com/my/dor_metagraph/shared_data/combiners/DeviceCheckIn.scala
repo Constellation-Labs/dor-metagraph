@@ -65,7 +65,6 @@ object DeviceCheckIn {
           .getOrElse(createAnalyticsBountyInformation(epochProgress, dorAPIResponse))
       }
 
-
   private def createAnalyticsBountyInformation(
     epochProgress : EpochProgress,
     dorAPIResponse: DorAPIResponse

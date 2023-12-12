@@ -23,9 +23,9 @@ import scala.collection.immutable.{SortedMap, SortedSet}
 
 object DorRewards {
   def make[F[_] : Async](
-    dailyBountyRewards: DailyBountyRewards[F],
+    dailyBountyRewards    : DailyBountyRewards[F],
     analyticsBountyRewards: AnalyticsBountyRewards[F],
-    validatorNodes: ValidatorNodes[F]
+    validatorNodes        : ValidatorNodes[F]
   ): Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
     (
       lastArtifact        : Signed[CurrencyIncrementalSnapshot],
@@ -56,7 +56,7 @@ object DorRewards {
           noRewards
 
       def distributeAnalyticsRewards(
-        state: CheckInDataCalculatedState,
+        state           : CheckInDataCalculatedState,
         l0ValidatorNodes: List[Address],
         l1ValidatorNodes: List[Address]
       ): F[SortedSet[RewardTransaction]] =

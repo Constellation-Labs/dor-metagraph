@@ -9,7 +9,7 @@ import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
 
-abstract class BountyRewards[F[_]: Async] {
+abstract class BountyRewards[F[_] : Async] {
 
   val ValidatorNodeTaxRate: Double = 0.10
 

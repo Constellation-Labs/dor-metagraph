@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.l0
 
 import cats.data.NonEmptySet
-import cats.effect.{IO, Resource}
+import cats.effect.IO
 import cats.implicits.catsSyntaxApplicativeId
 import cats.syntax.option._
 import com.my.dor_metagraph.l0.rewards.DorRewards
@@ -19,7 +19,6 @@ import org.tessellation.schema.height.{Height, SubHeight}
 import org.tessellation.schema.transaction.RewardTransaction
 import org.tessellation.schema.{ActiveTip, BlockReference, DeprecatedTip, ID, SnapshotOrdinal, SnapshotTips}
 import org.tessellation.sdk.infrastructure.consensus.trigger.TimeTrigger
-import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hash.{Hash, ProofsHash}
 import org.tessellation.security.hex.Hex
 import org.tessellation.security.signature.Signed

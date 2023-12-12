@@ -1,7 +1,7 @@
 package com.my.dor_metagraph.l0
 
 import cats.syntax.option._
-import com.my.dor_metagraph.l0.rewards.bounties.{DailyBountyRewards, AnalyticsBountyRewards}
+import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, DailyBountyRewards}
 import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.auto._
 import org.tessellation.schema.address.Address
