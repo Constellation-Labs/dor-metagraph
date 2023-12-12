@@ -11,6 +11,12 @@ import org.tessellation.schema.transaction.RewardTransaction
 object Types {
   val EpochProgress1Day: Long = 60 * 24
 
+  val ModulusInstallationBounty: Long = 0
+  val ModulusCommercialBounty: Long = 1
+  val ModulusAnalyticsBounty: Long = 2
+
+  val UndefinedTeamId: String = "Undefined"
+
   val MinimumCheckInSeconds: Long =
     java.time.Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
 
@@ -39,9 +45,10 @@ object Types {
 
   @derive(encoder, decoder)
   case class DeviceInfo(
-    lastCheckIn              : Long,
-    dorAPIResponse           : DorAPIResponse,
-    nextEpochProgressToReward: Long
+    lastCheckIn               : Long,
+    dorAPIResponse            : DorAPIResponse,
+    nextEpochProgressToReward : Long,
+    analyticsBountyInformation: Option[AnalyticsBountyInformation]
   )
 
   @derive(encoder, decoder)
@@ -90,10 +97,12 @@ object Types {
 
   @derive(encoder, decoder)
   case class DorAPIResponse(
-    rewardAddress      : Option[Address],
-    isInstalled        : Boolean,
-    locationType       : Option[String],
-    billedAmountMonthly: Option[Long]
+    rewardAddress: Option[Address],
+    isInstalled  : Boolean,
+    locationType : Option[String],
+    lastBillingId: Option[String],
+    teamId       : Option[String],
+    billedAmount : Option[Long]
   )
 
   @derive(encoder, decoder)
@@ -111,5 +120,17 @@ object Types {
   case class RewardTransactionsAndValidatorsTaxes(
     rewardTransactions: List[RewardTransaction],
     validatorsTaxes   : Long
+  )
+
+  object RewardTransactionsAndValidatorsTaxes {
+    def empty: RewardTransactionsAndValidatorsTaxes = RewardTransactionsAndValidatorsTaxes(List.empty, 0L)
+  }
+
+  @derive(encoder, decoder)
+  case class AnalyticsBountyInformation(
+    nextEpochProgressToRewardAnalytics: Long,
+    teamId                            : String,
+    lastBillingId                     : String,
+    billedAmount                      : Long
   )
 }

@@ -6,6 +6,7 @@ import cats.syntax.flatMap.toFlatMapOps
 import cats.syntax.functor.toFunctorOps
 import com.my.dor_metagraph.shared_data.Utils.{getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.external_apis.DorApi.handleCheckIn
+import com.my.dor_metagraph.shared_data.types.Codecs._
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.bullet.borer.Cbor
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
@@ -13,7 +14,6 @@ import org.tessellation.schema.ID.Id
 import org.tessellation.security.hex.Hex
 import org.tessellation.security.signature.Signed
 import org.tessellation.security.signature.signature.{Signature, SignatureProof}
-import com.my.dor_metagraph.shared_data.types.Codecs._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

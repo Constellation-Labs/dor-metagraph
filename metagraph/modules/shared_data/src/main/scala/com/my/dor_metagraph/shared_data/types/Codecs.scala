@@ -1,9 +1,8 @@
 package com.my.dor_metagraph.shared_data.types
 
 import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInInfo, DeviceCheckInWithSignature}
-import io.bullet.borer.Codec
 import io.bullet.borer.derivation.MapBasedCodecs.{deriveCodec, deriveEncoder}
-import io.bullet.borer.{Decoder, Encoder, Reader}
+import io.bullet.borer.{Codec, Decoder, Encoder, Reader}
 import org.tessellation.security.hex.Hex
 
 object Codecs {

@@ -1,10 +1,10 @@
-package com.my.dor_metagraph.l0.rewards
+package com.my.dor_metagraph.l0.rewards.collateral
 
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import com.my.dor_metagraph.shared_data.types.Types._
+import eu.timepit.refined.types.numeric.NonNegLong
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
-import eu.timepit.refined.types.numeric.NonNegLong
 
 object Collateral {
   def getDeviceCollateral(
