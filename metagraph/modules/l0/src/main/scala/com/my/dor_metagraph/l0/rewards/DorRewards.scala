@@ -46,32 +46,27 @@ object DorRewards {
         Async[F].delay(state.asInstanceOf[CheckInDataCalculatedState])
 
       def distributeDailyRewards(
-        state           : CheckInDataCalculatedState,
-        l0ValidatorNodes: List[Address],
-        l1ValidatorNodes: List[Address]
+        state: CheckInDataCalculatedState
       ): F[SortedSet[RewardTransaction]] =
         if (epochProgressModulus == ModulusInstallationBounty || epochProgressModulus == ModulusCommercialBounty)
-          logger.info("Starting the daily rewards...") >> buildRewards(state, l0ValidatorNodes, l1ValidatorNodes, dailyBountyRewards)
+          logger.info("Starting the daily rewards...") >> buildRewards(state, dailyBountyRewards)
         else
           noRewards
 
       def distributeAnalyticsRewards(
-        state           : CheckInDataCalculatedState,
-        l0ValidatorNodes: List[Address],
-        l1ValidatorNodes: List[Address]
+        state: CheckInDataCalculatedState
       ): F[SortedSet[RewardTransaction]] =
         if (epochProgressModulus == ModulusAnalyticsBounty)
-          logger.info("Trying to distribute analytics rewards...") >> buildRewards(state, l0ValidatorNodes, l1ValidatorNodes, analyticsBountyRewards)
+          logger.info("Trying to distribute analytics rewards...") >> buildRewards(state, analyticsBountyRewards)
         else
           noRewards
 
       def buildRewards(
-        state           : CheckInDataCalculatedState,
-        l0ValidatorNodes: List[Address],
-        l1ValidatorNodes: List[Address],
-        bountyRewards   : BountyRewards[F]
+        state        : CheckInDataCalculatedState,
+        bountyRewards: BountyRewards[F]
       ): F[SortedSet[RewardTransaction]] =
         for {
+          (l0ValidatorNodes, l1ValidatorNodes) <- validatorNodes.getValidatorNodes
           rewardsInfo <- bountyRewards.getBountyRewardsTransactions(state, currentEpochProgress, lastBalances)
           validatorNodesTransactions <- getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, rewardsInfo.validatorsTaxes)
         } yield buildTransactionsSortedSet(rewardsInfo.rewardTransactions, validatorNodesTransactions)
@@ -84,9 +79,8 @@ object DorRewards {
             case Some(dataCalculatedState) =>
               for {
                 checkInDataCalculatedState <- toCheckInDataCalculatedState(dataCalculatedState)
-                (l0ValidatorNodes, l1ValidatorNodes) <- validatorNodes.getValidatorNodes
-                dailyRewards <- distributeDailyRewards(checkInDataCalculatedState, l0ValidatorNodes, l1ValidatorNodes)
-                analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState, l0ValidatorNodes, l1ValidatorNodes)
+                dailyRewards <- distributeDailyRewards(checkInDataCalculatedState)
+                analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState)
               } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
           }
       }
