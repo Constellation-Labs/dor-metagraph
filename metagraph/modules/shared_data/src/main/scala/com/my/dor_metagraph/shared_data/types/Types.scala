@@ -7,12 +7,13 @@ import org.tessellation.currency.dataApplication.{DataCalculatedState, DataOnCha
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
+import java.time.Instant
 
 object Types {
   val EpochProgress1Day: Long = 60 * 24
 
   val MinimumCheckInSeconds: Long =
-    java.time.Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
+    Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
 
   val Collateral50K: Long = toTokenAmountFormat(50 * 1000)
   val Collateral100K: Long = toTokenAmountFormat(100 * 1000)
