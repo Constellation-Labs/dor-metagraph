@@ -78,10 +78,11 @@ runs:
           echo "Bucket '$BUCKET_NAME' already exists."
         fi
 
-    - name: Build tessellation dependencies
+    - name: Setup Java and scala
       with:
+        JAVA_VERSION: openjdk@1.11.0
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      uses: "./.github/templates/build_tessellation"
+      uses: "./.github/templates/setup_java_and_scala"
 
     - name: Generate Metagraph JARS
       env:
@@ -95,9 +96,9 @@ runs:
       shell: bash
       run: |
         mkdir .github/artifacts
-        mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0.jar
-        mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1.jar
-        mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1.jar
+        mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-* .github/artifacts/metagraph-l0.jar
+        mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-* .github/artifacts/currency-l1.jar
+        mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-* .github/artifacts/data-l1.jar
 
     - name: Send JARs to S3 bucket
       shell: bash

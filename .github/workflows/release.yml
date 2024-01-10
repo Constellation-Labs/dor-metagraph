@@ -36,6 +36,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: "./.github/templates/setup_java_and_scala"
 
+      - name: Fetch Dependencies
+        shell: bash
+        if: steps.coursier-cache.outputs.cache-hit-coursier != 'true'
+        env:
+          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        run: |
+          cd metagraph
+          sbt +update
+
       - name: Test and assembly 🚀
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
