@@ -78,10 +78,11 @@ runs:
           echo "Bucket '$BUCKET_NAME' already exists."
         fi
 
-    - name: Build tessellation dependencies
+    - name: Setup Java and scala
       with:
-        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      uses: "./.github/templates/build_tessellation"
+        JAVA_VERSION: openjdk@1.11.0
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: "./.github/templates/setup_java_and_scala"
 
     - name: Generate Metagraph JARS
       env:
