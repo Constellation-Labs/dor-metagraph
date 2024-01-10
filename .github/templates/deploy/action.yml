@@ -81,7 +81,7 @@ runs:
     - name: Setup Java and scala
       with:
         JAVA_VERSION: openjdk@1.11.0
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       uses: "./.github/templates/setup_java_and_scala"
 
     - name: Generate Metagraph JARS
