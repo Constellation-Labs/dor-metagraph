@@ -78,31 +78,10 @@ runs:
           echo "Bucket '$BUCKET_NAME' already exists."
         fi
 
-    - name: Get tessellation version to build
-      shell: bash
-      run: |
-        echo "TESSELLATION_VERSION=v$(cat metagraph/project/Dependencies.scala | grep -E "tessellation = \"(.*)" | grep -o "\".*\"" | grep -Eo "[^\"]*")" >> $GITHUB_ENV
-
-    - name: Clone and generate Tessellation dependencies
-      env:
+    - name: Build tessellation dependencies
+      with:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      shell: bash
-      run: |
-        echo "TESSELLATION_VERSION=$TESSELLATION_VERSION"
-        
-        mkdir .github/dependencies
-        cd .github/dependencies
-        git clone https://github.com/Constellation-Labs/tessellation.git
-        cd tessellation
-        git checkout $TESSELLATION_VERSION
-        
-        sbt clean shared/publishM2
-        sbt clean kernel/publishM2
-        sbt clean keytool/publishM2
-        sbt clean sdk/publishM2
-        sbt clean dagL1/publishM2
-        sbt clean currencyL0/publishM2
-        sbt clean currencyL1/publishM2
+      uses: "./.github/templates/build_tessellation"
 
     - name: Generate Metagraph JARS
       env:
