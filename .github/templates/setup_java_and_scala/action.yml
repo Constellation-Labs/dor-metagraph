@@ -22,12 +22,3 @@ runs:
       with:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       uses: "./.github/templates/build_tessellation"
-
-    - name: Fetch Dependencies
-      shell: bash
-      if: steps.coursier-cache.outputs.cache-hit-coursier != 'true'
-      env:
-        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      run: |
-        cd metagraph
-        sbt +update
