@@ -25,4 +25,10 @@ runs:
         cd tessellation
         git checkout $TESSELLATION_VERSION
         
-        sbt clean shared/publishM2 kernel/publishM2 keytool/publishM2 sdk/publishM2 dagL1/publishM2 currencyL0/publishM2 currencyL1/publishM2
+        sbt clean shared/publishM2
+        sbt clean kernel/publishM2
+        sbt clean keytool/publishM2
+        sbt clean sdk/publishM2
+        sbt clean dagL1/publishM2
+        sbt clean currencyL0/publishM2
+        sbt clean currencyL1/publishM2
