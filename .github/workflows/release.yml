@@ -71,16 +71,16 @@ jobs:
             ./metagraph/currency-l1.jar
             ./metagraph/data-l1.jar
             
-            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/metagraph-l0-testnet-seedlist
-            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/metagraph-l0-integrationnet-seedlist
-            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/metagraph-l0-mainnet-seedlist
+            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-testnet-seedlist
+            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-integrationnet-seedlist
+            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-mainnet-seedlist
             
-            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/currency-l1-testnet-seedlist
-            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/currency-l1-integrationnet-seedlist
-            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/currency-l1-mainnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/ml1c-testnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/ml1c-integrationnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/ml1c-mainnet-seedlist
             
-            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/data-l1-testnet-seedlist
-            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/data-l1-integrationnet-seedlist
-            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/data-l1-mainnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/ml1d-testnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/ml1d-integrationnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/ml1d-mainnet-seedlist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
