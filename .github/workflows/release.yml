@@ -75,12 +75,12 @@ jobs:
             ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-integrationnet-seedlist
             ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-mainnet-seedlist
             
-            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/ml1c-testnet-seedlist
-            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/ml1c-integrationnet-seedlist
-            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/ml1c-mainnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/cl1-testnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/cl1-integrationnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/cl1-mainnet-seedlist
             
-            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/ml1d-testnet-seedlist
-            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/ml1d-integrationnet-seedlist
-            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/ml1d-mainnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/dl1-testnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/dl1-integrationnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/dl1-mainnet-seedlist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
