@@ -2,6 +2,7 @@
   "metagraph": {
     "id": "DAG8gMagrwoJ4nAMjbGx17WB5D6nqBEPZYChc3zH",
     "name": "DOR",
+    "version": "v1.0.1",
     "include_currency_l1_layer": true,
     "include_data_l1_layer": true,
     "file_system": {
@@ -29,7 +30,22 @@
       "DATA_L1_NODE_URL=http://34.212.38.215:9000/cluster/info"
     ],
     "additional_currency_l1_env_variables": [],
-    "additional_data_l1_env_variables": []
+    "additional_data_l1_env_variables": [],
+    "seedlists": {
+      "location": "Github",
+      "ml0": {
+        "base_url": "https://github.com/Constellation-Labs/dor-metagraph/releases/download",
+        "file_name": "ml0-testnet-seedlist"
+      },
+      "cl1": {
+        "base_url": "https://github.com/Constellation-Labs/dor-metagraph/releases/download",
+        "file_name": "cl1-testnet-seedlist"
+      },
+      "dl1": {
+        "base_url": "https://github.com/Constellation-Labs/dor-metagraph/releases/download",
+        "file_name": "dl1-testnet-seedlist"
+      }
+    }
   },
   "network": {
     "name": "testnet"
