@@ -16,9 +16,9 @@ import org.tessellation.security.SecurityProvider
 import org.tessellation.security.signature.Signed
 import cats.syntax.functor.toFunctorOps
 import com.my.dor_metagraph.shared_data.Utils.{PosLongOps, RewardTransactionOps}
-import org.tessellation.sdk.domain.rewards.Rewards
-import org.tessellation.sdk.infrastructure.consensus.trigger
-import org.tessellation.sdk.infrastructure.consensus.trigger.ConsensusTrigger
+import org.tessellation.node.shared.domain.rewards.Rewards
+import org.tessellation.node.shared.infrastructure.consensus.trigger
+import org.tessellation.node.shared.infrastructure.consensus.trigger.ConsensusTrigger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -83,7 +83,7 @@ object MainRewards {
     } yield buildRewardsTransactionsSortedSet(bountyTransactions, validatorNodesTransactions)
   }
 
-  private def buildRewardsTransactionsSortedSet[F[_] : Async](
+  private def buildRewardsTransactionsSortedSet[F[_]](
     bountyTransactions        : List[RewardTransaction],
     validatorNodesTransactions: List[RewardTransaction]
   ): SortedSet[RewardTransaction] = {
