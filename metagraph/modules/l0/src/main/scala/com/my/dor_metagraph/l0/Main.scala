@@ -27,7 +27,6 @@ import org.tessellation.ext.cats.effect.ResourceIO
 import org.tessellation.node.shared.domain.rewards.Rewards
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.schema.cluster.ClusterId
-import org.tessellation.sdk.domain.rewards.Rewards
 import org.tessellation.security.SecurityProvider
 import org.tessellation.security.hash.Hash
 import org.tessellation.security.signature.Signed
