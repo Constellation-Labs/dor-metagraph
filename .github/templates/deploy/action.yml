@@ -15,7 +15,8 @@ inputs:
     required: true
   GITHUB_TOKEN:
     required: true
-
+  NETWORK:
+    required: true
 runs:
   using: "composite"
   steps:
@@ -34,12 +35,13 @@ runs:
         AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
+        NETWORK: ${{ inputs.NETWORK }}
       shell: bash
       run: |
         echo "EC2_INSTANCE_1_ID=${{ inputs.EC2_INSTANCE_1_ID }}" >> $GITHUB_ENV
         echo "EC2_INSTANCE_2_ID=${{ inputs.EC2_INSTANCE_2_ID }}" >> $GITHUB_ENV
         echo "EC2_INSTANCE_3_ID=${{ inputs.EC2_INSTANCE_3_ID }}" >> $GITHUB_ENV
-        echo "BUCKET_NAME=dor-metagraph-jars-testnet" >> $GITHUB_ENV
+        echo "BUCKET_NAME=dor-metagraph-jars-$NETWORK" >> $GITHUB_ENV
 
     - name: Install AWS Cli on instances if not exists
       env:
@@ -76,31 +78,11 @@ runs:
           echo "Bucket '$BUCKET_NAME' already exists."
         fi
 
-    - name: Get tessellation version to build
-      shell: bash
-      run: |
-        echo "TESSELLATION_VERSION=v$(cat metagraph/project/Dependencies.scala | grep -E "tessellation = \"(.*)" | grep -o "\".*\"" | grep -Eo "[^\"]*")" >> $GITHUB_ENV
-
-    - name: Clone and generate Tessellation dependencies
-      env:
+    - name: Setup Java and scala
+      with:
+        JAVA_VERSION: openjdk@1.11.0
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      shell: bash
-      run: |
-        echo "TESSELLATION_VERSION=$TESSELLATION_VERSION"
-        
-        mkdir .github/dependencies
-        cd .github/dependencies
-        git clone https://github.com/Constellation-Labs/tessellation.git
-        cd tessellation
-        git checkout $TESSELLATION_VERSION
-        
-        sbt --error clean shared/publishM2 
-        sbt --error kernel/publishM2 
-        sbt --error keytool/publishM2
-        sbt --error sdk/publishM2
-        sbt --error dagL1/publishM2
-        sbt --error currencyL0/publishM2
-        sbt --error currencyL1/publishM2
+      uses: "./.github/templates/setup_java_and_scala"
 
     - name: Generate Metagraph JARS
       env:
@@ -114,9 +96,9 @@ runs:
       shell: bash
       run: |
         mkdir .github/artifacts
-        mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/metagraph-l0.jar
-        mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/data-l1.jar
-        mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-0.1.0-SNAPSHOT.jar .github/artifacts/currency-l1.jar
+        mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-* .github/artifacts/metagraph-l0.jar
+        mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-* .github/artifacts/currency-l1.jar
+        mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-* .github/artifacts/data-l1.jar
 
     - name: Send JARs to S3 bucket
       shell: bash
@@ -125,11 +107,12 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         AWS_DEFAULT_REGION: ${{ inputs.AWS_REGION }}
+        NETWORK: ${{ inputs.NETWORK }}
       run: |
         cd .github/artifacts
-        aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars-testnet
-        aws s3 cp data-l1.jar s3://dor-metagraph-jars-testnet
-        aws s3 cp currency-l1.jar s3://dor-metagraph-jars-testnet
+        aws s3 cp metagraph-l0.jar s3://dor-metagraph-jars-$NETWORK
+        aws s3 cp data-l1.jar s3://dor-metagraph-jars-$NETWORK
+        aws s3 cp currency-l1.jar s3://dor-metagraph-jars-$NETWORK
 
     - name: Send JARS from S3 to EC2 - Instance 1
       shell: bash
@@ -138,10 +121,11 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         AWS_DEFAULT_REGION: ${{ inputs.AWS_REGION }}
+        NETWORK: ${{ inputs.NETWORK }}
       run: |
-        METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
-        CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/currency-l1.jar /home/ubuntu/code/currency-l1/"
-        DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/data-l1.jar /home/ubuntu/code/data-l1/"
+        METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
+        CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/currency-l1.jar /home/ubuntu/code/currency-l1/"
+        DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/data-l1.jar /home/ubuntu/code/data-l1/"
         
         metagraph_l0_command_id=$(aws ssm send-command \
         --instance-id $EC2_INSTANCE_1_ID \
@@ -228,10 +212,11 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         AWS_DEFAULT_REGION: ${{ inputs.AWS_REGION }}
+        NETWORK: ${{ inputs.NETWORK }}
       run: |
-        METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
-        CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/currency-l1.jar /home/ubuntu/code/currency-l1/"
-        DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/data-l1.jar /home/ubuntu/code/data-l1/"
+        METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
+        CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/currency-l1.jar /home/ubuntu/code/currency-l1/"
+        DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/data-l1.jar /home/ubuntu/code/data-l1/"
         
         metagraph_l0_command_id=$(aws ssm send-command \
         --instance-id $EC2_INSTANCE_2_ID \
@@ -318,10 +303,11 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         AWS_DEFAULT_REGION: ${{ inputs.AWS_REGION }}
+        NETWORK: ${{ inputs.NETWORK }}
       run: |
-        METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
-        CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/currency-l1.jar /home/ubuntu/code/currency-l1/"
-        DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-testnet/data-l1.jar /home/ubuntu/code/data-l1/"
+        METAGRAPH_L0_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/metagraph-l0.jar /home/ubuntu/code/metagraph-l0/"
+        CURRENCY_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/currency-l1.jar /home/ubuntu/code/currency-l1/"
+        DATA_L1_COMMAND="export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY && export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION && aws s3 cp s3://dor-metagraph-jars-$NETWORK/data-l1.jar /home/ubuntu/code/data-l1/"
         
         metagraph_l0_command_id=$(aws ssm send-command \
         --instance-id $EC2_INSTANCE_3_ID \

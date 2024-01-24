@@ -1,9 +1,9 @@
-import sbt.*
+import sbt._
 
 object Dependencies {
 
   object V {
-    val tessellation = "2.2.0"
+    val tessellation = "2.3.0"
     val decline = "2.4.1"
   }
 
@@ -17,7 +17,7 @@ object Dependencies {
   object Libraries {
     val tessellationKernel = tessellation("kernel")
     val tessellationDAGL1 = tessellation("dag-l1")
-    val tessellationSDK = tessellation("sdk")
+    val tessellationNodeShared = tessellation("node-shared")
     val tessellationShared = tessellation("shared")
     val tessellationKeytool = tessellation("keytool")
     val tessellationCurrencyL0 = tessellation("currency-l0")

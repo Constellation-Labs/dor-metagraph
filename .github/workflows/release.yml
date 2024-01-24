@@ -1,0 +1,86 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Create Release
+
+jobs:
+  build:
+    if: startsWith(github.ref, 'refs/tags/')
+    name: Create Release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check if project version is release version
+        run:  test "v$(cut -d \" -f 2 metagraph/version.sbt)" = "${{ github.ref_name }}"
+
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v2.4.2
+        with:
+          configuration: ".github/config/changelog.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: little-core-labs/get-git-tag@v3.0.1
+        id: tagName
+        with:
+          tagRegex: "v(.*)"
+          tagRegexGroup: 1
+
+      - name: Setup Java and scala
+        with:
+          JAVA_VERSION: openjdk@1.11.0
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: "./.github/templates/setup_java_and_scala"
+
+      - name: Fetch Dependencies
+        shell: bash
+        if: steps.coursier-cache.outputs.cache-hit-coursier != 'true'
+        env:
+          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        run: |
+          cd metagraph
+          sbt +update
+
+      - name: Test and assembly 🚀
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd metagraph
+          sbt 'test;currencyL0/assembly;currencyL1/assembly;dataL1/assembly'
+
+      - name: Copy dependencies
+        run: |
+          cd metagraph
+          cp ./modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-${{ steps.tagName.outputs.tag }}.jar ./metagraph-l0.jar
+          cp ./modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-${{ steps.tagName.outputs.tag }}.jar ./currency-l1.jar
+          cp ./modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-${{ steps.tagName.outputs.tag }}.jar ./data-l1.jar
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          name: DOR Metagraph Release ${{ steps.tagName.outputs.tag }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.build_changelog.outputs.changelog }}
+          files: |
+            ./metagraph/metagraph-l0.jar
+            ./metagraph/currency-l1.jar
+            ./metagraph/data-l1.jar
+            
+            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-testnet-seedlist
+            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-integrationnet-seedlist
+            ./metagraph/modules/l0/src/main/scala/com/my/dor_metagraph/l0/seedlists/ml0-mainnet-seedlist
+            
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/cl1-testnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/cl1-integrationnet-seedlist
+            ./metagraph/modules/l1/src/main/scala/com/my/dor_metagraph/l1/seedlists/cl1-mainnet-seedlist
+            
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/dl1-testnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/dl1-integrationnet-seedlist
+            ./metagraph/modules/data_l1/src/main/scala/com/my/dor_metagraph/data_l1/seedlists/dl1-mainnet-seedlist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

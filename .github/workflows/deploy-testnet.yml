@@ -16,6 +16,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_TESTNET }}
           AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NETWORK: testnet
 
           EC2_INSTANCE_1_ID: ${{ secrets.EC2_INSTANCE_1_ID_TESTNET }}
           EC2_INSTANCE_2_ID: ${{ secrets.EC2_INSTANCE_2_ID_TESTNET }}
@@ -36,7 +37,6 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION_TESTNET }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_TESTNET }}
         run: |
-          echo "test"
           aws lambda invoke \
           --function-name MetagraphMonitor \
           --invocation-type Event \

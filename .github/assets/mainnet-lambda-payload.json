@@ -1,6 +1,6 @@
 {
   "metagraph": {
-    "id": "DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C",
+    "id": "DAG0CyySf35ftDQDQBnd1bdQ9aPyUdacMghpnCuM",
     "name": "DOR",
     "version": "v1.0.1",
     "include_currency_l1_layer": true,
@@ -22,12 +22,12 @@
       "data_l1_cli_port": 9002
     },
     "required_env_variables": {
-      "cl_app_env": "integrationnet",
+      "cl_app_env": "mainnet",
       "cl_collateral": 0
     },
     "additional_metagraph_l0_env_variables": [
-      "METAGRAPH_L0_NODE_URL=http://54.218.46.24:7000/cluster/info",
-      "DATA_L1_NODE_URL=http://54.218.46.24:9000/cluster/info"
+      "METAGRAPH_L0_NODE_URL=http://54.191.143.191:7000/cluster/info",
+      "DATA_L1_NODE_URL=http://54.191.143.191:9000/cluster/info"
     ],
     "additional_currency_l1_env_variables": [],
     "additional_data_l1_env_variables": [],
@@ -35,37 +35,37 @@
       "location": "Github",
       "ml0": {
         "base_url": "https://github.com/Constellation-Labs/dor-metagraph/releases/download",
-        "file_name": "ml0-integrationnet-seedlist"
+        "file_name": "ml0-mainnet-seedlist"
       },
       "cl1": {
         "base_url": "https://github.com/Constellation-Labs/dor-metagraph/releases/download",
-        "file_name": "cl1-integrationnet-seedlist"
+        "file_name": "cl1-mainnet-seedlist"
       },
       "dl1": {
         "base_url": "https://github.com/Constellation-Labs/dor-metagraph/releases/download",
-        "file_name": "dl1-integrationnet-seedlist"
+        "file_name": "dl1-mainnet-seedlist"
       }
     }
   },
   "network": {
-    "name": "integrationnet"
+    "name": "mainnet"
   },
   "aws": {
     "region": "us-west-2",
     "ec2": {
       "instances": {
         "genesis": {
-          "id": "${EC2_INSTANCE_1_ID_INTEGRATIONNET}",
-          "ip": "${EC2_INSTANCE_1_IP_INTEGRATIONNET}"
+          "id": "${EC2_INSTANCE_1_ID_MAINNET}",
+          "ip": "${EC2_INSTANCE_1_IP_MAINNET}"
         },
         "validators": [
           {
-            "id": "${EC2_INSTANCE_2_ID_INTEGRATIONNET}",
-            "ip": "${EC2_INSTANCE_2_IP_INTEGRATIONNET}"
+            "id": "${EC2_INSTANCE_2_ID_MAINNET}",
+            "ip": "${EC2_INSTANCE_2_IP_MAINNET}"
           },
           {
-            "id": "${EC2_INSTANCE_3_ID_INTEGRATIONNET}",
-            "ip": "${EC2_INSTANCE_3_IP_INTEGRATIONNET}"
+            "id": "${EC2_INSTANCE_3_ID_MAINNET}",
+            "ip": "${EC2_INSTANCE_3_IP_MAINNET}"
           }
         ]
       }
