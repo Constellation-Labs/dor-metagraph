@@ -12,7 +12,7 @@ import com.my.dor_metagraph.shared_data.deserializers.Deserializers
 import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, Encoder}
-import org.http4s.{EntityDecoder, _}
+import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication._
 import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
