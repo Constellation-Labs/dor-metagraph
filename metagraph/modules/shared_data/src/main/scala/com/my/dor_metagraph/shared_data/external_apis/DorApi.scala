@@ -1,11 +1,12 @@
 package com.my.dor_metagraph.shared_data.external_apis
 
 import cats.effect.Async
-import cats.syntax.option._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
+import cats.effect.std.Env
 import cats.syntax.applicativeError._
-import com.my.dor_metagraph.shared_data.Utils.getDeviceCheckInInfo
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import cats.syntax.option._
+import com.my.dor_metagraph.shared_data.Utils.{getDeviceCheckInInfo, getEnv}
 import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInWithSignature, DorAPIResponse}
 import io.circe.parser.decode
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -15,11 +16,11 @@ import ujson.Obj
 object DorApi {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("DorApi")
 
-  private def saveDeviceCheckIn[F[_] : Async](
+  private def saveDeviceCheckIn[F[_] : Async: Env](
     publicKey    : String,
     deviceCheckIn: DeviceCheckInWithSignature
   ): F[Option[DorAPIResponse]] = {
-    val apiUrl = "https://api.getdor.com/metagraph/device"
+    val apiUrl = getEnv[F]("DOR_API_URL")
     val endpoint = s"$apiUrl/$publicKey/check-in"
     val headers = Map("Content-Type" -> "application/json", "version" -> "2")
 
@@ -54,7 +55,7 @@ object DorApi {
     } yield decodedResponse
   }
 
-  def handleCheckIn[F[_] : Async](
+  def handleCheckInDorApi[F[_] : Async: Env](
     publicKey    : String,
     deviceCheckIn: DeviceCheckInWithSignature
   ): F[Option[DorAPIResponse]] = {
