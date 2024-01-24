@@ -98,12 +98,13 @@ object Types {
 
   @derive(encoder, decoder)
   case class DorAPIResponse(
-    rewardAddress: Option[Address],
-    isInstalled  : Boolean,
-    locationType : Option[String],
-    lastBillingId: Option[String],
-    teamId       : Option[String],
-    billedAmount : Option[Long]
+    rewardAddress      : Option[Address],
+    isInstalled        : Boolean,
+    locationType       : Option[String],
+    billedAmountMonthly: Option[Long],
+    lastBillingId      : Option[String],
+    teamId             : Option[String],
+    billedAmount       : Option[Long]
   )
 
   @derive(encoder, decoder)
