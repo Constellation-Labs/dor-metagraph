@@ -11,7 +11,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - UnitDeployedBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
     val currentEpochProgress = 1440L
 
     val deviceInfo = DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
@@ -21,7 +21,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - CommercialLocationBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
     val currentEpochProgress = 1441L
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
@@ -32,7 +32,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some)
     val currentEpochProgress = 2880L
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(2880L, "1", "123", 10L).some)
@@ -43,7 +43,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - AnalyticsSubscriptionBounty - 0L when not reach correct epochProgress") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, "123".some, "1".some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some)
     val currentEpochProgress = 2880L
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, AnalyticsBountyInformation(3500L, "1", "123", 10L).some)
@@ -54,7 +54,7 @@ object BountyRewardsTest extends SimpleIOSuite {
 
   pureTest("Get bounty reward amount - 0L when not reach correct epochProgress using modulus") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
     val currentEpochProgress = 1450L
 
     val deviceInfo = DeviceInfo(123456L, currentDeviceInfoAPIResponse, currentEpochProgress, none)
