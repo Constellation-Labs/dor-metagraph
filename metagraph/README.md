@@ -26,11 +26,11 @@ In the DOR Metagraph, the `State` holds all information pertaining to check-ins 
 On the other hand, the `CalculatedState` contains metadata information about the devices. In contrast to only storing check-ins from the current snapshot, the CalculatedState maintains a map that establishes the relationship between all devices and their metadata. This metadata includes:
 
 -   `devices: Map[Address, DeviceInfo]`
-  -   where `Address` represents the device address, and
-  -   `DeviceInfo` includes:
-    -   `lastCheckIn`
-    -   `dorAPIResponse`
-    -   `nextEpochProgressToReward`
+    -   where `Address` represents the device address, and
+    -   `DeviceInfo` includes:
+        -   `lastCheckIn`
+        -   `dorAPIResponse`
+        -   `nextEpochProgressToReward`
 
 Code
 --------
