@@ -28,20 +28,20 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
       deviceInfo     : DeviceInfo,
       devicesBalances: Map[Address, Balance]
     ): F[RewardTransactionsInformation] =
-      deviceInfo.dorAPIResponse.rewardAddress match {
+      deviceInfo.analyticsBountyInformation.get.analyticsRewardAddress match {
         case None =>
           logger.warn(s"Device doesn't have rewardAddress").as(acc)
 
-        case Some(rewardAddress) =>
+        case Some(analyticsRewardAddress) =>
           for {
-            (updatedBalances, collateralMultiplierFactor) <- Async[F].delay(getDeviceCollateral(devicesBalances, rewardAddress))
+            (updatedBalances, collateralMultiplierFactor) <- Async[F].delay(getDeviceCollateral(devicesBalances, analyticsRewardAddress))
 
             deviceTotalRewards <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
 
             deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxRate).toLong
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
 
-            deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, rewardAddress)
+            deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, analyticsRewardAddress)
             taxesToValidatorNodesUpdated = acc.validatorsTaxes + deviceTaxToValidatorNodes
 
           } yield RewardTransactionsInformation(deviceReward, taxesToValidatorNodesUpdated, updatedBalances)
@@ -63,22 +63,22 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
           if (teamDevices.isEmpty) {
             acc.pure[F]
           } else {
-            teamDevices
-              .find(_.dorAPIResponse.rewardAddress.isDefined)
-              .fold(acc.pure[F]) { deviceToPayCommissions =>
-                val rewardAddress = deviceToPayCommissions.dorAPIResponse.rewardAddress.get
-                val teamId = deviceToPayCommissions.analyticsBountyInformation.get.teamId
-
+            val device: DeviceInfo = teamDevices.head
+            val analyticsBountyInformation = device.analyticsBountyInformation.get
+            analyticsBountyInformation.analyticsRewardAddress match {
+              case None => logger.warn(s"Team ${analyticsBountyInformation.teamId} doesn't have default rewardAddress, skipping Analytics rewards.").as(acc)
+              case Some(analyticsRewardAddress) =>
+                val teamId = analyticsBountyInformation.teamId
                 val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices, acc.lastBalances)
-                val newBalancesWithAverage = Map(rewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
+                val newBalancesWithAverage = Map(analyticsRewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
 
                 for {
                   _ <- logger.info(s"[teamId: $teamId] Devices number: ${teamDevices.size}")
                   _ <- logger.info(s"[teamId: $teamId] Collateral average: $devicesCollateralAverage")
-                  _ <- logger.info(s"[teamId: $teamId] Address to be rewarded: ${rewardAddress.value.value}")
-                  rewardTransactionsInformation <- combine(acc, deviceToPayCommissions, newBalancesWithAverage)
+                  _ <- logger.info(s"[teamId: $teamId] Address to be rewarded: $analyticsRewardAddress")
+                  rewardTransactionsInformation <- combine(acc, device, newBalancesWithAverage)
                 } yield rewardTransactionsInformation
-              }
+            }
           }
         }
         .map(info => RewardTransactionsAndValidatorsTaxes(info.rewardTransactions.values.toList, info.validatorsTaxes))

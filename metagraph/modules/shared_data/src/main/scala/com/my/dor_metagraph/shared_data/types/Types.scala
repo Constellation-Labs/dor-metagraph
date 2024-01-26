@@ -7,6 +7,7 @@ import org.tessellation.currency.dataApplication.{DataCalculatedState, DataOnCha
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
+
 import java.time.Instant
 
 object Types {
@@ -96,6 +97,9 @@ object Types {
     state     : String
   )
 
+  /*
+  These fields should match exactly the names of the fields returned from DOR API endpoint: `metagraph/:pub_id/check-in`
+   */
   @derive(encoder, decoder)
   case class DorAPIResponse(
     rewardAddress      : Option[Address],
@@ -104,7 +108,8 @@ object Types {
     billedAmountMonthly: Option[Long],
     lastBillingId      : Option[String],
     teamId             : Option[String],
-    billedAmount       : Option[Long]
+    billedAmount       : Option[Long],
+    orgRewardAddress   : Option[Address]
   )
 
   @derive(encoder, decoder)
@@ -133,6 +138,7 @@ object Types {
     nextEpochProgressToRewardAnalytics: Long,
     teamId                            : String,
     lastBillingId                     : String,
-    billedAmount                      : Long
+    billedAmount                      : Long,
+    analyticsRewardAddress            : Option[Address]
   )
 }
