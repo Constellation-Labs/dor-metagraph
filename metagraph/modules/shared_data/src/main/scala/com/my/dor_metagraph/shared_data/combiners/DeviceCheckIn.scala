@@ -83,7 +83,7 @@ object DeviceCheckIn {
   private def updateAnalyticsBountyInformation(
     epochProgress                : EpochProgress,
     dorAPIResponse               : DorAPIResponse,
-    lastBillingId                : String,
+    lastBillingId                : Long,
     oldAnalyticsBountyInformation: AnalyticsBountyInformation
   ): AnalyticsBountyInformation = {
     if (oldAnalyticsBountyInformation.lastBillingId == lastBillingId || oldAnalyticsBountyInformation.nextEpochProgressToRewardAnalytics > epochProgress.value.value) {

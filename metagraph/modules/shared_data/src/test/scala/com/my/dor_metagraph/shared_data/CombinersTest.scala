@@ -74,7 +74,7 @@ object CombinersTest extends SimpleIOSuite {
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(Map.empty)
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
     val address = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val deviceInfoAPIResponse = DorAPIResponse(address.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
+    val deviceInfoAPIResponse = DorAPIResponse(address.some, isInstalled = true, "Retail".some, none, 123L.some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
     val checkInRaw = CheckInUpdate("123", "456", 1669815076L, "123", deviceInfoAPIResponse.some)
 
     val epochProgress = EpochProgress(1439L)
@@ -93,12 +93,12 @@ object CombinersTest extends SimpleIOSuite {
 
   pureTest("Update check in of device - AnalyticsBountyInformation do not update when billingID is the same than last") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, 123L.some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
     var currentEpochProgress = EpochProgress(1440L)
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", 123L, 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -132,12 +132,12 @@ object CombinersTest extends SimpleIOSuite {
 
   pureTest("Update check in of device - AnalyticsBountyInformation update when billingID is different than last") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, 123L.some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
     var currentEpochProgress = EpochProgress(1440L)
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", 123L, 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -151,7 +151,7 @@ object CombinersTest extends SimpleIOSuite {
     }
 
     currentEpochProgress = EpochProgress(3000L)
-    val checkInRaw = CheckInUpdate("123", "456", 12345, "123", currentDeviceInfoAPIResponse.copy(lastBillingId = "456".some).some)
+    val checkInRaw = CheckInUpdate("123", "456", 12345, "123", currentDeviceInfoAPIResponse.copy(lastBillingId = 456L.some).some)
     val allCheckIns = combineDeviceCheckIn(oldState, checkInRaw, currentAddress, currentEpochProgress)
 
     val deviceInfo2 = allCheckIns.calculated.devices(currentAddress)
@@ -171,12 +171,12 @@ object CombinersTest extends SimpleIOSuite {
 
   pureTest("Update check in of device - AnalyticsBountyInformation do not update when nextEpochProgressToRewardAnalytics is greater than current") {
     val currentAddress = Address.fromBytes("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb".getBytes)
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, 123L.some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
     var currentEpochProgress = EpochProgress(1440L)
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(20000L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(20000L, "1", 123L, 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
