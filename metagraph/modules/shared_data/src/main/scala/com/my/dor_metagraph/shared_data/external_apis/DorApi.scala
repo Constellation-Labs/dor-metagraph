@@ -20,11 +20,10 @@ object DorApi {
     publicKey    : String,
     deviceCheckIn: DeviceCheckInWithSignature
   ): F[Option[DorAPIResponse]] = {
-    val apiUrl = getEnv[F]("DOR_API_URL")
-    val endpoint = s"$apiUrl/$publicKey/check-in"
-    val headers = Map("Content-Type" -> "application/json", "version" -> "2")
-
     for {
+      apiUrl <- getEnv[F]("DOR_API_URL")
+      endpoint = s"$apiUrl/$publicKey/check-in"
+      headers = Map("Content-Type" -> "application/json", "version" -> "2")
       checkInInfo <- getDeviceCheckInInfo(deviceCheckIn.cbor)
       _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server AC ${checkInInfo.ac}")
       _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server DTS ${checkInInfo.dts}")
