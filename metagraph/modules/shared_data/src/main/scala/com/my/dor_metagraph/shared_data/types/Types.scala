@@ -106,7 +106,7 @@ object Types {
     isInstalled        : Boolean,
     locationType       : Option[String],
     billedAmountMonthly: Option[Long],
-    lastBillingId      : Option[String],
+    lastBillingId      : Option[Long],
     teamId             : Option[String],
     billedAmount       : Option[Long],
     orgRewardAddress   : Option[Address]
@@ -137,7 +137,7 @@ object Types {
   case class AnalyticsBountyInformation(
     nextEpochProgressToRewardAnalytics: Long,
     teamId                            : String,
-    lastBillingId                     : String,
+    lastBillingId                     : Long,
     billedAmount                      : Long,
     analyticsRewardAddress            : Option[Address]
   )
