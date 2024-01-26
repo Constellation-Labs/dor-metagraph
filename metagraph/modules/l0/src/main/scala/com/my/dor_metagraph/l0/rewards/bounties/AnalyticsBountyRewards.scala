@@ -28,7 +28,7 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
       deviceInfo     : DeviceInfo,
       devicesBalances: Map[Address, Balance]
     ): F[RewardTransactionsInformation] =
-      deviceInfo.dorAPIResponse.analyticsRewardAddress match {
+      deviceInfo.analyticsBountyInformation.get.analyticsRewardAddress match {
         case None =>
           logger.warn(s"Device doesn't have rewardAddress").as(acc)
 
@@ -64,11 +64,11 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
             acc.pure[F]
           } else {
             val device: DeviceInfo = teamDevices.head
-            val dorAPIResponse = device.dorAPIResponse
-            dorAPIResponse.analyticsRewardAddress match {
-              case None => logger.warn(s"Team ${dorAPIResponse.teamId} doesn't have default rewardAddress, skipping Analytics rewards.").as(acc)
+            val analyticsBountyInformation = device.analyticsBountyInformation.get
+            analyticsBountyInformation.analyticsRewardAddress match {
+              case None => logger.warn(s"Team ${analyticsBountyInformation.teamId} doesn't have default rewardAddress, skipping Analytics rewards.").as(acc)
               case Some(analyticsRewardAddress) =>
-                val teamId = dorAPIResponse.teamId
+                val teamId = analyticsBountyInformation.teamId
                 val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices, acc.lastBalances)
                 val newBalancesWithAverage = Map(analyticsRewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
 

@@ -135,7 +135,7 @@ object BuildRewardsTest extends SimpleIOSuite {
     val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
     val lastArtifactEpochProgress = 1441L
 
-    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)))
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
     for {
@@ -156,8 +156,8 @@ object BuildRewardsTest extends SimpleIOSuite {
     val lastArtifactEpochProgress = 1441L
 
     val calculatedState = CheckInDataCalculatedState(Map(
-      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some),
-      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse2, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse2, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)
     ))
 
     val balances = SortedMap(
@@ -242,8 +242,8 @@ object BuildRewardsTest extends SimpleIOSuite {
     val lastArtifactEpochProgress = 1441L
 
     val calculatedState = CheckInDataCalculatedState(Map(
-      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, rewardAddress).some),
-      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, rewardAddress).some)
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, rewardAddress.some).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, rewardAddress.some).some)
     ))
 
     val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))

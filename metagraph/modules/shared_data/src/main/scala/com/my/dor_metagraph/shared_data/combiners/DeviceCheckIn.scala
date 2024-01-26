@@ -76,7 +76,7 @@ object DeviceCheckIn {
       dorAPIResponse.teamId.get,
       dorAPIResponse.lastBillingId.get,
       dorAPIResponse.billedAmount.get,
-      dorAPIResponse.analyticsRewardAddress.get,
+      dorAPIResponse.orgRewardAddress,
     )
   }
 

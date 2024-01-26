@@ -98,7 +98,7 @@ object CombinersTest extends SimpleIOSuite {
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -137,7 +137,7 @@ object CombinersTest extends SimpleIOSuite {
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(1440L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
@@ -176,7 +176,7 @@ object CombinersTest extends SimpleIOSuite {
 
     val checkInStateOnChain: CheckInStateOnChain = CheckInStateOnChain(List.empty)
     val checkInDataCalculatedState: CheckInDataCalculatedState = CheckInDataCalculatedState(
-      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(20000L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)))
+      Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, currentEpochProgress.value.value, AnalyticsBountyInformation(20000L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some).some)))
     val oldState = DataState(checkInStateOnChain, checkInDataCalculatedState)
 
     val deviceInfo = oldState.calculated.devices(currentAddress)
