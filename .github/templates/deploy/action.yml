@@ -85,6 +85,7 @@ runs:
       uses: "./.github/templates/setup_java_and_scala"
 
     - name: Test and Generate Metagraph JARS 🚀
+      shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
