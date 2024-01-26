@@ -100,7 +100,7 @@ object BuildRewardsTest extends SimpleIOSuite {
 
   test("Build correctly rewards - UnitDeployedBounty") {
     val currentAddress = Address("DAG0DQPuvVThrCnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none, none)
     val lastArtifactEpochProgress = 1439L
 
     val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)))
@@ -116,7 +116,7 @@ object BuildRewardsTest extends SimpleIOSuite {
 
   test("Build correctly rewards - CommercialLocationBounty") {
     val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none, none)
     val lastArtifactEpochProgress = 1440L
 
     val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)))
@@ -132,10 +132,10 @@ object BuildRewardsTest extends SimpleIOSuite {
 
   test("Build correctly rewards - AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
     val lastArtifactEpochProgress = 1441L
 
-    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some)))
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)))
     val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
     for {
@@ -150,14 +150,14 @@ object BuildRewardsTest extends SimpleIOSuite {
     val currentAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
     val currentAddress2 = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oepAWyRMb")
 
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some)
-    val currentDeviceInfoAPIResponse2 = DorAPIResponse(currentAddress2.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
+    val currentDeviceInfoAPIResponse2 = DorAPIResponse(currentAddress2.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb").some)
 
     val lastArtifactEpochProgress = 1441L
 
     val calculatedState = CheckInDataCalculatedState(Map(
-      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some),
-      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse2, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some)
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse2, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")).some)
     ))
 
     val balances = SortedMap(
@@ -175,7 +175,7 @@ object BuildRewardsTest extends SimpleIOSuite {
 
   test("Build correctly rewards - reward address null") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
-    val currentDeviceInfoAPIResponse = DorAPIResponse(None, isInstalled = true, "Retail".some, none, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(None, isInstalled = true, "Retail".some, none, none, none, none, none)
     val lastArtifactEpochProgress = 1440L
 
     val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, none)))
@@ -190,7 +190,7 @@ object BuildRewardsTest extends SimpleIOSuite {
     val currentAddress = Address("DAG0DCPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentAddress2 = Address("DAG0DAPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
 
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none, none)
     val lastArtifactEpochProgress = 1440L
 
     val calculatedState = CheckInDataCalculatedState(Map(
@@ -214,7 +214,7 @@ object BuildRewardsTest extends SimpleIOSuite {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
     val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
 
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none, none)
     val lastArtifactEpochProgress = 1440L
 
     val calculatedState = CheckInDataCalculatedState(Map(
@@ -236,23 +236,26 @@ object BuildRewardsTest extends SimpleIOSuite {
   test("Build correctly rewards - pay only for one device of team AnalyticsSubscriptionBounty") {
     val currentAddress = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oefAWyRMb")
     val currentAddress2 = Address("DAG0DQCuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val  rewardAddress = Address("DAG0DQPuvVThrVnz66S4V6cocrtpg59oesAWyRMb")
 
-    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some)
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, "123".some, "1".some, 10L.some, rewardAddress.some)
     val lastArtifactEpochProgress = 1441L
 
     val calculatedState = CheckInDataCalculatedState(Map(
-      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some),
-      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L).some)
+      currentAddress -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, rewardAddress).some),
+      currentAddress2 -> DeviceInfo(1693526401L, currentDeviceInfoAPIResponse, lastArtifactEpochProgress, AnalyticsBountyInformation(1442L, "1", "123", 10L, rewardAddress).some)
     ))
 
     val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(1))))
 
     for {
       rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
-      reward = rewards.find(reward => reward.destination == currentAddress)
+      analyticsReward = rewards.find(reward => reward.destination == rewardAddress)
+      validatorsRewards = rewards.filter(reward => reward.destination != rewardAddress)
     } yield expect.eql(7, rewards.size) &&
-      expect.eql(22500000000L, reward.get.amount.value.value) &&
-      expect.eql(currentAddress, reward.get.destination) &&
-      expect.eql(416666666L, rewards.toList(1).amount.value.value)
+      expect.eql(22500000000L, analyticsReward.get.amount.value.value) &&
+      expect.eql(rewardAddress, analyticsReward.get.destination) &&
+      expect.eql(validatorsRewards.size, 6) &&
+      expect.eql(416666666L, validatorsRewards.toList(1).amount.value.value)
   }
 }

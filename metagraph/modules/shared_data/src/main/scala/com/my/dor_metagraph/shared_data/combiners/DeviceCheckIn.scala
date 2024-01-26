@@ -75,7 +75,8 @@ object DeviceCheckIn {
       nextRewardEpoch + ModulusAnalyticsBounty,
       dorAPIResponse.teamId.get,
       dorAPIResponse.lastBillingId.get,
-      dorAPIResponse.billedAmount.get
+      dorAPIResponse.billedAmount.get,
+      dorAPIResponse.analyticsRewardAddress.get,
     )
   }
 

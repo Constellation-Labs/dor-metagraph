@@ -98,13 +98,14 @@ object Types {
 
   @derive(encoder, decoder)
   case class DorAPIResponse(
-    rewardAddress      : Option[Address],
-    isInstalled        : Boolean,
-    locationType       : Option[String],
-    billedAmountMonthly: Option[Long],
-    lastBillingId      : Option[String],
-    teamId             : Option[String],
-    billedAmount       : Option[Long]
+    rewardAddress         : Option[Address],
+    isInstalled           : Boolean,
+    locationType          : Option[String],
+    billedAmountMonthly   : Option[Long],
+    lastBillingId         : Option[String],
+    teamId                : Option[String],
+    billedAmount          : Option[Long],
+    analyticsRewardAddress: Option[Address]
   )
 
   @derive(encoder, decoder)
@@ -133,6 +134,7 @@ object Types {
     nextEpochProgressToRewardAnalytics: Long,
     teamId                            : String,
     lastBillingId                     : String,
-    billedAmount                      : Long
+    billedAmount                      : Long,
+    analyticsRewardAddress            : Address
   )
 }
