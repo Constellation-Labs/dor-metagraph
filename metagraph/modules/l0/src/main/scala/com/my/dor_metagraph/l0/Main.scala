@@ -2,11 +2,13 @@ package com.my.dor_metagraph.l0
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import cats.syntax.validated._
 import cats.syntax.applicative._
 import cats.syntax.option._
+import cats.syntax.validated._
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
-import com.my.dor_metagraph.l0.rewards.MainRewards
+import com.my.dor_metagraph.l0.rewards.DorRewards
+import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, DailyBountyRewards}
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesAPI
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
@@ -16,13 +18,13 @@ import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState,
 import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
+import org.tessellation.currency.dataApplication._
 import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
-import org.tessellation.currency.dataApplication.{BaseDataApplicationL0Service, DataApplicationL0Service, DataState, DataUpdate, L0NodeContext}
 import org.tessellation.currency.l0.CurrencyL0App
 import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.ext.cats.effect.ResourceIO
-import org.tessellation.sdk.domain.rewards.Rewards
+import org.tessellation.node.shared.domain.rewards.Rewards
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.security.SecurityProvider
@@ -145,7 +147,16 @@ object Main extends CurrencyL0App(
   override def dataApplication: Option[Resource[IO, BaseDataApplicationL0Service[IO]]] =
     makeL0Service.asResource.some
 
-  override def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] =
-    MainRewards.make[IO].some
+  override def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] = {
+    val dailyBountyRewards = new DailyBountyRewards[IO]
+    val analyticsBountyRewards = new AnalyticsBountyRewards[IO]
+    val validatorNodes = new ValidatorNodesAPI[IO]
+
+    DorRewards.make[IO](
+      dailyBountyRewards,
+      analyticsBountyRewards,
+      validatorNodes
+    ).some
+  }
 }
 
