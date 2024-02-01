@@ -84,13 +84,13 @@ runs:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       uses: "./.github/templates/setup_java_and_scala"
 
-    - name: Generate Metagraph JARS
+    - name: Test and Generate Metagraph JARS 🚀
+      shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      shell: bash
       run: |
         cd metagraph
-        sbt currencyL1/assembly currencyL0/assembly dataL1/assembly
+        sbt 'test;currencyL0/assembly;currencyL1/assembly;dataL1/assembly'
 
     - name: Move JARS to artifact folder
       shell: bash

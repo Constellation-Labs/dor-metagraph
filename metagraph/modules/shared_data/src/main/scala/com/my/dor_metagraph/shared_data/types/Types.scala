@@ -7,10 +7,17 @@ import org.tessellation.currency.dataApplication.{DataCalculatedState, DataOnCha
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.RewardTransaction
+
 import java.time.Instant
 
 object Types {
   val EpochProgress1Day: Long = 60 * 24
+
+  val ModulusInstallationBounty: Long = 0
+  val ModulusCommercialBounty: Long = 1
+  val ModulusAnalyticsBounty: Long = 2
+
+  val UndefinedTeamId: String = "Undefined"
 
   val MinimumCheckInSeconds: Long =
     Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
@@ -40,9 +47,10 @@ object Types {
 
   @derive(encoder, decoder)
   case class DeviceInfo(
-    lastCheckIn              : Long,
-    dorAPIResponse           : DorAPIResponse,
-    nextEpochProgressToReward: Long
+    lastCheckIn               : Long,
+    dorAPIResponse            : DorAPIResponse,
+    nextEpochProgressToReward : Long,
+    analyticsBountyInformation: Option[AnalyticsBountyInformation]
   )
 
   @derive(encoder, decoder)
@@ -89,12 +97,19 @@ object Types {
     state     : String
   )
 
+  /*
+  These fields should match exactly the names of the fields returned from DOR API endpoint: `metagraph/:pub_id/check-in`
+   */
   @derive(encoder, decoder)
   case class DorAPIResponse(
     rewardAddress      : Option[Address],
     isInstalled        : Boolean,
     locationType       : Option[String],
-    billedAmountMonthly: Option[Long]
+    billedAmountMonthly: Option[Long],
+    lastBillingId      : Option[Long],
+    teamId             : Option[String],
+    billedAmount       : Option[Long],
+    orgRewardAddress   : Option[Address]
   )
 
   @derive(encoder, decoder)
@@ -112,5 +127,18 @@ object Types {
   case class RewardTransactionsAndValidatorsTaxes(
     rewardTransactions: List[RewardTransaction],
     validatorsTaxes   : Long
+  )
+
+  object RewardTransactionsAndValidatorsTaxes {
+    def empty: RewardTransactionsAndValidatorsTaxes = RewardTransactionsAndValidatorsTaxes(List.empty, 0L)
+  }
+
+  @derive(encoder, decoder)
+  case class AnalyticsBountyInformation(
+    nextEpochProgressToRewardAnalytics: Long,
+    teamId                            : String,
+    lastBillingId                     : Long,
+    billedAmount                      : Long,
+    analyticsRewardAddress            : Option[Address]
   )
 }

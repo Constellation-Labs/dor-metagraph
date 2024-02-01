@@ -2,9 +2,9 @@ package com.my.dor_metagraph.data_l1
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import cats.syntax.validated._
 import cats.syntax.applicative.catsSyntaxApplicativeId
 import cats.syntax.option.catsSyntaxOptionId
+import cats.syntax.validated._
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
@@ -12,17 +12,16 @@ import com.my.dor_metagraph.shared_data.deserializers.Deserializers
 import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, Encoder}
-import org.http4s._
+import org.http4s.{EntityDecoder, HttpRoutes}
 import org.tessellation.BuildInfo
-import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
 import org.tessellation.currency.dataApplication._
+import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
 import org.tessellation.currency.l1.CurrencyL1App
-import org.tessellation.schema.cluster.ClusterId
-import org.tessellation.security.signature.Signed
-import org.http4s.EntityDecoder
 import org.tessellation.ext.cats.effect.ResourceIO
 import org.tessellation.schema.SnapshotOrdinal
+import org.tessellation.schema.cluster.ClusterId
 import org.tessellation.security.hash.Hash
+import org.tessellation.security.signature.Signed
 
 import java.util.UUID
 

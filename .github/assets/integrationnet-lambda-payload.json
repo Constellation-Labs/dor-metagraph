@@ -30,7 +30,9 @@
       "DATA_L1_NODE_URL=http://54.218.46.24:9000/cluster/info"
     ],
     "additional_currency_l1_env_variables": [],
-    "additional_data_l1_env_variables": [],
+    "additional_data_l1_env_variables": [
+      "DOR_API_URL=https://api.getdor.com/metagraph/device"
+    ],
     "seedlists": {
       "location": "Github",
       "ml0": {
