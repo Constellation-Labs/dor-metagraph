@@ -86,6 +86,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
         METAGRAPH_VERSION=$(grep -o 'version := "[^"]*' metagraph/version.sbt | cut -d'"' -f2)
+        mkdir .github/artifacts
         cd .github/artifacts
         
         echo "Getting the metagraph JARs on Github of version $METAGRAPH_VERSION"
