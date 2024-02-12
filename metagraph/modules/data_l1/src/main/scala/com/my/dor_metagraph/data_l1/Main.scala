@@ -13,13 +13,13 @@ import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, HttpRoutes}
-import org.tessellation.BuildInfo
 import org.tessellation.currency.dataApplication._
 import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
 import org.tessellation.currency.l1.CurrencyL1App
 import org.tessellation.ext.cats.effect.ResourceIO
 import org.tessellation.schema.SnapshotOrdinal
 import org.tessellation.schema.cluster.ClusterId
+import org.tessellation.schema.semver.{MetagraphVersion, TessellationVersion}
 import org.tessellation.security.hash.Hash
 import org.tessellation.security.signature.Signed
 
@@ -29,7 +29,8 @@ object Main extends CurrencyL1App(
   "currency-data_l1",
   "currency data L1 node",
   ClusterId(UUID.fromString("517c3a05-9219-471b-a54c-21b7d72f4ae5")),
-  version = BuildInfo.version
+  tessellationVersion = TessellationVersion.unsafeFrom(org.tessellation.BuildInfo.version),
+  metagraphVersion = MetagraphVersion.unsafeFrom(com.my.dor_metagraph.data_l1.BuildInfo.version)
 ) {
 
   private def makeBaseDataApplicationL1Service(
