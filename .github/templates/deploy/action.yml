@@ -78,27 +78,21 @@ runs:
           echo "Bucket '$BUCKET_NAME' already exists."
         fi
 
-    - name: Setup Java and scala
-      with:
-        JAVA_VERSION: openjdk@1.11.0
-        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      uses: "./.github/templates/setup_java_and_scala"
 
-    - name: Test and Generate Metagraph JARS 🚀
+
+    - name: Get Metagraph JARS on Github
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
-        cd metagraph
-        sbt 'test;currencyL0/assembly;currencyL1/assembly;dataL1/assembly'
-
-    - name: Move JARS to artifact folder
-      shell: bash
-      run: |
+        METAGRAPH_VERSION=$(grep -o 'version := "[^"]*' metagraph/version.sbt | cut -d'"' -f2)
         mkdir .github/artifacts
-        mv metagraph/modules/l0/target/scala-2.13/dor_metagraph-currency-l0-assembly-* .github/artifacts/metagraph-l0.jar
-        mv metagraph/modules/l1/target/scala-2.13/dor_metagraph-currency-l1-assembly-* .github/artifacts/currency-l1.jar
-        mv metagraph/modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-* .github/artifacts/data-l1.jar
+        cd .github/artifacts
+        
+        echo "Getting the metagraph JARs on Github of version $METAGRAPH_VERSION"
+        wget https://github.com/Constellation-Labs/dor-metagraph/releases/download/v$METAGRAPH_VERSION/metagraph-l0.jar
+        wget https://github.com/Constellation-Labs/dor-metagraph/releases/download/v$METAGRAPH_VERSION/currency-l1.jar
+        wget https://github.com/Constellation-Labs/dor-metagraph/releases/download/v$METAGRAPH_VERSION/data-l1.jar
 
     - name: Send JARs to S3 bucket
       shell: bash
