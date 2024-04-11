@@ -2,7 +2,7 @@
   "metagraph": {
     "id": "DAG0CyySf35ftDQDQBnd1bdQ9aPyUdacMghpnCuM",
     "name": "DOR",
-    "version": "v1.0.1",
+    "version": "v1.2.0",
     "include_currency_l1_layer": true,
     "include_data_l1_layer": true,
     "file_system": {
