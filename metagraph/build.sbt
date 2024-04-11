@@ -46,7 +46,7 @@ lazy val sharedData = (project in file("modules/shared_data"))
       CompilerPlugin.kindProjector,
       CompilerPlugin.betterMonadicFor,
       CompilerPlugin.semanticDB,
-      Libraries.tessellationNodeShared,
+      Libraries.tessellationSDK,
       Libraries.borerCore,
       Libraries.borerDerivation,
       Libraries.requests,
