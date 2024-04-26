@@ -12,13 +12,13 @@ import com.my.dor_metagraph.shared_data.types.Types.{AnalyticsBountyInformation,
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.numeric.NonNegLong
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
+import org.tessellation.node.shared.infrastructure.consensus.trigger.TimeTrigger
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.epoch.EpochProgress
 import org.tessellation.schema.height.{Height, SubHeight}
 import org.tessellation.schema.transaction.RewardTransaction
 import org.tessellation.schema.{ActiveTip, BlockReference, DeprecatedTip, ID, SnapshotOrdinal, SnapshotTips}
-import org.tessellation.sdk.infrastructure.consensus.trigger.TimeTrigger
 import org.tessellation.security.hash.{Hash, ProofsHash}
 import org.tessellation.security.hex.Hex
 import org.tessellation.security.signature.Signed

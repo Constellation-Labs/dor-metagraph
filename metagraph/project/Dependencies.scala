@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object V {
-    val tessellation = "2.2.2"
+    val tessellation = "2.3.4"
     val decline = "2.4.1"
   }
 
@@ -15,7 +15,7 @@ object Dependencies {
     } % V.decline
 
   object Libraries {
-    val tessellationSDK = tessellation("sdk")
+    val tessellationNodeShared = tessellation("node-shared")
     val tessellationCurrencyL0 = tessellation("currency-l0")
     val tessellationCurrencyL1 = tessellation("currency-l1")
     val declineCore = decline()
