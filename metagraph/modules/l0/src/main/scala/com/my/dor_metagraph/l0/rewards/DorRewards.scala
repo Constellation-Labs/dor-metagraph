@@ -9,10 +9,10 @@ import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValid
 import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import com.my.dor_metagraph.shared_data.types.Types._
 import org.tessellation.currency.dataApplication.DataCalculatedState
+import org.tessellation.currency.l0.snapshot.CurrencySnapshotEvent
 import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
 import org.tessellation.node.shared.domain.rewards.Rewards
 import org.tessellation.node.shared.infrastructure.consensus.trigger.{ConsensusTrigger, EventTrigger, TimeTrigger}
-import org.tessellation.node.shared.snapshot.currency.CurrencySnapshotEvent
 import org.tessellation.schema.address.Address
 import org.tessellation.schema.balance.Balance
 import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
