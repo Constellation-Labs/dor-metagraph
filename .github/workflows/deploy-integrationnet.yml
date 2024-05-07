@@ -22,25 +22,3 @@ jobs:
           EC2_INSTANCE_1_ID: ${{ secrets.EC2_INSTANCE_1_ID_INTEGRATIONNET }}
           EC2_INSTANCE_2_ID: ${{ secrets.EC2_INSTANCE_2_ID_INTEGRATIONNET }}
           EC2_INSTANCE_3_ID: ${{ secrets.EC2_INSTANCE_3_ID_INTEGRATIONNET }}
-
-      - name: Inject information to JSON
-        uses: Lambdaspire/action-substitute-secrets-in-file@v1.0.0
-        with:
-          file: .github/assets/integrationnet-lambda-payload.json
-          tokenPattern: ${TOKEN}
-          secretsJson: ${{ toJSON(secrets) }}
-
-      - name: Trigger Auto Restart Lambda - Integrationnet
-        shell: bash
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_INTEGRATIONNET }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_INTEGRATIONNET }}
-          AWS_REGION: ${{ secrets.AWS_REGION_INTEGRATIONNET }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION_INTEGRATIONNET }}
-        run: |
-          aws lambda invoke \
-          --function-name MetagraphMonitor \
-          --invocation-type Event \
-          --cli-binary-format raw-in-base64-out \
-          --payload file://.github/assets/integrationnet-lambda-payload.json \
-          response.json
