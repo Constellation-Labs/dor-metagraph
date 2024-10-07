@@ -3,11 +3,11 @@ import sbt._
 object Dependencies {
 
   object V {
-    val tessellation = "2.8.0"
+    val tessellation = "99.99.99"
     val decline = "2.4.1"
   }
 
-  def tessellation(artifact: String): ModuleID = "org.constellation" %% s"tessellation-$artifact" % V.tessellation
+  def tessellation(artifact: String): ModuleID = "io.constellationnetwork" %% s"tessellation-$artifact" % V.tessellation
 
   def decline(artifact: String = ""): ModuleID =
     "com.monovore" %% {

@@ -5,8 +5,8 @@ import cats.effect.kernel.Async
 import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.types.Types.CheckInDataCalculatedState
 import io.circe.syntax.EncoderOps
-import org.tessellation.schema.SnapshotOrdinal
-import org.tessellation.security.hash.Hash
+import io.constellationnetwork.schema.SnapshotOrdinal
+import io.constellationnetwork.security.hash.Hash
 
 import java.nio.charset.StandardCharsets
 

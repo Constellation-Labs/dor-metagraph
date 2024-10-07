@@ -12,12 +12,12 @@ import com.my.dor_metagraph.shared_data.types.Codecs.checkInfoCodec
 import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.types.all.{NonNegLong, PosLong}
 import io.bullet.borer.Cbor
-import org.tessellation.schema.ID.Id
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.transaction.{RewardTransaction, TransactionAmount}
-import org.tessellation.security.SecurityProvider
-import org.tessellation.security.hex.Hex
-import org.tessellation.security.signature.signature.SignatureProof
+import io.constellationnetwork.schema.ID.Id
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.transaction.{RewardTransaction, TransactionAmount}
+import io.constellationnetwork.security.SecurityProvider
+import io.constellationnetwork.security.hex.Hex
+import io.constellationnetwork.security.signature.signature.SignatureProof
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

@@ -2,9 +2,7 @@ package com.my.dor_metagraph.l0
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import cats.syntax.applicative._
 import cats.syntax.option._
-import cats.syntax.validated._
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
 import com.my.dor_metagraph.l0.rewards.DorRewards
 import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, DailyBountyRewards}
@@ -16,20 +14,20 @@ import com.my.dor_metagraph.shared_data.deserializers.Deserializers
 import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, Encoder}
+import io.constellationnetwork.currency.dataApplication._
+import io.constellationnetwork.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
+import io.constellationnetwork.currency.l0.CurrencyL0App
+import io.constellationnetwork.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
+import io.constellationnetwork.ext.cats.effect.ResourceIO
+import io.constellationnetwork.node.shared.domain.rewards.Rewards
+import io.constellationnetwork.node.shared.snapshot.currency.CurrencySnapshotEvent
+import io.constellationnetwork.schema.SnapshotOrdinal
+import io.constellationnetwork.schema.cluster.ClusterId
+import io.constellationnetwork.schema.semver.{MetagraphVersion, TessellationVersion}
+import io.constellationnetwork.security.SecurityProvider
+import io.constellationnetwork.security.hash.Hash
+import io.constellationnetwork.security.signature.Signed
 import org.http4s.{EntityDecoder, HttpRoutes}
-import org.tessellation.currency.dataApplication._
-import org.tessellation.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
-import org.tessellation.currency.l0.CurrencyL0App
-import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
-import org.tessellation.ext.cats.effect.ResourceIO
-import org.tessellation.node.shared.domain.rewards.Rewards
-import org.tessellation.node.shared.snapshot.currency.CurrencySnapshotEvent
-import org.tessellation.schema.SnapshotOrdinal
-import org.tessellation.schema.cluster.ClusterId
-import org.tessellation.schema.semver.{MetagraphVersion, TessellationVersion}
-import org.tessellation.security.SecurityProvider
-import org.tessellation.security.hash.Hash
-import org.tessellation.security.signature.Signed
 
 import java.util.UUID
 
@@ -37,7 +35,7 @@ object Main extends CurrencyL0App(
   "currency-l0",
   "currency L0 node",
   ClusterId(UUID.fromString("517c3a05-9219-471b-a54c-21b7d72f4ae5")),
-  tessellationVersion = TessellationVersion.unsafeFrom(org.tessellation.BuildInfo.version),
+  tessellationVersion = TessellationVersion.unsafeFrom(io.constellationnetwork.BuildInfo.version),
   metagraphVersion = MetagraphVersion.unsafeFrom(com.my.dor_metagraph.l0.BuildInfo.version)
 ) {
   private def makeBaseDataApplicationL0Service(
@@ -47,11 +45,6 @@ object Main extends CurrencyL0App(
       new DataApplicationL0Service[IO, CheckInUpdate, CheckInStateOnChain, CheckInDataCalculatedState] {
         override def genesis: DataState[CheckInStateOnChain, CheckInDataCalculatedState] =
           DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(Map.empty))
-
-        override def validateUpdate(
-          update: CheckInUpdate
-        )(implicit context: L0NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] =
-          ().validNec.pure[IO]
 
         override def validateData(
           state  : DataState[CheckInStateOnChain, CheckInDataCalculatedState],

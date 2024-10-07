@@ -4,8 +4,8 @@ import cats.syntax.option._
 import com.my.dor_metagraph.shared_data.types.Types._
 import com.my.dor_metagraph.shared_data.validations.TypeValidators._
 import eu.timepit.refined.auto._
-import org.tessellation.currency.dataApplication.DataState
-import org.tessellation.schema.address.Address
+import io.constellationnetwork.currency.dataApplication.DataState
+import io.constellationnetwork.schema.address.Address
 import weaver.SimpleIOSuite
 
 object TypeValidatorsTest extends SimpleIOSuite {
