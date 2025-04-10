@@ -7,9 +7,9 @@ import cats.syntax.functor.toFunctorOps
 import com.my.dor_metagraph.shared_data.Utils.getFirstAddressFromProofs
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInUpdate}
 import com.my.dor_metagraph.shared_data.validations.TypeValidators._
-import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
-import org.tessellation.security.SecurityProvider
-import org.tessellation.security.signature.signature.SignatureProof
+import io.constellationnetwork.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
+import io.constellationnetwork.security.SecurityProvider
+import io.constellationnetwork.security.signature.signature.SignatureProof
 
 object Validations {
   def deviceCheckInValidationsL0[F[_] : Async](

@@ -3,9 +3,9 @@ package com.my.dor_metagraph.shared_data.serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps
-import org.tessellation.currency.dataApplication.DataUpdate
-import org.tessellation.currency.dataApplication.dataApplication.DataApplicationBlock
-import org.tessellation.security.signature.Signed
+import io.constellationnetwork.currency.dataApplication.DataUpdate
+import io.constellationnetwork.currency.dataApplication.dataApplication.DataApplicationBlock
+import io.constellationnetwork.security.signature.Signed
 
 import java.nio.charset.StandardCharsets
 

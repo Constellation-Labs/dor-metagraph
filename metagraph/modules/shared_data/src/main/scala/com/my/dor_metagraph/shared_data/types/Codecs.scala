@@ -3,7 +3,7 @@ package com.my.dor_metagraph.shared_data.types
 import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInInfo, DeviceCheckInWithSignature}
 import io.bullet.borer.derivation.MapBasedCodecs.{deriveCodec, deriveEncoder}
 import io.bullet.borer.{Codec, Decoder, Encoder, Reader}
-import org.tessellation.security.hex.Hex
+import io.constellationnetwork.security.hex.Hex
 
 object Codecs {
   private def readNextString(

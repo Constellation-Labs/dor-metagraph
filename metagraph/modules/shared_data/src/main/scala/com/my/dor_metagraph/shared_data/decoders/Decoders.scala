@@ -11,10 +11,10 @@ import com.my.dor_metagraph.shared_data.types.Codecs._
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.bullet.borer.Cbor
 import org.http4s.{DecodeResult, EntityDecoder, MediaType}
-import org.tessellation.schema.ID.Id
-import org.tessellation.security.hex.Hex
-import org.tessellation.security.signature.Signed
-import org.tessellation.security.signature.signature.{Signature, SignatureProof}
+import io.constellationnetwork.schema.ID.Id
+import io.constellationnetwork.security.hex.Hex
+import io.constellationnetwork.security.signature.Signed
+import io.constellationnetwork.security.signature.signature.{Signature, SignatureProof}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

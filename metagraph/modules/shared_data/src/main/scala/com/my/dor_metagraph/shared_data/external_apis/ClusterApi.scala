@@ -6,8 +6,8 @@ import com.my.dor_metagraph.shared_data.Utils.getDagAddressFromPublicKey
 import com.my.dor_metagraph.shared_data.types.Types.ClusterInfoResponse
 import eu.timepit.refined.auto._
 import io.circe.parser.decode
-import org.tessellation.schema.address.Address
-import org.tessellation.security.SecurityProvider
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.security.SecurityProvider
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
