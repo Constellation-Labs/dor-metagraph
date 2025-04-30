@@ -3,8 +3,8 @@ package com.my.dor_metagraph.l0.rewards.collateral
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.types.numeric.NonNegLong
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.balance.Balance
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.balance.Balance
 
 object Collateral {
   def getDeviceCollateral(

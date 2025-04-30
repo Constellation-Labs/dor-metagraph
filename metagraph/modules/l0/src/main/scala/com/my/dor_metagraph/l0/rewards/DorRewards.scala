@@ -8,15 +8,15 @@ import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes
 import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
 import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import com.my.dor_metagraph.shared_data.types.Types._
-import org.tessellation.currency.dataApplication.DataCalculatedState
-import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
-import org.tessellation.node.shared.domain.rewards.Rewards
-import org.tessellation.node.shared.infrastructure.consensus.trigger.{ConsensusTrigger, EventTrigger, TimeTrigger}
-import org.tessellation.node.shared.snapshot.currency.CurrencySnapshotEvent
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction.{RewardTransaction, Transaction}
-import org.tessellation.security.signature.Signed
+import io.constellationnetwork.currency.dataApplication.DataCalculatedState
+import io.constellationnetwork.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
+import io.constellationnetwork.node.shared.domain.rewards.Rewards
+import io.constellationnetwork.node.shared.infrastructure.consensus.trigger.{ConsensusTrigger, EventTrigger, TimeTrigger}
+import io.constellationnetwork.node.shared.snapshot.currency.CurrencySnapshotEvent
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.balance.Balance
+import io.constellationnetwork.schema.transaction.{RewardTransaction, Transaction}
+import io.constellationnetwork.security.signature.Signed
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.collection.immutable.{SortedMap, SortedSet}

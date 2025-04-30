@@ -1,9 +1,9 @@
 package com.my.dor_metagraph.shared_data.combiners
 
 import com.my.dor_metagraph.shared_data.types.Types._
-import org.tessellation.currency.dataApplication.DataState
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.epoch.EpochProgress
+import io.constellationnetwork.currency.dataApplication.DataState
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.epoch.EpochProgress
 
 object DeviceCheckIn {
   def combineDeviceCheckIn(

@@ -5,9 +5,9 @@ import cats.syntax.functor._
 import cats.syntax.option.catsSyntaxOptionId
 import com.my.dor_metagraph.shared_data.Utils.{PosLongOps, RewardTransactionOps}
 import com.my.dor_metagraph.shared_data.types.Types._
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction.RewardTransaction
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.balance.Balance
+import io.constellationnetwork.schema.transaction.RewardTransaction
 
 abstract class BountyRewards[F[_] : Async] {
 

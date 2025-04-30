@@ -3,10 +3,10 @@ package com.my.dor_metagraph.shared_data.types
 import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import derevo.circe.magnolia.{decoder, encoder}
 import derevo.derive
-import org.tessellation.currency.dataApplication.{DataCalculatedState, DataOnChainState, DataUpdate}
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction.RewardTransaction
+import io.constellationnetwork.currency.dataApplication.{DataCalculatedState, DataOnChainState, DataUpdate}
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.balance.Balance
+import io.constellationnetwork.schema.transaction.RewardTransaction
 
 import java.time.Instant
 
