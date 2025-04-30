@@ -9,7 +9,7 @@ jobs:
   build:
     if: startsWith(github.ref, 'refs/tags/')
     name: Create Release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -29,6 +29,21 @@ jobs:
         with:
           tagRegex: "v(.*)"
           tagRegexGroup: 1
+
+      - name: Setup Java and scala
+        with:
+          JAVA_VERSION: openjdk@1.11.0
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: "./.github/templates/setup_java_and_scala"
+
+      - name: Fetch Dependencies
+        shell: bash
+        if: steps.coursier-cache.outputs.cache-hit-coursier != 'true'
+        env:
+          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        run: |
+          cd metagraph
+          sbt +update
 
       - name: Test and assembly 🚀
         env:
