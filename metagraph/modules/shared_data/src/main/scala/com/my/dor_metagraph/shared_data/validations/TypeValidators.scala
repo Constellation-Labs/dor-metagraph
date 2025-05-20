@@ -2,8 +2,8 @@ package com.my.dor_metagraph.shared_data.validations
 
 import com.my.dor_metagraph.shared_data.Errors._
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInUpdate, MinimumCheckInSeconds}
-import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
-import org.tessellation.schema.address.Address
+import io.constellationnetwork.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
+import io.constellationnetwork.schema.address.Address
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit

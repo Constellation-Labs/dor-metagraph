@@ -382,19 +382,19 @@ runs:
         fi
 
     - name: Save Metagraph L0 JAR
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: metagraph-l0.jar
         path: .github/artifacts/metagraph-l0.jar
     - name: Save Currency L1 JAR
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: currency-l0.jar
         path: .github/artifacts/currency-l1.jar
     - name: Save Data L1 JAR
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: data-l1.jar

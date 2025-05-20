@@ -5,8 +5,8 @@ import cats.effect.std.Env
 import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Utils.getEnv
 import com.my.dor_metagraph.shared_data.external_apis.ClusterApi.getValidatorNodesAddresses
-import org.tessellation.schema.address.Address
-import org.tessellation.security.SecurityProvider
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.security.SecurityProvider
 
 class ValidatorNodesAPI[F[_] : Async : SecurityProvider : Env] extends ValidatorNodes[F] {
 

@@ -8,9 +8,9 @@ import com.my.dor_metagraph.l0.rewards.collateral.Collateral.getDeviceCollateral
 import com.my.dor_metagraph.shared_data.Utils._
 import com.my.dor_metagraph.shared_data.bounties.{CommercialLocationBounty, UnitDeployedBounty}
 import com.my.dor_metagraph.shared_data.types.Types._
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.transaction.RewardTransaction
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.balance.Balance
+import io.constellationnetwork.schema.transaction.RewardTransaction
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
