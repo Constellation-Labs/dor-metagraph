@@ -26,4 +26,4 @@ runs:
         git checkout $TESSELLATION_VERSION
         
         sbt clean 
-        sbt sdk/publishM2
+        sbt -Dversion.override=$TESSELLATION_VERSION sdk/publishM2
