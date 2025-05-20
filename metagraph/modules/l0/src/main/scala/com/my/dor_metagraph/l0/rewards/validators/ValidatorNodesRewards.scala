@@ -5,8 +5,8 @@ import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.Utils.{PosLongEffectOps, RewardTransactionOps}
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.transaction.RewardTransaction
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.transaction.RewardTransaction
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

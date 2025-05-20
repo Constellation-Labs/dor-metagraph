@@ -11,18 +11,18 @@ import com.my.dor_metagraph.shared_data.Utils.toTokenAmountFormat
 import com.my.dor_metagraph.shared_data.types.Types.{AnalyticsBountyInformation, CheckInDataCalculatedState, DeviceInfo, DorAPIResponse}
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.numeric.NonNegLong
-import org.tessellation.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
-import org.tessellation.node.shared.infrastructure.consensus.trigger.TimeTrigger
-import org.tessellation.schema.address.Address
-import org.tessellation.schema.balance.Balance
-import org.tessellation.schema.epoch.EpochProgress
-import org.tessellation.schema.height.{Height, SubHeight}
-import org.tessellation.schema.transaction.RewardTransaction
-import org.tessellation.schema.{ActiveTip, BlockReference, DeprecatedTip, ID, SnapshotOrdinal, SnapshotTips}
-import org.tessellation.security.hash.{Hash, ProofsHash}
-import org.tessellation.security.hex.Hex
-import org.tessellation.security.signature.Signed
-import org.tessellation.security.signature.signature.{Signature, SignatureProof}
+import io.constellationnetwork.currency.schema.currency.{CurrencyIncrementalSnapshot, CurrencySnapshotStateProof}
+import io.constellationnetwork.node.shared.infrastructure.consensus.trigger.TimeTrigger
+import io.constellationnetwork.schema.address.Address
+import io.constellationnetwork.schema.balance.Balance
+import io.constellationnetwork.schema.epoch.EpochProgress
+import io.constellationnetwork.schema.height.{Height, SubHeight}
+import io.constellationnetwork.schema.transaction.RewardTransaction
+import io.constellationnetwork.schema.{ActiveTip, BlockReference, DeprecatedTip, ID, SnapshotOrdinal, SnapshotTips}
+import io.constellationnetwork.security.hash.{Hash, ProofsHash}
+import io.constellationnetwork.security.hex.Hex
+import io.constellationnetwork.security.signature.Signed
+import io.constellationnetwork.security.signature.signature.{Signature, SignatureProof}
 import weaver.SimpleIOSuite
 
 import scala.collection.immutable.{SortedMap, SortedSet}
@@ -73,8 +73,16 @@ object BuildRewardsTest extends SimpleIOSuite {
           ),
           SortedSet(ActiveTip(BlockReference(Height(122L), ProofsHash("bbbb")), 2L, SnapshotOrdinal(55L)))
         ),
-        stateProof = CurrencySnapshotStateProof(Hash(""), Hash("")),
-        epochProgress = EpochProgress(NonNegLong.unsafeFrom(epochProgress))
+        stateProof = CurrencySnapshotStateProof(Hash(""), Hash(""), None, None, None, None, None, None, None),
+        epochProgress = EpochProgress(NonNegLong.unsafeFrom(epochProgress)),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None
       ),
       NonEmptySet.one(SignatureProof(ID.Id(Hex("")), Signature(Hex(""))))
     )

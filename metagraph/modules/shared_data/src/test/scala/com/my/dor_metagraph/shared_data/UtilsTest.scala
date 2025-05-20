@@ -2,7 +2,7 @@ package com.my.dor_metagraph.shared_data
 
 import cats.effect.{IO, Resource}
 import com.my.dor_metagraph.shared_data.Utils.getDagAddressFromPublicKey
-import org.tessellation.security.SecurityProvider
+import io.constellationnetwork.security.SecurityProvider
 import weaver.MutableIOSuite
 
 object UtilsTest extends MutableIOSuite {

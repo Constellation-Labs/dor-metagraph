@@ -7,13 +7,13 @@ import com.my.dor_metagraph.shared_data.Utils.getFirstAddressFromProofs
 import com.my.dor_metagraph.shared_data.combiners.DeviceCheckIn.combineDeviceCheckIn
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import com.my.dor_metagraph.shared_data.validations.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
-import org.tessellation.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
-import org.tessellation.currency.dataApplication.{DataState, L0NodeContext}
-import org.tessellation.ext.cats.syntax.next.catsSyntaxNext
-import org.tessellation.schema.epoch.EpochProgress._
-import org.tessellation.schema.epoch._
-import org.tessellation.security.SecurityProvider
-import org.tessellation.security.signature.Signed
+import io.constellationnetwork.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
+import io.constellationnetwork.currency.dataApplication.{DataState, L0NodeContext}
+import io.constellationnetwork.ext.cats.syntax.next.catsSyntaxNext
+import io.constellationnetwork.schema.epoch.EpochProgress._
+import io.constellationnetwork.schema.epoch._
+import io.constellationnetwork.security.SecurityProvider
+import io.constellationnetwork.security.signature.Signed
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
