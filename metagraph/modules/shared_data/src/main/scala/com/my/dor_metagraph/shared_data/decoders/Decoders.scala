@@ -1,16 +1,15 @@
 package com.my.dor_metagraph.shared_data.decoders
 
-import cats.data.NonEmptySet
+import cats.data.{EitherT, NonEmptySet}
 import cats.effect.Async
 import cats.effect.std.Env
-import cats.syntax.flatMap.toFlatMapOps
-import cats.syntax.functor.toFunctorOps
+import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Utils.{getByteArrayFromRequestBody, getDeviceCheckInInfo}
 import com.my.dor_metagraph.shared_data.external_apis.DorApi.handleCheckInDorApi
 import com.my.dor_metagraph.shared_data.types.Codecs._
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.bullet.borer.Cbor
-import org.http4s.{DecodeResult, EntityDecoder, MediaType}
+import org.http4s.{DecodeFailure, DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
 import io.constellationnetwork.schema.ID.Id
 import io.constellationnetwork.security.hex.Hex
 import io.constellationnetwork.security.signature.Signed
@@ -51,15 +50,19 @@ object Decoders {
 
   }
 
-  def signedDataEntityDecoder[F[_] : Async: Env]: EntityDecoder[F, Signed[CheckInUpdate]] = {
+  def signedDataEntityDecoder[F[_]: Async: Env]: EntityDecoder[F, Signed[CheckInUpdate]] = {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
-      val rawText = msg.as[String]
-      val signed = rawText.flatMap { text =>
-        logger.info(s"Received RAW request: $text")
-        val bodyAsBytes = getByteArrayFromRequestBody(text)
-        buildSignedUpdate(bodyAsBytes)
+      EitherT {
+        (for {
+          text <- msg.as[String]
+          _ <- logger.info(s"Received RAW request: $text")
+          bodyAsBytes = getByteArrayFromRequestBody(text)
+          result <- buildSignedUpdate(bodyAsBytes)
+        } yield Right(result): Either[DecodeFailure, Signed[CheckInUpdate]]
+          ).handleErrorWith { err =>
+          (Left(InvalidMessageBodyFailure(s"Failed to decode CheckInUpdate: ${err.getMessage}", err.some)): Either[DecodeFailure, Signed[CheckInUpdate]]).pure[F]
+        }
       }
-      DecodeResult.success(signed)
     }
   }
 
