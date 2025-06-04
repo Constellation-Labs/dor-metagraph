@@ -1,10 +1,7 @@
 package com.my.dor_metagraph.data_l1
 
-import cats.data.NonEmptyList
-import cats.effect.{IO, Resource}
-import cats.syntax.applicative.catsSyntaxApplicativeId
+import cats.effect.{Async, IO, Resource}
 import cats.syntax.option.catsSyntaxOptionId
-import cats.syntax.validated._
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
@@ -12,15 +9,14 @@ import com.my.dor_metagraph.shared_data.deserializers.Deserializers
 import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, Encoder}
-import org.http4s.{EntityDecoder, HttpRoutes}
+import org.http4s.{EntityDecoder, HttpRoutes, InvalidMessageBodyFailure, Request}
+
 import io.constellationnetwork.currency.dataApplication._
 import io.constellationnetwork.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
 import io.constellationnetwork.currency.l1.CurrencyL1App
 import io.constellationnetwork.ext.cats.effect.ResourceIO
-import io.constellationnetwork.schema.SnapshotOrdinal
 import io.constellationnetwork.schema.cluster.ClusterId
 import io.constellationnetwork.schema.semver.{MetagraphVersion, TessellationVersion}
-import io.constellationnetwork.security.hash.Hash
 import io.constellationnetwork.security.signature.Signed
 
 import java.util.UUID
@@ -99,6 +95,25 @@ object Main extends CurrencyL1App(
         bytes: Array[Byte]
       ): IO[Either[Throwable, CheckInDataCalculatedState]] =
         IO(Deserializers.deserializeCalculatedState(bytes))
+
+      override def postDataTransactionsRequestDecoder(req: Request[IO])(implicit f: Async[IO]): IO[DataRequest] = {
+        implicit val signedEntityDecoder: EntityDecoder[IO, Signed[CheckInUpdate]] = signedDataEntityDecoder
+        req
+          .as[Signed[CheckInUpdate]]
+          .map[DataRequest](SingleDataUpdateRequest)
+          .handleErrorWith{ err =>
+            logger.error(
+              s"Failed to decode request.\n" +
+                s"Error: $err"
+            ) >>
+              IO.raiseError[DataRequest](
+                InvalidMessageBodyFailure(
+                  s"Failed to decode request.\n" +
+                    s"Error: $err"
+                )
+              )
+          }
+      }
     }
   )
 
