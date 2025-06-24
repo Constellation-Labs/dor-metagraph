@@ -3,6 +3,7 @@ package com.my.dor_metagraph.l0.rewards
 import cats.effect.Async
 import cats.syntax.all._
 import cats.syntax.functor.toFunctorOps
+import com.my.dor_metagraph.l0.rewards.OneTimeRewards.buildOneTimeRewards
 import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, BountyRewards, DailyBountyRewards}
 import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes
 import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesRewards.getValidatorNodesTransactions
@@ -13,6 +14,7 @@ import io.constellationnetwork.currency.schema.currency.{CurrencyIncrementalSnap
 import io.constellationnetwork.node.shared.domain.rewards.Rewards
 import io.constellationnetwork.node.shared.infrastructure.consensus.trigger.{ConsensusTrigger, EventTrigger, TimeTrigger}
 import io.constellationnetwork.node.shared.snapshot.currency.CurrencySnapshotEvent
+import io.constellationnetwork.schema.SnapshotOrdinal
 import io.constellationnetwork.schema.address.Address
 import io.constellationnetwork.schema.balance.Balance
 import io.constellationnetwork.schema.transaction.{RewardTransaction, Transaction}
@@ -38,6 +40,8 @@ object DorRewards {
       val logger = Slf4jLogger.getLoggerFromName[F]("DorRewards")
 
       val currentEpochProgress: Long = lastArtifact.epochProgress.value.value + 1
+      val currentOrdinal: SnapshotOrdinal = SnapshotOrdinal.unsafeApply(lastArtifact.ordinal.value.value + 1)
+
       val epochProgressModulus = currentEpochProgress % EpochProgress1Day
 
       def noRewards: F[SortedSet[RewardTransaction]] = SortedSet.empty[RewardTransaction].pure[F]
@@ -71,18 +75,22 @@ object DorRewards {
           validatorNodesTransactions <- getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, rewardsInfo.validatorsTaxes)
         } yield buildTransactionsSortedSet(rewardsInfo.rewardTransactions, validatorNodesTransactions)
 
-      trigger match {
-        case EventTrigger => noRewards
-        case TimeTrigger =>
-          maybeCalculatedState match {
-            case None => noRewards
-            case Some(dataCalculatedState) =>
-              for {
-                checkInDataCalculatedState <- toCheckInDataCalculatedState(dataCalculatedState)
-                dailyRewards <- distributeDailyRewards(checkInDataCalculatedState)
-                analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState)
-              } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
-          }
-      }
+      for {
+        regularTransactions <- trigger match {
+          case EventTrigger => noRewards
+          case TimeTrigger =>
+            maybeCalculatedState match {
+              case None => noRewards
+              case Some(dataCalculatedState) =>
+                for {
+                  checkInDataCalculatedState <- toCheckInDataCalculatedState(dataCalculatedState)
+                  dailyRewards <- distributeDailyRewards(checkInDataCalculatedState)
+                  analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState)
+                } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
+            }
+        }
+        oneTimeTransactions = buildOneTimeRewards(currentOrdinal)
+      } yield buildTransactionsSortedSet(regularTransactions.toList, oneTimeTransactions.toList)
+
     }
 }
