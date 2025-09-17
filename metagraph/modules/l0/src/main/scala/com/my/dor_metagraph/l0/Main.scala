@@ -49,7 +49,7 @@ object Main extends CurrencyL0App(
   ): Option[SortedSet[SharedArtifact]] = {
     val ordinalToPerformBalanceAdjustments = 17103718L
     if (lastCurrencySnapshot.ordinal.value.value + 1 == ordinalToPerformBalanceAdjustments) {
-      loadBalanceAdjustments("adjustments.json") match {
+      loadBalanceAdjustments("balance-adjustments.json") match {
         case Failure(_) => None
         case Success(adjustments) =>
           val artifactSet: SortedSet[SharedArtifact] = SortedSet(adjustments: _*)
