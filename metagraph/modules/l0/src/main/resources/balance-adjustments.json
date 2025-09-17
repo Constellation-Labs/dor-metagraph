@@ -1,0 +1,266 @@
+[
+  {
+    "address": "DAG08UzxAf6H1q5yhqg8ak2kYFjLDhD294Siwrzc",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "c10cb089b0b0b9c2a4fc017c4aa32fe08c70de6b2c11dc3a5111ac67cbbb5f14",
+      "e69a956424632d76212a00002642b14f31e53c69a5f3158f6752e0c4d277d0e8",
+      "5970e6b7eb77fcd8f307465cbbdc1381d455543850992a5d3789f05e9c10c803",
+      "c3cfe3c1cf6c4c527ea4295f15c38fc909ffe796640cb9ac927bc60938c9e53b",
+      "bff57a1851975708a5bdb5badad7ffe8a0e5e8773038c3f5baa59cbda13b81e0",
+      "21a6433d5854b8ddb70e85a753db069d9d9b13f8263ace253c1272bafbbf9be0",
+      "429562d029299e0e95a7d2e6137b4c4fa0e666d2634b76b1e94d9d790a3376a9"
+    ],
+    "deduct": -32492629.0
+  },
+  {
+    "address": "DAG09tkvpazCUBp9KZxcYCp8WaphkKFvpH1ZYtGx",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "97286798e3b5b2a134e0cf122040cf2eadd4e28417090aa723eb79eeef8265af",
+      "121fb44726586ae4e23dce3dcfb78f2490ff8e118284d85da381455223590ca9",
+      "e0440bd0c2ba66cfae75fd557c893e5c2691027280365a0e9bfb86b840da3fac",
+      "584905d0693314e6c47dd1f5b396f8742b5238b16e05573ebc5f80bd3160aa87"
+    ],
+    "deduct": -24027791.0
+  },
+  {
+    "address": "DAG0CRgKuTRRBu9JjKgPaJoqMqgxGevpdVfmxwog",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "1a4c13cc9713f5273aab70a2cf5a7f969a9c015ba9f120aabb524d6359da3c83",
+      "fb4c79a132964522be589f198d2791c9b1af03ccea0eab1f33871659094c2c56",
+      "c98fc7d131349f1f07f80ea173e9ec8ba341dc67ad6ae33e8bf9d22908bb34c4",
+      "a51911906274ce3b533795fe68b4aeb6bf44e792c0fbc936db48af9c98df0d7b",
+      "c359e0bed69996da487e0bdd49bf40fb544ce2ec508fd48d18d7356faac4fccd"
+    ],
+    "deduct": -35261294.0
+  },
+  {
+    "address": "DAG1rhSoptnuvm7qfCkGB7gHRHAHX23gtsrumnpL",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "83f28bae860759c5a12f6643f21aac52897de744c92f7b16841f199c7ac3c58e",
+      "e6e1958fe43fec39436fade2ee18a7a11028e5a45d9026d622cb02319a96da91"
+    ],
+    "deduct": -11190614.0
+  },
+  {
+    "address": "DAG2NbwQreSw1odKLMKrWT9txDsdeLYfKLWP262B",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "9633de5c5cc4e2298eba2df485c83368ebbffc8643382832c5d3b8363d65f79e",
+      "fb8f91b9503467ac131db63301b09ac7fde00bb3bae9adadda0c734fb73cd5fe"
+    ],
+    "deduct": -7528672.0
+  },
+  {
+    "address": "DAG2oihfBe9ft1L6ETdg4PSRNkWVQZVzrWUxtzyx",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "b8b4f4fa4e9079682153753f379918328e53dd6655479bca5024599f7359cbdc",
+      "b20d2a4fbcdfb2dd323cb52edd476484196fcd4430a72eeccb244b0c6ba0b436",
+      "e8d42be07c119ce32cd18684ca59e662919ab20eabf7eb17c155934cccf8626e"
+    ],
+    "deduct": -17617780.0
+  },
+  {
+    "address": "DAG37Ye2fdUBh2bGk7jjSbgmRevyU8KhWJVc4N9p",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "117ebc8c09ae640b4869d6fe9662684c0ba9743ee650fa32846fadd977dc6aa2",
+      "9552e095b63759f784f21727a7814143c7b27b0fabd34ce7b259de247cb4b5e3",
+      "129c56fd94c4d2e99313e6ff153805684a69d9467ede7f0c46d13147c5972b5e",
+      "6c55d536c7fe5c1a8559e0bc99dc3ec9037c82f26dc9276c1b735ebcaf0ccb87",
+      "06fb9287cbdfe99724807e8b5b5b7d695994439ce55222ab071d627992ed32e4"
+    ],
+    "deduct": -30624776.0
+  },
+  {
+    "address": "DAG3Eex8oePC3Mgw3HobdjadwkAmLVQQ4yVrTN3d",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "65b0ed645e8ac31a3bde82cbc6eeeab73b3cbaf386ed7756ac54c2a8ae84f9c3",
+      "0b3f80440203feca81bc1b8e3be3dbf2da860c7c36bf2e7b3bc89e0225869a18",
+      "29efbcb295533d068f7f7f9a8050f14d50d77fde80ac59a0b8dbd1aab4169c2f",
+      "214158d2e536c49acc3434c1f3c80914e2a46015cbeafd1a05a66b6f8322e3ef",
+      "521a81285ae0826d9cc6f57a7786d4e71253bd9c50cb6852853e97c9bd872046"
+    ],
+    "deduct": -30937430.0
+  },
+  {
+    "address": "DAG3mnhR7SqUP8H2wEDe4LychWdxLbSZAeQmFASs",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "e313b28b1434cfaad0a171c3641bb965e89d9b5a91305e5cccc91d1758c0670d",
+      "3075a21377714b0a0afd447a6a23c134f64f7a959abf2daf2e9bd2279d4f2df7",
+      "9fc5a9be8ae87fe09295adff74cc8567944ad0faeafb347be3e622927c1db6e4",
+      "1f8a54f00756f9308b5f16e1b15fc322210e81dbaa2aa0ad91e9d37134b8a3d0",
+      "8131feea489a2bbb1047eb68062cde4efd85b8df87a36e29ae923f986ee758b8",
+      "09f0b839c6741ddc05b16fb1f53c93379143e4e7aa1666498cffbca3fa89089c",
+      "6ec9ab655bd7fde313d84f12630436302c21ef6bc272d26c9a55870ca41e476e"
+    ],
+    "deduct": -37881401.0
+  },
+  {
+    "address": "DAG3puQaFAiV3LUvrfDUWFpprBF5ZPS9tmWpR4qM",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "1a25624a968cbc1e69eae9307942d4cb3dbb118e39cd40d9400e7ebcf541ef83"
+    ],
+    "deduct": -8665644.0
+  },
+  {
+    "address": "DAG4cE4i3eGjQNMijijsCwmtq6njDYHsrfQkAFaf",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "4ed8549ab58c56231c24dcbb1a7e11f861d7b6914ab8a9a9547a3f28b8006018",
+      "de9beae27dabf70ec963b683bbbd665dc8ac5751cae634ac61eaeeb30b22b30b",
+      "e813067b0c69208227535f8b05ff8cd5acfe0b104d09e7fbc66398c68f88fb16",
+      "4947f792de9c5e93cb806105e67f632faeee1b022b6b494168f87b43547eb479"
+    ],
+    "deduct": -23415957.0
+  },
+  {
+    "address": "DAG4oBpm22PvsE3RVokWV4EbYesbLxGxgovD2KYr",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "df442e48fd1d25c8ea9fc8d100565357bd657fc14bb942f2833fb45ed0195610"
+    ],
+    "deduct": -11169993746026.0
+  },
+  {
+    "address": "DAG5FRNmLise5nFLpUCtQZzyBt63nVRCUtBnudEb",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "1e89eb7afe577e339e3b541c3f261ea06244dc8c3153d0b5a720d43d8980d385",
+      "f9ab2fa956b3025e9ef55a7b70afd6fae54ef4df21980a1f3aa665f7410c40e5",
+      "3a105f07fb33ce1f4c3067abdec2b32f20edf6fe23f37ee8692f0f2043ebb7d0",
+      "ba1dc96fb9e6b195643d615830a46e22ade497eab07d5f44af8e02673a9e56fa",
+      "d77a820849d0de8a4bcc9ea0fe4e9de6098bdef06ca59cc5c78fe004d7c93024"
+    ],
+    "deduct": -23386906.0
+  },
+  {
+    "address": "DAG5YW1u8QskFopXR153cd7ahqChjqLfivqMX7oE",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "c504382dd59a9cdf24811fbf0a922c4395f4b7d945db9b678f286f8edaca70dc",
+      "7fb26d176024bedf06732bcabb6b448b7e6588af4a43b7e41858057c774b8e13",
+      "478acf164a767ac21f0547050e1f7259083f965b0922ef564c23d87429f6059f",
+      "2b16e7ba7f69ea7fc54cde47336a162c84ff6c392ed4f7f234d333de4cd32b5a",
+      "372e4d1d7a5460edf030ab37cf2e132c16eedd5562c5b7bc303cf501bb3dbbac"
+    ],
+    "deduct": -30677602.0
+  },
+  {
+    "address": "DAG6MsXGpenxYvx24aSnuXKRjCuSvo1qixHX7j1J",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "a23838b2058d405c50c70141ce875f7f9e150de27528d25588a6871ab828654c",
+      "3d2df5158f98d0aa94462473d85de5ab182dbc83143209a26320af540120090e",
+      "ce70b45f58c1e5c82e113a20572b22794bc031a28a8e932fec3fc075d3b4fdd5",
+      "4874424f96b076d68ee541bdcee935b2f8a4c94460a66ce478c9ae9d7151c6c3",
+      "8d79732ea3045fc1a3813f3b7bc7b1572a0117d0448a071c13658b3220919426"
+    ],
+    "deduct": -23965570.0
+  },
+  {
+    "address": "DAG6NefHhhsUacvYQrcja49JHafh1qJ2N4j5F8Gy",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "ee685bf5c98bc8176d1b3f591ffa711422950f4f43bf11d4ee5e86eb17891400"
+    ],
+    "deduct": -9547280000000.0
+  },
+  {
+    "address": "DAG6ZocRgnBU387xyFkZnbbuhGPhcqVsMZGF7E8Q",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "39a4ed5593c355417d77e426d3e2ca55046f2a1c593b91ea9e5011f579e2d6ee",
+      "df79ce852ade5db05584bf38438370df4afa17620bc2934015b67e8e1fd21822",
+      "08cbccbb7ab9b9ed466e671f6f14bdc537b65b6fdb7e55110108d17d5a8b137a"
+    ],
+    "deduct": -17845994.0
+  },
+  {
+    "address": "DAG6jPbtf6aR6ozX2gZHnY3zc7wkMsQMEtAPatfM",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "18604762793fb2c99addc82ca1438f87fbef7bce1e2a8a2b64da834e79be93d5",
+      "4914bd86ae8daa83a1c5eaed0199f0b627ecf5e780a81081d67f0dc74cb7e9e1",
+      "b2a278b50842c06a9c6b8741ad23a1e1798a92f791b21fad1fb9d7688b32732a"
+    ],
+    "deduct": -18889651.0
+  },
+  {
+    "address": "DAG7QBspNFjZVPs6BStoYoBB4KxaihhsKWLU6LYo",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "f48524ecb316e230ae7f8224a0b2b4c7e24e00af67d2267d270a8e5c6efbc391",
+      "eea3961584a630fe1bab786c4dee21551de261da1c9ef0f2531c7a67a2359782",
+      "7e7a771fac225ca9e5fd1c63fb523d3423b7d675ebc78fad8ec3d8416a7f28dc",
+      "b63a337a16329b654fce771839a560f72a7b5b995fde77400ef9359c630d880b",
+      "9828acc7df641b261df530d879b5dae50f581632be54113a5691f4ab68c1f2d3"
+    ],
+    "deduct": -28000099.0
+  },
+  {
+    "address": "DAG7QdoJUPjsSkrjZcjRbS4fMn6zifFXBY79p8EJ",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "821e6d906c578165a2a746c9ca2e2c2cbb436a8d4bccbac653e97f01bf2792fe",
+      "15374d08056c9d8fbddd5affae58033b8d170d5a0c42bb3a8849bc146f902923",
+      "97cc04ce700f54efbb4673aaa8f6a6fcb19b54eac3ff9ed156261e088d7b40c1",
+      "1f4db57136830ff3eed871bec9dd0059eb98134e3bbf84a1f09e03c96f86157a"
+    ],
+    "deduct": -24006800.0
+  },
+  {
+    "address": "DAG7X5idd4aLfp4XC6WQdG1eDfR3LGPVEwtUUB2W",
+    "reason": "SpendTransactionDestinationNotApplied",
+    "reference": [
+      "c10cb089b0b0b9c2a4fc017c4aa32fe08c70de6b2c11dc3a5111ac67cbbb5f14",
+      "eea3961584a630fe1bab786c4dee21551de261da1c9ef0f2531c7a67a2359782",
+      "1e89eb7afe577e339e3b541c3f261ea06244dc8c3153d0b5a720d43d8980d385",
+      "117ebc8c09ae640b4869d6fe9662684c0ba9743ee650fa32846fadd977dc6aa2"
+    ],
+    "increase": 15864543.0
+  },
+  {
+    "address": "DAG7Xh3B7R3wngYG6R3GbaAotfKwcjGGcVithwE3",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "8d41c293547aa9c533d91922c5e3bce1799db0d87a6eb90c7e163a409a6bfc04"
+    ],
+    "deduct": -4837839.0
+  },
+  {
+    "address": "DAG8L621KnjmiDvdAn4DVjqs7vUKgk5hv4C6nqnK",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "50bc051989e294f23e6d8f241da1bb48066730877a049a1eb5ce68c3ef222011",
+      "4b0315e1158df7c6a9e263a7596bf60829308356bd71cd6c17ccef6ea2b76145",
+      "a262eb7f44b824a16b0c8ffafe0abc6e21fbf35f18dbda4e4cbe22ad8200a8bf",
+      "35fa0ec15ac69614602a0bfcb95fbb1dbdda61798341e04ebf31b7ef89d0584e",
+      "1180f0e6bda1bfd7d2e6ed27c9dd7abde69e9a3f4c5b66c459d03160960c93b6"
+    ],
+    "deduct": -29355516.0
+  },
+  {
+    "address": "DAG8qDrivtQAo7yGY4r5Ua3Y9HgVDDa7mbLToR9q",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "bb9bf4aed12141d1fbe3d9b97ebb6cf7d81add18e8f4f3358ec90173b6be82d7"
+    ],
+    "deduct": -10000000000000.0
+  },
+  {
+    "address": "DAG8ugLHANeWzyNVBhyiXDQBfAQhshNvqxgA44MD",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "62553366daf47879b422e694e0f9cfd086655de7754c30cc18242ab5a4fc19f7"
+    ],
+    "deduct": -8900292.0
+  }
+]

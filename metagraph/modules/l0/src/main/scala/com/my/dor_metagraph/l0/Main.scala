@@ -5,6 +5,7 @@ import cats.effect.{IO, Resource}
 import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.validated._
+import com.my.dor_metagraph.l0.BalanceAdjustmentLoader.loadBalanceAdjustments
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
 import com.my.dor_metagraph.l0.rewards.DorRewards
 import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, DailyBountyRewards}
@@ -25,6 +26,7 @@ import io.constellationnetwork.ext.cats.effect.ResourceIO
 import io.constellationnetwork.node.shared.domain.rewards.Rewards
 import io.constellationnetwork.node.shared.snapshot.currency.CurrencySnapshotEvent
 import io.constellationnetwork.schema.SnapshotOrdinal
+import io.constellationnetwork.schema.artifact.SharedArtifact
 import io.constellationnetwork.schema.cluster.ClusterId
 import io.constellationnetwork.schema.semver.{MetagraphVersion, TessellationVersion}
 import io.constellationnetwork.security.SecurityProvider
@@ -32,6 +34,8 @@ import io.constellationnetwork.security.hash.Hash
 import io.constellationnetwork.security.signature.Signed
 
 import java.util.UUID
+import scala.collection.immutable.SortedSet
+import scala.util.{Failure, Success}
 
 object Main extends CurrencyL0App(
   "currency-l0",
@@ -40,6 +44,21 @@ object Main extends CurrencyL0App(
   tessellationVersion = TessellationVersion.unsafeFrom(io.constellationnetwork.BuildInfo.version),
   metagraphVersion = MetagraphVersion.unsafeFrom(com.my.dor_metagraph.l0.BuildInfo.version)
 ) {
+  override def customArtifacts(
+    lastCurrencySnapshot: Signed[CurrencyIncrementalSnapshot]
+  ): Option[SortedSet[SharedArtifact]] = {
+    val ordinalToPerformBalanceAdjustments = 17103718L
+    if (lastCurrencySnapshot.ordinal.value.value + 1 == ordinalToPerformBalanceAdjustments) {
+      loadBalanceAdjustments("balance-adjustments.json") match {
+        case Failure(_) => None
+        case Success(adjustments) =>
+          val artifactSet: SortedSet[SharedArtifact] = SortedSet(adjustments: _*)
+          Some(artifactSet)
+      }
+    } else {
+      None
+    }
+  }
   private def makeBaseDataApplicationL0Service(
     calculatedStateService: CalculatedStateService[IO]
   ): BaseDataApplicationL0Service[IO] =
