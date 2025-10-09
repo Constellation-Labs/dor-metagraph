@@ -1,0 +1,10 @@
+[
+  {
+    "address": "DAG1juwdY2QJdkmnVoAaQwJ2myUVB6Kohuxrazpn",
+    "reason": "SpendTransactionSourceNotApplied",
+    "reference": [
+      "edd9d1fa742654f5d9593c68279d9e164ba1876333d260b9022ac1de68278eeb"
+    ],
+    "deduct": -22837225000000.0
+  }
+]
