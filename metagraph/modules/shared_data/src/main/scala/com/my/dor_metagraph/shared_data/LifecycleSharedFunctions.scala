@@ -54,7 +54,6 @@ object LifecycleSharedFunctions {
               logger.error(message) >> new Exception(message).raiseError[F, EpochProgress]
           }
           address <- getFirstAddressFromProofs(signedUpdate.proofs)
-          _ <- logger.info(s"New checkIn for the device: $signedUpdate")
         } yield combineDeviceCheckIn(acc, signedUpdate, address, epochProgress.next)
       }
     }
