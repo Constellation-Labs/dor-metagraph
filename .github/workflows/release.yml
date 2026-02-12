@@ -11,14 +11,14 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if project version is release version
-        run:  test "v$(cut -d \" -f 2 metagraph/version.sbt)" = "${{ github.ref_name }}"
+        run: test "v$(cut -d \" -f 2 metagraph/version.sbt)" = "${{ github.ref_name }}"
 
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v2.4.2
+        uses: mikepenz/release-changelog-builder-action@v5
         with:
           configuration: ".github/config/changelog.json"
         env:
@@ -30,17 +30,20 @@ jobs:
           tagRegex: "v(.*)"
           tagRegexGroup: 1
 
-      - name: Setup Java and scala
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          JAVA_VERSION: openjdk@1.11.0
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: "./.github/templates/setup_java_and_scala"
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Fetch Dependencies
         shell: bash
         if: steps.coursier-cache.outputs.cache-hit-coursier != 'true'
         env:
-          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd metagraph
           sbt +update
@@ -60,7 +63,7 @@ jobs:
           cp ./modules/data_l1/target/scala-2.13/dor_metagraph-data_l1-assembly-${{ steps.tagName.outputs.tag }}.jar ./data-l1.jar
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: DOR Metagraph Release ${{ steps.tagName.outputs.tag }}
           draft: false
