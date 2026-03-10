@@ -6,9 +6,10 @@ ThisBuild / scalaVersion := "2.13.10"
 ThisBuild / evictionErrorLevel := Level.Warn
 
 ThisBuild / assemblyMergeStrategy := {
-  case "logback.xml"                                       => MergeStrategy.first
-  case x if x.contains("io.netty.versions.properties")     => MergeStrategy.discard
-  case PathList(xs @ _*) if xs.last == "module-info.class" => MergeStrategy.first
+  case "logback.xml"                                             => MergeStrategy.first
+  case x if x.contains("io.netty.versions.properties")           => MergeStrategy.discard
+  case PathList(xs @ _*) if xs.last == "module-info.class"       => MergeStrategy.first
+  case PathList("META-INF", "versions", _, "OSGI-INF", _ @ _*)   => MergeStrategy.discard
   case x =>
     val oldStrategy = (assembly / assemblyMergeStrategy).value
     oldStrategy(x)
