@@ -25,13 +25,16 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
     def noCheckInMade(nextEpochProgressToReward: Long): Boolean =
       currentEpochProgress - nextEpochProgressToReward >= EpochProgress1Day
 
-    def combine(acc: RewardTransactionsInformation, deviceInfo: DeviceInfo): F[RewardTransactionsInformation] =
+    def combine(acc: RewardTransactionsInformation, entry: (Address, DeviceInfo)): F[RewardTransactionsInformation] = {
+      val (deviceAddress, deviceInfo) = entry
+      val publicId = deviceInfo.publicId.getOrElse("unknown")
+
       deviceInfo.dorAPIResponse.rewardAddress match {
         case None =>
-          logger.warn(s"Device doesn't have rewardAddress").as(acc)
+          logger.warn(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId] doesn't have rewardAddress").as(acc)
 
         case Some(rewardAddress) if noCheckInMade(deviceInfo.nextEpochProgressToReward) =>
-          logger.warn(s"Device with reward address ${rewardAddress.value.value} didn't make a check in the last 24 hours").as(acc)
+          logger.warn(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] didn't make a check in the last 24 hours").as(acc)
 
         case Some(rewardAddress) =>
           for {
@@ -42,15 +45,18 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
             deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxRate).toLong
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
 
+            _ <- logger.info(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
+
             deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, rewardAddress)
             taxesToValidatorNodesUpdated = acc.validatorsTaxes + deviceTaxToValidatorNodes
 
           } yield RewardTransactionsInformation(deviceReward, taxesToValidatorNodesUpdated, updatedBalances)
       }
+    }
 
     for {
       _ <- logInitialRewardDistribution(currentEpochProgress)
-      bountyRewards <- state.devices.values.toList
+      bountyRewards <- state.devices.toList
         .foldLeftM(RewardTransactionsInformation(Map.empty, 0L, lastBalancesRaw))(combine)
         .map(reward => RewardTransactionsAndValidatorsTaxes(reward.rewardTransactions.values.toList, reward.validatorsTaxes))
       _ <- logAllDevicesRewards(bountyRewards)

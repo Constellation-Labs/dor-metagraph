@@ -6,28 +6,32 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
-import com.my.dor_metagraph.shared_data.Utils.{getDeviceCheckInInfo, getEnv}
-import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInWithSignature, DorAPIResponse}
+import com.my.dor_metagraph.shared_data.Utils.getEnv
+import com.my.dor_metagraph.shared_data.types.Types.{DeviceCheckInInfo, DeviceCheckInWithSignature, DorAPIResponse}
 import io.circe.parser.decode
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import ujson.Obj
 
+import scala.concurrent.duration._
+
 object DorApi {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("DorApi")
 
+  private val ConnectTimeoutMs: Int = 5_000
+  private val ReadTimeoutMs: Int = 10_000
+  private val MaxRetries: Int = 3
+  private val InitialBackoff: FiniteDuration = 200.millis
+
   private def saveDeviceCheckIn[F[_] : Async: Env](
-    publicKey    : String,
-    deviceCheckIn: DeviceCheckInWithSignature
+    publicKey      : String,
+    deviceCheckIn  : DeviceCheckInWithSignature,
+    checkInInfo    : DeviceCheckInInfo
   ): F[Option[DorAPIResponse]] = {
     for {
       apiUrl <- getEnv[F]("DOR_API_URL")
       endpoint = s"$apiUrl/$publicKey/check-in"
       headers = Map("Content-Type" -> "application/json", "version" -> "2")
-      checkInInfo <- getDeviceCheckInInfo(deviceCheckIn.cbor)
-      _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server AC ${checkInInfo.ac}")
-      _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server DTS ${checkInInfo.dts}")
-      _ <- logger.info(s"Decoded CBOR field before check-in to DOR Server E ${checkInInfo.e}")
 
       requestBody = Obj(
         "ac" -> checkInInfo.ac,
@@ -37,29 +41,48 @@ object DorApi {
         "signature" -> deviceCheckIn.sig
       ).render()
 
-      _ <- logger.info(s"Request body: $requestBody")
+      _ <- logger.debug(s"Posting check-in to DOR for $publicKey")
 
-      body = requests.post(
-        url = endpoint,
-        headers = headers,
-        data = requestBody
-      ).text()
+      body <- Async[F].blocking(
+        requests.post(
+          url = endpoint,
+          headers = headers,
+          data = requestBody,
+          readTimeout = ReadTimeoutMs,
+          connectTimeout = ConnectTimeoutMs
+        ).text()
+      )
 
-      _ <- logger.info(s"API response $body")
+      _ <- logger.debug(s"DOR API response for $publicKey: $body")
 
       decodedResponse <- decode[DorAPIResponse](body).fold(
-        err => logger.warn(s"Failing when decoding: ${err.getMessage}").as(none),
+        err => logger.warn(s"Failing when decoding DOR response for $publicKey: ${err.getMessage}").as(none[DorAPIResponse]),
         response => Async[F].pure(response.some)
       )
     } yield decodedResponse
   }
 
+  private def retrying[F[_] : Async, A](
+    publicKey  : String,
+    attempt    : Int,
+    backoff    : FiniteDuration,
+    action     : F[A]
+  ): F[A] =
+    action.handleErrorWith { err =>
+      if (attempt >= MaxRetries) {
+        logger.warn(s"DOR API call for $publicKey failed after $MaxRetries attempts: ${err.getMessage}") >>
+          err.raiseError[F, A]
+      } else {
+        logger.warn(s"DOR API call for $publicKey failed on attempt $attempt: ${err.getMessage}. Retrying in $backoff") >>
+          Async[F].sleep(backoff) >>
+          retrying(publicKey, attempt + 1, backoff * 2, action)
+      }
+    }
+
   def handleCheckInDorApi[F[_] : Async: Env](
     publicKey    : String,
-    deviceCheckIn: DeviceCheckInWithSignature
-  ): F[Option[DorAPIResponse]] = {
-    saveDeviceCheckIn(publicKey, deviceCheckIn).handleErrorWith { err =>
-      logger.warn(s"Failing when check in: ${err.getMessage}").as(none)
-    }
-  }
+    deviceCheckIn: DeviceCheckInWithSignature,
+    checkInInfo  : DeviceCheckInInfo
+  ): F[Option[DorAPIResponse]] =
+    retrying(publicKey, attempt = 1, backoff = InitialBackoff, saveDeviceCheckIn(publicKey, deviceCheckIn, checkInInfo))
 }

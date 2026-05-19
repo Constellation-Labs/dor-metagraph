@@ -50,7 +50,8 @@ object Types {
     lastCheckIn               : Long,
     dorAPIResponse            : DorAPIResponse,
     nextEpochProgressToReward : Long,
-    analyticsBountyInformation: Option[AnalyticsBountyInformation]
+    analyticsBountyInformation: Option[AnalyticsBountyInformation],
+    publicId                  : Option[String] = None
   )
 
   @derive(encoder, decoder)
