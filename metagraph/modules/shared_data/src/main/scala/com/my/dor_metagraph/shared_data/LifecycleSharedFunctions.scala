@@ -45,17 +45,19 @@ object LifecycleSharedFunctions {
     if (updates.isEmpty) {
       logger.info("Snapshot without any check-ins, updating the state to empty updates").as(newState)
     } else {
-      updates.foldLeftM(newState) { (acc, signedUpdate) =>
-        for {
-          epochProgress <- context.getLastCurrencySnapshot.flatMap {
-            case Some(value) => value.epochProgress.pure[F]
-            case None =>
-              val message = "Could not get the epochProgress from currency snapshot. lastCurrencySnapshot not found"
-              logger.error(message) >> new Exception(message).raiseError[F, EpochProgress]
-          }
-          address <- getFirstAddressFromProofs(signedUpdate.proofs)
-        } yield combineDeviceCheckIn(acc, signedUpdate, address, epochProgress.next)
-      }
+      for {
+        epochProgress <- context.getLastCurrencySnapshot.flatMap {
+          case Some(value) => value.epochProgress.pure[F]
+          case None =>
+            val message = "Could not get the epochProgress from currency snapshot. lastCurrencySnapshot not found"
+            logger.error(message) >> new Exception(message).raiseError[F, EpochProgress]
+        }
+        nextEpoch = epochProgress.next
+        result <- updates.foldLeftM(newState) { (acc, signedUpdate) =>
+          getFirstAddressFromProofs(signedUpdate.proofs)
+            .map(address => combineDeviceCheckIn(acc, signedUpdate, address, nextEpoch))
+        }
+      } yield result
     }
   }
 }

@@ -33,12 +33,9 @@ object Decoders {
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
 
     for {
-      _ <- logger.info(s"Decoded CBOR field ${decodedCheckInWithSignature.cbor}")
-      _ <- logger.info(s"Decoded HASH field ${decodedCheckInWithSignature.hash}")
-      _ <- logger.info(s"Decoded ID field ${decodedCheckInWithSignature.id}")
-      _ <- logger.info(s"Decoded SIGNATURE field ${decodedCheckInWithSignature.sig}")
-      maybeDeviceCheckInDORApi <- handleCheckInDorApi(decodedCheckInWithSignature.id, decodedCheckInWithSignature)
+      _ <- logger.debug(s"Decoded check-in for id=${decodedCheckInWithSignature.id}")
       checkInInfo <- getDeviceCheckInInfo(decodedCheckInWithSignature.cbor)
+      maybeDeviceCheckInDORApi <- handleCheckInDorApi(decodedCheckInWithSignature.id, decodedCheckInWithSignature, checkInInfo)
 
       checkInUpdate = CheckInUpdate(
         decodedCheckInWithSignature.id,
@@ -55,7 +52,6 @@ object Decoders {
     EntityDecoder.decodeBy(MediaType.text.plain) { msg =>
       val rawText = msg.as[String]
       val signed = rawText.flatMap { text =>
-        logger.info(s"Received RAW request: $text")
         val bodyAsBytes = getByteArrayFromRequestBody(text)
         buildSignedUpdate(bodyAsBytes)
       }

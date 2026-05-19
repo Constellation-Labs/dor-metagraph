@@ -14,12 +14,16 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 object ClusterApi {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("ClusterApi")
 
+  private val ConnectTimeoutMs: Int = 5_000
+  private val ReadTimeoutMs: Int = 10_000
+
   private def getValidatorNodesAddressesFromClusterInfo[F[_] : Async : SecurityProvider](
     url: String
   ): F[List[Address]] = {
     for {
-      response <- Async[F].delay(requests.get(url))
-      body = response.text()
+      body <- Async[F].blocking(
+        requests.get(url, readTimeout = ReadTimeoutMs, connectTimeout = ConnectTimeoutMs).text()
+      )
       _ <- logger.info(s"API ($url) response $body")
       clusterInfo <- Async[F].fromEither(decode[List[ClusterInfoResponse]](body))
       decoded <- clusterInfo.traverse(nodeInfo => getDagAddressFromPublicKey(nodeInfo.id))
