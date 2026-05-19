@@ -32,6 +32,10 @@ object Utils {
   def getByteArrayFromRequestBody(
     bodyAsString: String
   ): Array[Byte] = {
+    if ((bodyAsString.length & 1) != 0) {
+      throw new IllegalArgumentException(s"Request body has odd length ${bodyAsString.length}; expected hex-encoded bytes")
+    }
+
     val bodyAsBytes: ListBuffer[Byte] = ListBuffer.empty
 
     var idx = 0
@@ -84,10 +88,12 @@ object Utils {
     SortedSet.from(summedTransactions)
   }
 
+  val DatolitesPerDag: Double = 1e8
+
   def toTokenAmountFormat(
     balance: Double
   ): Long = {
-    (balance * 10e7).toLong
+    (balance * DatolitesPerDag).toLong
   }
 
   def getDeviceCheckInInfo[F[_] : Async](
@@ -99,9 +105,7 @@ object Utils {
         logger.error(message) >> new Exception(message).raiseError[F, Array[Byte]]
       }
       decodedCheckIn = Cbor.decode(checkInCborData).to[DeviceCheckInInfo].value
-      _ <- logger.info(s"Decoded check-in AC: ${decodedCheckIn.ac}")
-      _ <- logger.info(s"Decoded check-in DTS: ${decodedCheckIn.dts}")
-      _ <- logger.info(s"Decoded check-in E: ${decodedCheckIn.e}")
+      _ <- logger.debug(s"Decoded check-in dts=${decodedCheckIn.dts}")
     } yield decodedCheckIn
   }
 

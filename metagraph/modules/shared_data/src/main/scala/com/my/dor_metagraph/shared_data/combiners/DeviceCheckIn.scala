@@ -1,5 +1,6 @@
 package com.my.dor_metagraph.shared_data.combiners
 
+import cats.syntax.option._
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.constellationnetwork.currency.dataApplication.DataState
 import io.constellationnetwork.schema.address.Address
@@ -21,7 +22,7 @@ object DeviceCheckIn {
     val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
     val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
 
-    val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation)
+    val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation, checkInUpdate.publicId.some)
 
     val devices: Map[Address, DeviceInfo] = acc.calculated.devices.updated(address, checkIn)
     val updates: List[CheckInStateUpdate] = checkInStateUpdate :: acc.onChain.updates
@@ -56,26 +57,28 @@ object DeviceCheckIn {
     maybeDeviceInfo: Option[DeviceInfo],
     dorAPIResponse : DorAPIResponse
   ): Option[AnalyticsBountyInformation] =
-    dorAPIResponse
-      .lastBillingId
-      .map { lastBillingId =>
-        maybeDeviceInfo
-          .flatMap(_.analyticsBountyInformation)
-          .map(updateAnalyticsBountyInformation(epochProgress, dorAPIResponse, lastBillingId, _))
-          .getOrElse(createAnalyticsBountyInformation(epochProgress, dorAPIResponse))
-      }
+    dorAPIResponse.lastBillingId.flatMap { lastBillingId =>
+      maybeDeviceInfo
+        .flatMap(_.analyticsBountyInformation)
+        .map(old => updateAnalyticsBountyInformation(epochProgress, dorAPIResponse, lastBillingId, old).some)
+        .getOrElse(createAnalyticsBountyInformation(epochProgress, dorAPIResponse))
+    }
 
   private def createAnalyticsBountyInformation(
     epochProgress : EpochProgress,
     dorAPIResponse: DorAPIResponse
-  ): AnalyticsBountyInformation = {
+  ): Option[AnalyticsBountyInformation] = {
     val (_, nextRewardEpoch: Long) = getRewardEpoch(epochProgress)
 
-    AnalyticsBountyInformation(
+    for {
+      teamId        <- dorAPIResponse.teamId
+      lastBillingId <- dorAPIResponse.lastBillingId
+      billedAmount  <- dorAPIResponse.billedAmount
+    } yield AnalyticsBountyInformation(
       nextRewardEpoch + ModulusAnalyticsBounty,
-      dorAPIResponse.teamId.get,
-      dorAPIResponse.lastBillingId.get,
-      dorAPIResponse.billedAmount.get,
+      teamId,
+      lastBillingId,
+      billedAmount,
       dorAPIResponse.orgRewardAddress,
     )
   }
@@ -89,7 +92,7 @@ object DeviceCheckIn {
     if (oldAnalyticsBountyInformation.lastBillingId == lastBillingId || oldAnalyticsBountyInformation.nextEpochProgressToRewardAnalytics > epochProgress.value.value) {
       oldAnalyticsBountyInformation
     } else {
-      createAnalyticsBountyInformation(epochProgress, dorAPIResponse)
+      createAnalyticsBountyInformation(epochProgress, dorAPIResponse).getOrElse(oldAnalyticsBountyInformation)
     }
   }
 }
