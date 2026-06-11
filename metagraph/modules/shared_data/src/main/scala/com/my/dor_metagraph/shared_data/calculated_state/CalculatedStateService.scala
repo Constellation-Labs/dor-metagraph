@@ -40,7 +40,7 @@ object CalculatedStateService {
                 acc.updated(address, value)
             }
 
-            CalculatedState(snapshotOrdinal, CheckInDataCalculatedState(updatedDevices))
+            CalculatedState(snapshotOrdinal, CheckInDataCalculatedState(updatedDevices, state.lastEpochProgress))
           }.as(true)
 
         override def hashCalculatedState(
