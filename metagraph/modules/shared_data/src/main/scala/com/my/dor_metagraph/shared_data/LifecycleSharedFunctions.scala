@@ -35,29 +35,55 @@ object LifecycleSharedFunctions {
     }.map(_.reduce)
   }
 
+  /**
+    * Epoch progress to use when combining check-ins. Prefers the live context; falls back to
+    * the value persisted in the calculated state when the context has no snapshot yet (e.g.
+    * during a rollback replay on framework versions that do not seed the snapshot storage
+    * before DataApplicationTraverse runs). The stored value is the one used by the previous
+    * non-empty combine, so the fallback reproduces the original computation exactly whenever
+    * the epoch did not advance in between, and stays within the elapsed-epoch gap otherwise.
+    */
+  private[shared_data] def getCurrentEpochProgress[F[_] : Async](
+    oldCalculatedState: CheckInDataCalculatedState
+  )(implicit context: L0NodeContext[F]): F[EpochProgress] =
+    context.getLastCurrencySnapshot.flatMap {
+      case Some(value) => value.epochProgress.next.pure[F]
+      case None =>
+        oldCalculatedState.lastEpochProgress match {
+          case Some(storedEpochProgress) =>
+            logger.warn(
+              s"lastCurrencySnapshot unavailable, falling back to lastEpochProgress=${storedEpochProgress.value.value} from calculated state"
+            ).as(storedEpochProgress)
+          case None =>
+            val message = "Could not get the epochProgress from currency snapshot. lastCurrencySnapshot not found"
+            logger.error(message) >> new Exception(message).raiseError[F, EpochProgress]
+        }
+    }
+
   def combine[F[_] : Async](
     oldState: DataState[CheckInStateOnChain, CheckInDataCalculatedState],
     updates : List[Signed[CheckInUpdate]]
   )(implicit context: L0NodeContext[F]): F[DataState[CheckInStateOnChain, CheckInDataCalculatedState]] = {
     implicit val sp: SecurityProvider[F] = context.securityProvider
-    val newState = DataState(CheckInStateOnChain(List.empty), CheckInDataCalculatedState(oldState.calculated.devices))
+    // The framework seeds each snapshot's block fold with the previous snapshot's state, so
+    // onChain must reset here. With several blocks in one snapshot only the last combine call's
+    // updates end up in the published onChain state; the full check-in list is still available
+    // through the snapshot's data blocks.
+    val newState = DataState(
+      CheckInStateOnChain(List.empty),
+      CheckInDataCalculatedState(oldState.calculated.devices, oldState.calculated.lastEpochProgress)
+    )
 
     if (updates.isEmpty) {
       logger.info("Snapshot without any check-ins, updating the state to empty updates").as(newState)
     } else {
       for {
-        epochProgress <- context.getLastCurrencySnapshot.flatMap {
-          case Some(value) => value.epochProgress.pure[F]
-          case None =>
-            val message = "Could not get the epochProgress from currency snapshot. lastCurrencySnapshot not found"
-            logger.error(message) >> new Exception(message).raiseError[F, EpochProgress]
-        }
-        nextEpoch = epochProgress.next
+        nextEpoch <- getCurrentEpochProgress(oldState.calculated)
         result <- updates.foldLeftM(newState) { (acc, signedUpdate) =>
           getFirstAddressFromProofs(signedUpdate.proofs)
             .map(address => combineDeviceCheckIn(acc, signedUpdate, address, nextEpoch))
         }
-      } yield result
+      } yield result.copy(calculated = result.calculated.copy(lastEpochProgress = nextEpoch.some))
     }
   }
 }

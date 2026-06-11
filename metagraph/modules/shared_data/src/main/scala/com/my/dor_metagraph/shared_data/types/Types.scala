@@ -6,6 +6,7 @@ import derevo.derive
 import io.constellationnetwork.currency.dataApplication.{DataCalculatedState, DataOnChainState, DataUpdate}
 import io.constellationnetwork.schema.address.Address
 import io.constellationnetwork.schema.balance.Balance
+import io.constellationnetwork.schema.epoch.EpochProgress
 import io.constellationnetwork.schema.transaction.RewardTransaction
 
 import java.time.Instant
@@ -76,7 +77,11 @@ object Types {
 
   @derive(encoder, decoder)
   case class CheckInDataCalculatedState(
-    devices: Map[Address, DeviceInfo]
+    devices          : Map[Address, DeviceInfo],
+    // None encodes to null and is dropped by deepDropNullValues at every serialization
+    // boundary (hash, disk, p2p), so pre-upgrade states keep their original hashes.
+    // Populating it with Some changes the state hash: all source nodes must upgrade together.
+    lastEpochProgress: Option[EpochProgress] = None
   ) extends DataCalculatedState
 
   @derive(encoder, decoder)
