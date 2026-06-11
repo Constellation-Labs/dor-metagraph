@@ -12,26 +12,29 @@ object DeviceCheckIn {
     checkInUpdate: CheckInUpdate,
     address      : Address,
     epochProgress: EpochProgress
-  ): DataState[CheckInStateOnChain, CheckInDataCalculatedState] = {
-    val maybeDeviceInfo = acc.calculated.devices.get(address)
-    val dorAPIResponse: DorAPIResponse = checkInUpdate.maybeDorAPIResponse.get
+  ): DataState[CheckInStateOnChain, CheckInDataCalculatedState] =
+    // Validation rejects check-ins without a DOR API response before they reach a block, so
+    // this branch is only reachable for already-accepted malformed data; skipping the single
+    // update keeps the combine total instead of failing the whole snapshot.
+    checkInUpdate.maybeDorAPIResponse.fold(acc) { dorAPIResponse =>
+      val maybeDeviceInfo = acc.calculated.devices.get(address)
 
-    val nextRewardEpochProgress: Long = nextEpochProgressToReward(epochProgress, maybeDeviceInfo)
-    val maybeAnalyticsBountyInformation: Option[AnalyticsBountyInformation] = getAnalyticsRewardsInformation(epochProgress, maybeDeviceInfo, dorAPIResponse)
+      val nextRewardEpochProgress: Long = nextEpochProgressToReward(epochProgress, maybeDeviceInfo)
+      val maybeAnalyticsBountyInformation: Option[AnalyticsBountyInformation] = getAnalyticsRewardsInformation(epochProgress, maybeDeviceInfo, dorAPIResponse)
 
-    val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
-    val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
+      val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
+      val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
 
-    val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation, checkInUpdate.publicId.some)
+      val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation, checkInUpdate.publicId.some)
 
-    val devices: Map[Address, DeviceInfo] = acc.calculated.devices.updated(address, checkIn)
-    val updates: List[CheckInStateUpdate] = checkInStateUpdate :: acc.onChain.updates
+      val devices: Map[Address, DeviceInfo] = acc.calculated.devices.updated(address, checkIn)
+      val updates: List[CheckInStateUpdate] = checkInStateUpdate :: acc.onChain.updates
 
-    DataState(
-      CheckInStateOnChain(updates),
-      CheckInDataCalculatedState(devices)
-    )
-  }
+      DataState(
+        CheckInStateOnChain(updates),
+        CheckInDataCalculatedState(devices, acc.calculated.lastEpochProgress)
+      )
+    }
 
   private def getRewardEpoch(epochProgress: EpochProgress): (Long, Long) = {
     val currentEpoch: Long = epochProgress.value.value
