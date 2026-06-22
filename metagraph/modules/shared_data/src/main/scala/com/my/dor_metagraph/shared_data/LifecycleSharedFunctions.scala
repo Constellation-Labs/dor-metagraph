@@ -32,7 +32,13 @@ object LifecycleSharedFunctions {
     implicit val sp: SecurityProvider[F] = context.securityProvider
     updates.traverse { signedUpdate =>
       deviceCheckInValidationsL0(signedUpdate.value, signedUpdate.proofs, oldState.calculated)
-    }.map(_.reduce)
+    }.map(_.reduce).flatTap { result =>
+      result.fold(
+        errors =>
+          logger.warn(s"[L0 VALIDATION] block of ${updates.size} update(s) had validation errors: ${errors.toChain.toList.mkString(", ")}"),
+        _ => Async[F].unit
+      )
+    }
   }
 
   /**
@@ -79,6 +85,7 @@ object LifecycleSharedFunctions {
     } else {
       for {
         nextEpoch <- getCurrentEpochProgress(oldState.calculated)
+        _ <- logger.info(s"[L0 COMBINE] processing check-ins=${updates.size} | devicesInState=${oldState.calculated.devices.size} | epoch=${nextEpoch.value.value}")
         result <- updates.foldLeftM(newState) { (acc, signedUpdate) =>
           getFirstAddressFromProofs(signedUpdate.proofs)
             .map(address => combineDeviceCheckIn(acc, signedUpdate, address, nextEpoch))

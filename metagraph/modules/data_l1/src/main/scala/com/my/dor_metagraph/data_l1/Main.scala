@@ -36,7 +36,21 @@ object Main extends CurrencyL1App(
       override def validateUpdate(
         update: CheckInUpdate
       )(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] =
-        LifecycleSharedFunctions.validateUpdate[IO](update)
+        // Detailed per-check-in ingress visibility: one line per submission with the outcome.
+        LifecycleSharedFunctions.validateUpdate[IO](update).flatTap { result =>
+          result.fold(
+            errors =>
+              logger.warn(
+                s"[DATA-L1 INGRESS] rejected check-in publicId=${update.publicId} dts=${update.dts} " +
+                  s"dorRegistered=${update.maybeDorAPIResponse.isDefined} errors=${errors.toChain.toList.mkString(", ")}"
+              ),
+            _ =>
+              logger.info(
+                s"[DATA-L1 INGRESS] accepted check-in publicId=${update.publicId} dts=${update.dts} " +
+                  s"dorRegistered=${update.maybeDorAPIResponse.isDefined}"
+              )
+          )
+        }
 
       override def routes(implicit context: L1NodeContext[IO]): HttpRoutes[IO] =
         HttpRoutes.empty
