@@ -31,10 +31,10 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
 
       deviceInfo.dorAPIResponse.rewardAddress match {
         case None =>
-          logger.warn(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId] doesn't have rewardAddress").as(acc)
+          logger.debug(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId] doesn't have rewardAddress").as(acc)
 
         case Some(rewardAddress) if noCheckInMade(deviceInfo.nextEpochProgressToReward) =>
-          logger.warn(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] didn't make a check in the last 24 hours").as(acc)
+          logger.debug(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] didn't make a check in the last 24 hours").as(acc)
 
         case Some(rewardAddress) =>
           for {
@@ -42,10 +42,10 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
 
             deviceTotalRewards <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
 
-            deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxRate).toLong
+            deviceTaxToValidatorNodes = validatorNodeTaxOf(deviceTotalRewards)
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
 
-            _ <- logger.info(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
+            _ <- logger.debug(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
 
             deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, rewardAddress)
             taxesToValidatorNodesUpdated = acc.validatorsTaxes + deviceTaxToValidatorNodes
@@ -89,13 +89,14 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
   override def logAllDevicesRewards(
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
-    def logRewardTransaction: RewardTransaction => F[Unit] = rewardTransaction =>
-      logger.info(s"[DAILY] Device Reward Address: ${rewardTransaction.destination}. Amount: ${rewardTransaction.amount}")
-
+    val totalReward = bountyRewards.rewardTransactions.foldLeft(0L)((acc, tx) => acc + tx.amount.value.value)
     for {
-      _ <- logger.info("[DAILY] All rewards to be distributed to devices")
-      _ <- bountyRewards.rewardTransactions.traverse_(logRewardTransaction)
-      _ <- logger.info(s"[DAILY] Validators taxes to be distributed between validators: ${bountyRewards.validatorsTaxes}")
+      // One aggregate line per cycle at INFO; per-transaction detail stays at DEBUG to avoid
+      // emitting thousands of INFO lines on a large device fleet.
+      _ <- logger.info(s"[DAILY] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
+      _ <- bountyRewards.rewardTransactions.traverse_(tx =>
+        logger.debug(s"[DAILY] reward destination=${tx.destination.value.value} amount=${tx.amount.value.value}")
+      )
     } yield ()
   }
 }

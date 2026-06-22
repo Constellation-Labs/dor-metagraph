@@ -10,7 +10,8 @@ object CsvReader {
 
     val lines = Source.fromInputStream(stream).getLines().toList
 
-    lines.map { line =>
+    // Skip blank/whitespace-only lines (e.g. a trailing newline) so they don't crash parsing.
+    lines.map(_.trim).filter(_.nonEmpty).map { line =>
       line.split(",", 2).toList match {
         case address :: amountStr :: Nil =>
           val amount = BigDecimal(amountStr.trim)

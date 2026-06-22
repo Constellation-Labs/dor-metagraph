@@ -11,7 +11,9 @@ import io.constellationnetwork.schema.transaction.RewardTransaction
 
 abstract class BountyRewards[F[_] : Async] {
 
-  val ValidatorNodeTaxRate: Double = 0.10
+  // 10% validator-node tax as exact integer arithmetic (floor). The device keeps `total - tax`, so
+  // device reward + validator tax == total exactly (no Double, no minting/burning of datolites).
+  protected def validatorNodeTaxOf(total: Long): Long = total / 10
 
   def logInitialRewardDistribution(
     currentEpochProgress: Long
@@ -35,11 +37,11 @@ abstract class BountyRewards[F[_] : Async] {
   protected def getDeviceBountiesRewards(
     device                    : DeviceInfo,
     currentEpochProgress      : Long,
-    collateralMultiplierFactor: Double
+    collateralMultiplierFactor: Ratio
   ): F[Long] = {
     for {
       deviceBountiesRewardsAmount <- Async[F].delay(getDeviceBountyRewardsAmount(device, currentEpochProgress))
-      rewardsWithCollateral = (deviceBountiesRewardsAmount * collateralMultiplierFactor).toLong
+      rewardsWithCollateral = collateralMultiplierFactor.applyTo(deviceBountiesRewardsAmount)
     } yield rewardsWithCollateral
   }
 

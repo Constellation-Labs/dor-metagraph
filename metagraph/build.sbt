@@ -84,6 +84,13 @@ lazy val currencyL0 = (project in file("modules/l0"))
     scalacOptions ++= List("-Ymacro-annotations", "-Yrangepos", "-Wconf:cat=unused:info", "-language:reflectiveCalls"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "com.my.dor_metagraph.l0",
+    // Bundle the committed per-network seedlists onto the L0 classpath (root) so the reward logic can
+    // read them deterministically. Points at the EXISTING files (no copies, single source of truth):
+    // ml0-<net>-seedlist from this module and dl1-<net>-seedlist from the data_l1 module.
+    Compile / unmanagedResourceDirectories ++= Seq(
+      baseDirectory.value / "src" / "main" / "scala" / "com" / "my" / "dor_metagraph" / "l0" / "seedlists",
+      baseDirectory.value / ".." / "data_l1" / "src" / "main" / "scala" / "com" / "my" / "dor_metagraph" / "data_l1" / "seedlists"
+    ),
     resolvers += Resolver.mavenLocal,
     resolvers += Resolver.githubPackages("abankowski", "http-request-signer"),
     Defaults.itSettings,

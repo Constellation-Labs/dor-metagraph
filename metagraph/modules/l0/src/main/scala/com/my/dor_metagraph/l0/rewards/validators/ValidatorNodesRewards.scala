@@ -2,9 +2,8 @@ package com.my.dor_metagraph.l0.rewards.validators
 
 import cats.effect.Async
 import cats.syntax.applicative._
-import cats.syntax.flatMap._
 import cats.syntax.functor._
-import com.my.dor_metagraph.shared_data.Utils.{PosLongEffectOps, RewardTransactionOps}
+import com.my.dor_metagraph.shared_data.Utils.{PosLongOps, RewardTransactionOps}
 import io.constellationnetwork.schema.address.Address
 import io.constellationnetwork.schema.transaction.RewardTransaction
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -14,18 +13,33 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 object ValidatorNodesRewards {
   def logger[F[_] : Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLoggerFromName[F]("ValidatorNodesRewards")
 
-  private def getRewardsValidatorNodes[F[_] : Async](
-    addresses     : List[Address],
-    taxToEachLayer: Long,
-    layer         : String
-  ): F[List[RewardTransaction]] =
-    for {
-      numberOfAddresses <- addresses.size.pure[F]
-      amountToEachAddress <- (taxToEachLayer / numberOfAddresses).toPosLong
-      validatorNodesRewards = addresses.map(address => (address, amountToEachAddress).toRewardTransaction)
-      _ <- logger.info(s"[Validator Nodes $layer] Total Rewards to be distributed: $taxToEachLayer")
-      _ <- logger.info(s"[Validator Nodes $layer] Distributing $amountToEachAddress to each one of the $numberOfAddresses addresses")
-    } yield validatorNodesRewards
+  /**
+    * Split `tax` datolites across `addresses` deterministically and WITHOUT loss:
+    *   - each address gets `tax / n`,
+    *   - the `tax % n` leftover datolites are handed out one each to the first `remainder`
+    *     addresses in canonical (address-string) order.
+    *
+    * This conserves the pool exactly (`sum(payouts) == tax`) and never feeds a zero/negative value
+    * into PosLong (addresses whose share would be 0 are simply omitted), so it cannot throw.
+    */
+  private def splitEvenly(
+    addresses: List[Address],
+    tax      : Long
+  ): List[RewardTransaction] = {
+    val sorted = addresses.distinct.sortBy(_.value.value)
+    val n = sorted.size
+    if (n == 0 || tax <= 0L) {
+      List.empty
+    } else {
+      val base = tax / n
+      val remainder = (tax % n).toInt
+      sorted.zipWithIndex.flatMap { case (address, idx) =>
+        val amount = base + (if (idx < remainder) 1L else 0L)
+        if (amount > 0L) List((address, amount.toPosLongUnsafe).toRewardTransaction)
+        else List.empty
+      }
+    }
+  }
 
   def getValidatorNodesTransactions[F[_] : Async](
     validatorNodesL0     : List[Address],
@@ -35,12 +49,25 @@ object ValidatorNodesRewards {
     if (taxesToValidatorNodes < 2) {
       List.empty[RewardTransaction].pure[F]
     } else {
-      val taxToEachLayer = taxesToValidatorNodes / 2
+      // Split the pool 50/50 between layers; if a layer has no recipients its share is redirected to
+      // the other so the full collected tax is always distributed (no minting, no burning).
+      val (taxL0, taxL1) = (validatorNodesL0.nonEmpty, validatorNodesL1.nonEmpty) match {
+        case (true, true) =>
+          val half = taxesToValidatorNodes / 2
+          // odd-datolite leftover goes to L0, keeping the total exact
+          (taxesToValidatorNodes - half, half)
+        case (true, false) => (taxesToValidatorNodes, 0L)
+        case (false, true) => (0L, taxesToValidatorNodes)
+        case (false, false) => (0L, 0L)
+      }
 
-      for {
-        validatorNodesL0Rewards <- getRewardsValidatorNodes(validatorNodesL0, taxToEachLayer, "L0")
-        validatorNodesL1Rewards <- getRewardsValidatorNodes(validatorNodesL1, taxToEachLayer, "L1")
-      } yield validatorNodesL0Rewards ::: validatorNodesL1Rewards
+      val l0Rewards = splitEvenly(validatorNodesL0, taxL0)
+      val l1Rewards = splitEvenly(validatorNodesL1, taxL1)
+
+      logger[F].info(
+        s"[Validator Nodes] Distributing tax=$taxesToValidatorNodes -> L0=$taxL0 across ${validatorNodesL0.size} addresses, " +
+          s"L1=$taxL1 across ${validatorNodesL1.size} addresses"
+      ).as(l0Rewards ::: l1Rewards)
     }
   }
 }

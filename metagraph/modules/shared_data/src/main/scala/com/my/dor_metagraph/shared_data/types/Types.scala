@@ -20,6 +20,12 @@ object Types {
 
   val UndefinedTeamId: String = "Undefined"
 
+  // Upper bound on DOR-reported billed amounts accepted into state. The value is server-sourced and
+  // drives analytics payouts; this rejects negative or absurd values (which could overflow reward
+  // math) before they enter consensus. Generous on purpose so legitimate check-ins are never
+  // dropped — tighten toward the real business maximum if known.
+  val MaxBilledAmount: Long = 1_000_000_000L
+
   val MinimumCheckInSeconds: Long =
     Instant.parse("2023-09-01T00:00:00.00Z").toEpochMilli / 1000L
 
@@ -27,10 +33,23 @@ object Types {
   val Collateral100K: Long = toTokenAmountFormat(100 * 1000)
   val Collateral200K: Long = toTokenAmountFormat(200 * 1000)
 
-  val CollateralLessThan50KMultiplier: Double = 1D
-  val CollateralBetween50KAnd100KMultiplier: Double = 1.05D
-  val CollateralBetween100KAnd200KMultiplier: Double = 1.1D
-  val CollateralGreaterThan200KMultiplier: Double = 1.2D
+  // Collateral reward multipliers as exact rationals instead of Double, so reward math is
+  // integer-only and bit-identical on every validator (see Ratio below).
+  val CollateralLessThan50KMultiplier: Ratio = Ratio(1L, 1L)
+  val CollateralBetween50KAnd100KMultiplier: Ratio = Ratio(105L, 100L)
+  val CollateralBetween100KAnd200KMultiplier: Ratio = Ratio(110L, 100L)
+  val CollateralGreaterThan200KMultiplier: Ratio = Ratio(120L, 100L)
+
+  /**
+    * An exact, deterministic multiplier (numerator/denominator) for token math. Applies as
+    * multiply-before-divide in BigInt so there is no floating-point rounding and no intermediate
+    * Long overflow; the final conversion throws (deterministically, on every node) rather than
+    * silently wrapping if the result somehow exceeds Long.
+    */
+  case class Ratio(numerator: Long, denominator: Long) {
+    def applyTo(amount: Long): Long =
+      (BigInt(amount) * BigInt(numerator) / BigInt(denominator)).bigInteger.longValueExact()
+  }
 
   @derive(encoder, decoder)
   case class CheckInProof(
@@ -52,7 +71,11 @@ object Types {
     dorAPIResponse            : DorAPIResponse,
     nextEpochProgressToReward : Long,
     analyticsBountyInformation: Option[AnalyticsBountyInformation],
-    publicId                  : Option[String] = None
+    publicId                  : Option[String] = None,
+    // Hash of the device's most recent accepted check-in. Used to reject a verbatim replay of a
+    // signed check-in (the signature only covers this hash, so a replay reuses it). None encodes to
+    // null and is dropped by deepDropNullValues, preserving pre-upgrade hashes until repopulated.
+    lastCheckInHash           : Option[String] = None
   )
 
   @derive(encoder, decoder)
@@ -92,16 +115,6 @@ object Types {
     dtmCheckInHash     : String,
     maybeDorAPIResponse: Option[DorAPIResponse]
   ) extends DataUpdate
-
-  @derive(encoder, decoder)
-  case class ClusterInfoResponse(
-    id        : String,
-    ip        : String,
-    publicPort: Long,
-    p2pPort   : Long,
-    session   : String,
-    state     : String
-  )
 
   /*
   These fields should match exactly the names of the fields returned from DOR API endpoint: `metagraph/:pub_id/check-in`

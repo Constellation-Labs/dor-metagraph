@@ -6,11 +6,11 @@ class UnitDeployedBounty extends Bounty {
   override def getBountyRewardAmount(
     deviceInfo  : DorAPIResponse,
     epochModulus: Long
-  ): Double = {
+  ): Long = {
     if (epochModulus != 0L) {
-      0D
+      0L
     } else {
-      50D
+      50L
     }
   }
 }
