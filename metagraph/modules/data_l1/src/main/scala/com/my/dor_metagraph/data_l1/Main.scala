@@ -3,6 +3,7 @@ package com.my.dor_metagraph.data_l1
 import cats.effect.{Async, IO, Resource}
 import cats.syntax.option.catsSyntaxOptionId
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
+import com.my.dor_metagraph.shared_data.metrics.DorMetrics
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
 import com.my.dor_metagraph.shared_data.deserializers.Deserializers
@@ -10,6 +11,7 @@ import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import io.circe.{Decoder, Encoder}
 import org.http4s.{EntityDecoder, HttpRoutes, InvalidMessageBodyFailure, Request}
+import org.http4s.dsl.io._
 
 import io.constellationnetwork.currency.dataApplication._
 import io.constellationnetwork.currency.dataApplication.dataApplication.{DataApplicationBlock, DataApplicationValidationErrorOr}
@@ -36,24 +38,29 @@ object Main extends CurrencyL1App(
       override def validateUpdate(
         update: CheckInUpdate
       )(implicit context: L1NodeContext[IO]): IO[DataApplicationValidationErrorOr[Unit]] =
-        // Detailed per-check-in ingress visibility: one line per submission with the outcome.
-        LifecycleSharedFunctions.validateUpdate[IO](update).flatTap { result =>
-          result.fold(
-            errors =>
-              logger.warn(
-                s"[DATA-L1 INGRESS] rejected check-in publicId=${update.publicId} dts=${update.dts} " +
-                  s"dorRegistered=${update.maybeDorAPIResponse.isDefined} errors=${errors.toChain.toList.mkString(", ")}"
-              ),
-            _ =>
-              logger.info(
-                s"[DATA-L1 INGRESS] accepted check-in publicId=${update.publicId} dts=${update.dts} " +
-                  s"dorRegistered=${update.maybeDorAPIResponse.isDefined}"
-              )
-          )
-        }
+        // Detailed per-check-in ingress visibility + per-node metric counters.
+        DorMetrics.inc[IO](DorMetrics.checkInsReceived) >>
+          LifecycleSharedFunctions.validateUpdate[IO](update).flatTap { result =>
+            result.fold(
+              errors =>
+                DorMetrics.inc[IO](DorMetrics.checkInsRejected) >>
+                  logger.warn(
+                    s"[DATA-L1 INGRESS] rejected check-in publicId=${update.publicId} dts=${update.dts} " +
+                      s"dorRegistered=${update.maybeDorAPIResponse.isDefined} errors=${errors.toChain.toList.mkString(", ")}"
+                  ),
+              _ =>
+                DorMetrics.inc[IO](DorMetrics.checkInsAccepted) >>
+                  logger.info(
+                    s"[DATA-L1 INGRESS] accepted check-in publicId=${update.publicId} dts=${update.dts} " +
+                      s"dorRegistered=${update.maybeDorAPIResponse.isDefined}"
+                  )
+            )
+          }
 
       override def routes(implicit context: L1NodeContext[IO]): HttpRoutes[IO] =
-        HttpRoutes.empty
+        HttpRoutes.of[IO] {
+          case GET -> Root / "dor-metrics" => Ok(DorMetrics.renderPrometheus)
+        }
 
       override def dataEncoder: Encoder[CheckInUpdate] =
         implicitly[Encoder[CheckInUpdate]]
