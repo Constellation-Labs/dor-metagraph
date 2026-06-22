@@ -76,6 +76,20 @@ object DeterminismTest extends SimpleIOSuite {
     }
   }
 
+  pureTest("serialization is byte-stable across a decode/re-encode round-trip (restart consistency)") {
+    val devices = Map(
+      addrA -> DeviceInfo(1L, resp(addrA), 1440L, none, "pubA".some, "hashA".some),
+      addrB -> DeviceInfo(2L, resp(addrB), 2880L, none, "pubB".some, "hashB".some)
+    )
+    val state = CheckInDataCalculatedState(devices, EpochProgress(99L).some)
+    val bytes1 = Serializers.serializeCalculatedState(state)
+
+    Deserializers.deserializeCalculatedState(bytes1).map(Serializers.serializeCalculatedState) match {
+      case Right(bytes2) => expect(bytes1.sameElements(bytes2))
+      case Left(e)       => failure(s"calculated state must re-encode identically: $e")
+    }
+  }
+
   pureTest("buildTransactionsSortedSet is order-independent and aggregates per destination (anti-fork)") {
     def tx(a: Address, amount: Long) = RewardTransaction(a, TransactionAmount(PosLong.unsafeFrom(amount)))
     val a1 = tx(addrA, 100L)
