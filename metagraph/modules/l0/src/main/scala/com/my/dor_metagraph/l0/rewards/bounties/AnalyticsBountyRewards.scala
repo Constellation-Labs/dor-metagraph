@@ -66,10 +66,10 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
           if (teamDevices.isEmpty) {
             acc.pure[F]
           } else {
-            // teamDevices comes from folding the calculated-state device map, which every validator
-            // builds in an identical order, so `.head` selects the same representative device on all
-            // nodes (deterministic). The representative's billedAmount drives the team reward amount.
-            val device: DeviceInfo = teamDevices.head
+            // Deterministic representative: pick by a stable total key (publicId, then lastCheckIn)
+            // rather than relying on Map/collection iteration order. The representative's billedAmount
+            // drives the team reward amount, so this choice must be identical on every validator.
+            val device: DeviceInfo = teamDevices.toList.sortBy(d => (d.publicId.getOrElse(""), d.lastCheckIn)).head
             val analyticsBountyInformation = device.analyticsBountyInformation.get
             analyticsBountyInformation.analyticsRewardAddress match {
               case None =>

@@ -28,7 +28,7 @@ object RewardConservationTest extends SimpleIOSuite {
   private def total(txs: List[RewardTransaction]): Long =
     txs.foldLeft(0L)((acc, tx) => acc + tx.amount.value.value)
 
-  List(2L, 3L, 7L, 101L, 1000003L, 999_999_999L).foreach { tax =>
+  List(1L, 2L, 3L, 7L, 101L, 1000003L, 999_999_999L).foreach { tax =>
     test(s"validator tax pool is fully conserved (sum == tax) for tax=$tax") {
       getValidatorNodesTransactions[IO](l0, l1, tax).map(txs => expect.eql(tax, total(txs)))
     }
@@ -38,8 +38,8 @@ object RewardConservationTest extends SimpleIOSuite {
     getValidatorNodesTransactions[IO](List.empty, l1, 101L).map(txs => expect.eql(101L, total(txs)))
   }
 
-  test("tax below the minimum threshold pays nothing") {
-    getValidatorNodesTransactions[IO](l0, l1, 1L).map(txs => expect.eql(0, txs.size))
+  test("zero tax pays nothing") {
+    getValidatorNodesTransactions[IO](l0, l1, 0L).map(txs => expect.eql(0, txs.size))
   }
 
   test("tiny tax does not crash and emits only strictly-positive amounts") {
