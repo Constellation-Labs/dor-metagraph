@@ -48,7 +48,7 @@ object DorMetrics {
     Sample("dor_checkins_received_total", "Check-ins received at data-L1 ingress", "counter", checkInsReceived.get()),
     Sample("dor_checkins_accepted_total", "Check-ins that passed L1 validation", "counter", checkInsAccepted.get()),
     Sample("dor_checkins_rejected_total", "Check-ins rejected at L1 validation", "counter", checkInsRejected.get()),
-    Sample("dor_blocks_combined_total", "Data blocks processed by combine at L0", "counter", blocksCombined.get()),
+    Sample("dor_blocks_combined_total", "Non-empty data blocks processed by combine at L0", "counter", blocksCombined.get()),
     Sample("dor_checkins_combined_total", "Check-ins processed by combine at L0", "counter", checkInsCombined.get()),
     Sample("dor_devices_in_state", "Devices currently tracked in calculated state", "gauge", devicesInState.get()),
     Sample("dor_daily_reward_cycles_total", "Daily reward distributions executed", "counter", dailyRewardCycles.get()),
