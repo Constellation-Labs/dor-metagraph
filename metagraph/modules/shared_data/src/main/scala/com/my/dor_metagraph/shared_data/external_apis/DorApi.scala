@@ -58,8 +58,6 @@ object DorApi {
         "signature" -> deviceCheckIn.sig
       ).render()
 
-      _ <- logger.debug(s"Posting check-in to DOR for $publicKey")
-
       // check = false: inspect the status code ourselves instead of letting the client throw on
       // any non-2xx, so we can distinguish retryable (5xx/decode) from terminal (4xx) outcomes.
       response <- Async[F].blocking {
@@ -82,7 +80,7 @@ object DorApi {
             err =>
               logger.warn(s"DOR API 2xx body for $publicKey failed to decode (length=${body.length}): ${err.getMessage}") >>
                 RetryableDorError(s"undecodable 2xx response for $publicKey").raiseError[F, Option[DorAPIResponse]],
-            response => logger.debug(s"DOR API check-in accepted for $publicKey").as(response.some)
+            response => Async[F].pure(response.some)
           )
 
         case code if code >= 400 && code < 500 =>

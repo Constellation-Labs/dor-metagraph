@@ -26,15 +26,14 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
       currentEpochProgress - nextEpochProgressToReward >= EpochProgress1Day
 
     def combine(acc: RewardTransactionsInformation, entry: (Address, DeviceInfo)): F[RewardTransactionsInformation] = {
-      val (deviceAddress, deviceInfo) = entry
-      val publicId = deviceInfo.publicId.getOrElse("unknown")
+      val (_, deviceInfo) = entry
 
       deviceInfo.dorAPIResponse.rewardAddress match {
         case None =>
-          logger.debug(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId] doesn't have rewardAddress").as(acc)
+          Async[F].pure(acc)
 
         case Some(rewardAddress) if noCheckInMade(deviceInfo.nextEpochProgressToReward) =>
-          logger.debug(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] didn't make a check in the last 24 hours").as(acc)
+          Async[F].pure(acc)
 
         case Some(rewardAddress) =>
           for {
@@ -44,8 +43,6 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
 
             deviceTaxToValidatorNodes = validatorNodeTaxOf(deviceTotalRewards)
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
-
-            _ <- logger.debug(s"[DAILY] Device [address=${deviceAddress.value.value}, publicId=$publicId, rewardAddress=${rewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
 
             deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, rewardAddress)
             taxesToValidatorNodesUpdated = acc.validatorsTaxes + deviceTaxToValidatorNodes
@@ -90,13 +87,7 @@ class DailyBountyRewards[F[_] : Async] extends BountyRewards {
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
     val totalReward = bountyRewards.rewardTransactions.foldLeft(0L)((acc, tx) => acc + tx.amount.value.value)
-    for {
-      // One aggregate line per cycle at INFO; per-transaction detail stays at DEBUG to avoid
-      // emitting thousands of INFO lines on a large device fleet.
-      _ <- logger.info(s"[DAILY] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
-      _ <- bountyRewards.rewardTransactions.traverse_(tx =>
-        logger.debug(s"[DAILY] reward destination=${tx.destination.value.value} amount=${tx.amount.value.value}")
-      )
-    } yield ()
+    // One aggregate line per reward cycle (no per-payout spam, INFO level only).
+    logger.info(s"[DAILY] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
   }
 }

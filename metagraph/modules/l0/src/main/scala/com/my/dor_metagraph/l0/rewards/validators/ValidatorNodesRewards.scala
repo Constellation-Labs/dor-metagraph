@@ -64,10 +64,18 @@ object ValidatorNodesRewards {
       val l0Rewards = splitEvenly(validatorNodesL0, taxL0)
       val l1Rewards = splitEvenly(validatorNodesL1, taxL1)
 
-      logger[F].info(
-        s"[Validator Nodes] Distributing tax=$taxesToValidatorNodes -> L0=$taxL0 across ${validatorNodesL0.size} addresses, " +
-          s"L1=$taxL1 across ${validatorNodesL1.size} addresses"
-      ).as(l0Rewards ::: l1Rewards)
+      val logLine =
+        if (validatorNodesL0.isEmpty && validatorNodesL1.isEmpty)
+          // Misconfiguration: a non-zero pool with no recipients on either layer would be silently
+          // burned. Make it loud rather than quietly under-distribute.
+          logger[F].warn(s"[Validator Nodes] No validator addresses on either layer; tax=$taxesToValidatorNodes datolites was NOT distributed")
+        else
+          logger[F].info(
+            s"[Validator Nodes] Distributing tax=$taxesToValidatorNodes -> L0=$taxL0 across ${validatorNodesL0.size} addresses, " +
+              s"L1=$taxL1 across ${validatorNodesL1.size} addresses"
+          )
+
+      logLine.as(l0Rewards ::: l1Rewards)
     }
   }
 }
