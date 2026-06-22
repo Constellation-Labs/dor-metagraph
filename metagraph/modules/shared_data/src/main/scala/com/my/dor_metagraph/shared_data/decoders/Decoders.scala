@@ -33,7 +33,6 @@ object Decoders {
     val proofs = NonEmptySet.fromSetUnsafe(SortedSet(signatureProof))
 
     for {
-      _ <- logger.debug(s"Decoded check-in for id=${decodedCheckInWithSignature.id}")
       checkInInfo <- getDeviceCheckInInfo(decodedCheckInWithSignature.cbor)
       maybeDeviceCheckInDORApi <- handleCheckInDorApi(decodedCheckInWithSignature.id, decodedCheckInWithSignature, checkInInfo)
 

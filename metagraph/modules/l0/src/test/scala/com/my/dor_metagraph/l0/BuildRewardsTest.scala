@@ -214,7 +214,7 @@ object BuildRewardsTest extends SimpleIOSuite {
     } yield expect.eql(7, rewards.size) &&
       expect.eql(9900000000L, reward.get.amount.value.value) &&
       expect.eql(currentAddress, reward.get.destination) &&
-      expect.eql(183333333L, rewards.toList(1).amount.value.value)
+      expect.eql(183333334L, rewards.toList(1).amount.value.value)
   }
 
 
@@ -236,7 +236,7 @@ object BuildRewardsTest extends SimpleIOSuite {
       rewards <- getRewards(lastArtifactEpochProgress, calculatedState, balances)
       reward = rewards.find(reward => reward.destination == currentAddress)
     } yield expect.eql(6, rewards.size) &&
-      expect.eql(10083333333L, reward.get.amount.value.value) &&
+      expect.eql(10083333334L, reward.get.amount.value.value) &&
       expect.eql(currentAddress, reward.get.destination) &&
       expect.eql(183333333L, rewards.toList(1).amount.value.value)
   }
@@ -264,6 +264,6 @@ object BuildRewardsTest extends SimpleIOSuite {
       expect.eql(22500000000L, analyticsReward.get.amount.value.value) &&
       expect.eql(rewardAddress, analyticsReward.get.destination) &&
       expect.eql(validatorsRewards.size, 6) &&
-      expect.eql(416666666L, validatorsRewards.toList(1).amount.value.value)
+      expect.eql(416666667L, validatorsRewards.toList(1).amount.value.value)
   }
 }

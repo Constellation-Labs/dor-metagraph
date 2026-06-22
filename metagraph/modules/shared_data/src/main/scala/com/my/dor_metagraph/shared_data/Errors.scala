@@ -32,4 +32,16 @@ object Errors {
   case object DeviceNotRegisteredOnDorApi extends DataApplicationValidationError {
     val message = "Device not registered on Dor API"
   }
+
+  case object MultipleProofsNotAllowed extends DataApplicationValidationError {
+    val message = "Check-in must be signed by exactly one key"
+  }
+
+  case object BilledAmountOutOfBounds extends DataApplicationValidationError {
+    val message = "DOR billed amount is negative or exceeds the allowed maximum"
+  }
+
+  case object RepeatedCheckInHash extends DataApplicationValidationError {
+    val message = "Check-in hash was already used for this device"
+  }
 }

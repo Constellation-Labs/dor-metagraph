@@ -11,7 +11,6 @@ import com.my.dor_metagraph.shared_data.bounties.AnalyticsSubscriptionBounty
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.constellationnetwork.schema.address.Address
 import io.constellationnetwork.schema.balance.Balance
-import io.constellationnetwork.schema.transaction.RewardTransaction
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -28,12 +27,11 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
       deviceInfo     : DeviceInfo,
       devicesBalances: Map[Address, Balance]
     ): F[RewardTransactionsInformation] = {
-      val publicId = deviceInfo.publicId.getOrElse("unknown")
-      val teamId = deviceInfo.analyticsBountyInformation.map(_.teamId).getOrElse(UndefinedTeamId)
-
+      // .get is safe: only devices whose analyticsBountyInformation is defined reach here (filtered
+      // in the `collect` below).
       deviceInfo.analyticsBountyInformation.get.analyticsRewardAddress match {
         case None =>
-          logger.warn(s"[ANALYTICS] Device [publicId=$publicId, teamId=$teamId] doesn't have rewardAddress").as(acc)
+          Async[F].pure(acc)
 
         case Some(analyticsRewardAddress) =>
           for {
@@ -41,10 +39,8 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
 
             deviceTotalRewards <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
 
-            deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxRate).toLong
+            deviceTaxToValidatorNodes = validatorNodeTaxOf(deviceTotalRewards)
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
-
-            _ <- logger.info(s"[ANALYTICS] Team representative device [publicId=$publicId, teamId=$teamId, rewardAddress=${analyticsRewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
 
             deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, analyticsRewardAddress)
             taxesToValidatorNodesUpdated = acc.validatorsTaxes + deviceTaxToValidatorNodes
@@ -69,23 +65,18 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
           if (teamDevices.isEmpty) {
             acc.pure[F]
           } else {
-            val device: DeviceInfo = teamDevices.head
+            // Deterministic representative: pick by a stable total key (publicId, then lastCheckIn)
+            // rather than relying on Map/collection iteration order. The representative's billedAmount
+            // drives the team reward amount, so this choice must be identical on every validator.
+            val device: DeviceInfo = teamDevices.toList.sortBy(d => (d.publicId.getOrElse(""), d.lastCheckIn)).head
             val analyticsBountyInformation = device.analyticsBountyInformation.get
-            val devicePublicIds = teamDevices.flatMap(_.publicId).toList
             analyticsBountyInformation.analyticsRewardAddress match {
-              case None => logger.warn(s"[ANALYTICS] Team ${analyticsBountyInformation.teamId} doesn't have default rewardAddress, skipping Analytics rewards. Affected devices=${teamDevices.size}, publicIds=${devicePublicIds.mkString(",")}").as(acc)
+              case None =>
+                Async[F].pure(acc)
               case Some(analyticsRewardAddress) =>
-                val teamId = analyticsBountyInformation.teamId
                 val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices, acc.lastBalances)
                 val newBalancesWithAverage = Map(analyticsRewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
-
-                for {
-                  _ <- logger.info(s"[teamId: $teamId] Devices number: ${teamDevices.size}")
-                  _ <- logger.info(s"[teamId: $teamId] Device publicIds: ${devicePublicIds.mkString(",")}")
-                  _ <- logger.info(s"[teamId: $teamId] Collateral average: $devicesCollateralAverage")
-                  _ <- logger.info(s"[teamId: $teamId] Address to be rewarded: $analyticsRewardAddress")
-                  rewardTransactionsInformation <- combine(acc, device, newBalancesWithAverage)
-                } yield rewardTransactionsInformation
+                combine(acc, device, newBalancesWithAverage)
             }
           }
         }
@@ -115,30 +106,22 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
   override def logAllDevicesRewards(
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
-    if (bountyRewards.rewardTransactions.isEmpty) {
-      logger.info(s"[ANALYTICS] No commissions to pay on this epochProgress").as(())
-    } else {
-      def logRewardTransaction: RewardTransaction => F[Unit] = rewardTransaction =>
-        logger.info(s"[ANALYTICS] Device Reward Address: ${rewardTransaction.destination}. Amount: ${rewardTransaction.amount}")
-
-      for {
-        _ <- logger.info("[ANALYTICS] All rewards to be distributed to devices")
-        _ <- bountyRewards.rewardTransactions.traverse_(logRewardTransaction)
-        _ <- logger.info(s"[ANALYTICS] Validators taxes to be distributed between validators: ${bountyRewards.validatorsTaxes}")
-      } yield ()
-    }
+    val totalReward = bountyRewards.rewardTransactions.foldLeft(0L)((acc, tx) => acc + tx.amount.value.value)
+    // One aggregate line per reward cycle (no per-payout spam, INFO level only).
+    logger.info(s"[ANALYTICS] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
   }
 
   private def getDevicesCollateralAverage(devices: Iterable[DeviceInfo], balances: Map[Address, Balance]): Long =
     if (devices.isEmpty) {
       0L
     } else {
+      // addExact keeps the same fail-fast-on-overflow discipline as the rest of the reward path.
       val sumOfBalances: Long =
         devices
           .flatMap(_.dorAPIResponse.rewardAddress)
           .flatMap(balances.get)
           .map(_.value.value)
-          .sum
+          .foldLeft(0L)((acc, balance) => Math.addExact(acc, balance))
       sumOfBalances / devices.size
     }
 }

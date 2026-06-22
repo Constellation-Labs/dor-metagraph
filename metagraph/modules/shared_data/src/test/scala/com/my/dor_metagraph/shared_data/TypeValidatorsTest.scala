@@ -91,4 +91,22 @@ object TypeValidatorsTest extends SimpleIOSuite {
 
     expect.eql(false, validation.isValid)
   }
+
+  pureTest("Return update invalid - validateCheckInHashIsNotRepeated (verbatim replay)") {
+    val address = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val dorResponse = DorAPIResponse(address.some, isInstalled = true, "Retail".some, none, none, none, none, none)
+    val state = CheckInDataCalculatedState(Map(address -> DeviceInfo(1L, dorResponse, 1L, none, none, "hash-1".some)))
+    val replay = CheckInUpdate("123", "456", 2L, "hash-1", dorResponse.some)
+
+    expect.eql(false, validateCheckInHashIsNotRepeated(state, replay, address).isValid)
+  }
+
+  pureTest("Return update valid - validateCheckInHashIsNotRepeated (new hash)") {
+    val address = Address("DAG0DQPuvVThrHnz66S4V6cocrtpg59oesAWyRMb")
+    val dorResponse = DorAPIResponse(address.some, isInstalled = true, "Retail".some, none, none, none, none, none)
+    val state = CheckInDataCalculatedState(Map(address -> DeviceInfo(1L, dorResponse, 1L, none, none, "hash-1".some)))
+    val fresh = CheckInUpdate("123", "456", 2L, "hash-2", dorResponse.some)
+
+    expect.eql(true, validateCheckInHashIsNotRepeated(state, fresh, address).isValid)
+  }
 }

@@ -10,7 +10,7 @@ object Collateral {
   def getDeviceCollateral(
     lastBalances : Map[Address, Balance],
     rewardAddress: Address
-  ): (Map[Address, Balance], Double) = {
+  ): (Map[Address, Balance], Ratio) = {
     lastBalances.get(rewardAddress) match {
       case None => (lastBalances, CollateralLessThan50KMultiplier)
       case Some(rawBalance) =>

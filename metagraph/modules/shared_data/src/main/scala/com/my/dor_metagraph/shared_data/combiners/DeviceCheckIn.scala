@@ -25,7 +25,7 @@ object DeviceCheckIn {
       val checkInProof = CheckInProof(checkInUpdate.publicId, checkInUpdate.signature)
       val checkInStateUpdate = CheckInStateUpdate(address, checkInUpdate.dts, checkInProof, checkInUpdate.dtmCheckInHash)
 
-      val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation, checkInUpdate.publicId.some)
+      val checkIn = DeviceInfo(checkInUpdate.dts, dorAPIResponse, nextRewardEpochProgress, maybeAnalyticsBountyInformation, checkInUpdate.publicId.some, checkInUpdate.dtmCheckInHash.some)
 
       val devices: Map[Address, DeviceInfo] = acc.calculated.devices.updated(address, checkIn)
       val updates: List[CheckInStateUpdate] = checkInStateUpdate :: acc.onChain.updates

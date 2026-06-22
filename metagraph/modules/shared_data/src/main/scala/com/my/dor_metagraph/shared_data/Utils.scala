@@ -77,7 +77,9 @@ object Utils {
         .filter(_.amount.value.value > 0)
         .groupBy(_.destination)
         .view
-        .mapValues(_.map(_.amount.value.value).sum)
+        // addExact fails fast (deterministically on every node) on overflow rather than wrapping to
+        // a negative/incorrect mint when many rewards target the same destination.
+        .mapValues(_.foldLeft(0L)((acc, tx) => Math.addExact(acc, tx.amount.value.value)))
 
     val summedTransactions: View[RewardTransaction] =
       groupedTransactions.map {
@@ -88,13 +90,14 @@ object Utils {
     SortedSet.from(summedTransactions)
   }
 
-  val DatolitesPerDag: Double = 1e8
+  val DatolitesPerDag: Long = 100_000_000L
 
+  // DAG -> datolites. Integer-only (no Double): exact, deterministic across nodes. multiplyExact
+  // fails fast (identically on every node) on overflow instead of silently wrapping to a wrong mint.
   def toTokenAmountFormat(
-    balance: Double
-  ): Long = {
-    (balance * DatolitesPerDag).toLong
-  }
+    dagAmount: Long
+  ): Long =
+    Math.multiplyExact(dagAmount, DatolitesPerDag)
 
   def getDeviceCheckInInfo[F[_] : Async](
     cborData: String
@@ -105,7 +108,6 @@ object Utils {
         logger.error(message) >> new Exception(message).raiseError[F, Array[Byte]]
       }
       decodedCheckIn = Cbor.decode(checkInCborData).to[DeviceCheckInInfo].value
-      _ <- logger.debug(s"Decoded check-in dts=${decodedCheckIn.dts}")
     } yield decodedCheckIn
   }
 
