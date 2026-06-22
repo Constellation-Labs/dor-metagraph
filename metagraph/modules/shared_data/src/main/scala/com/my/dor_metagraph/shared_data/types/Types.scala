@@ -20,10 +20,11 @@ object Types {
 
   val UndefinedTeamId: String = "Undefined"
 
-  // Upper bound on DOR-reported billed amounts accepted into state. The value is server-sourced and
-  // drives analytics payouts; this rejects negative or absurd values (which could overflow reward
-  // math) before they enter consensus. Generous on purpose so legitimate check-ins are never
-  // dropped — tighten toward the real business maximum if known.
+  // Upper bound on DOR-reported billed amounts accepted into state. Server-sourced; drives analytics
+  // payouts. Rejects negative/absurd values before they enter consensus. At 1e9 the worst-case
+  // single-device reward is 1e9 * 25 DAG * 1e8 * 1.2 ≈ 3e18 datolites, ~3x below Long.MaxValue
+  // (9.22e18); any residual overflow is a deterministic halt (Math.multiplyExact), never a silent
+  // mint. Lower toward the real business maximum if known.
   val MaxBilledAmount: Long = 1_000_000_000L
 
   val MinimumCheckInSeconds: Long =

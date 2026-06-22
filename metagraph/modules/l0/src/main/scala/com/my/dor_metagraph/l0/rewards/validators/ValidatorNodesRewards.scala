@@ -46,7 +46,9 @@ object ValidatorNodesRewards {
     validatorNodesL1     : List[Address],
     taxesToValidatorNodes: Long
   ): F[List[RewardTransaction]] = {
-    if (taxesToValidatorNodes < 2) {
+    // splitEvenly conserves any tax >= 1 (the remainder is distributed datolite-by-datolite), so the
+    // only no-op case is a zero pool.
+    if (taxesToValidatorNodes < 1) {
       List.empty[RewardTransaction].pure[F]
     } else {
       // Split the pool 50/50 between layers; if a layer has no recipients its share is redirected to
