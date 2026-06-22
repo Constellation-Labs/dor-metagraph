@@ -38,21 +38,21 @@ object ValidatorNodes {
     }
 
   // The network is fixed per deployment (all nodes on a network share it), so this selection is
-  // deterministic across the fleet. Fail fast on an unset/unknown value rather than risk paying the
-  // wrong network's validators.
-  private[validators] def resolveNetwork[F[_] : Async : Env]: F[String] =
-    Env[F].get("CL_APP_ENV").flatMap {
-      case Some(value) =>
-        value.trim.toLowerCase match {
-          case "mainnet"        => "mainnet".pure[F]
-          case "testnet"        => "testnet".pure[F]
-          case "integrationnet" => "integrationnet".pure[F]
-          case "dev"            => "testnet".pure[F] // dev mirrors the testnet seedlist
-          case other =>
-            Async[F].raiseError(new RuntimeException(s"Unknown CL_APP_ENV='$other'; cannot select validator seedlist"))
-        }
-      case None =>
-        Async[F].raiseError(new RuntimeException("CL_APP_ENV is not set; cannot select validator seedlist"))
+  // deterministic across the fleet. Pure mapping (testable without an Env); fails on unset/unknown
+  // rather than risk paying the wrong network's validators.
+  private[validators] def networkFor(envValue: Option[String]): Either[String, String] =
+    envValue.map(_.trim.toLowerCase) match {
+      case Some("mainnet")        => Right("mainnet")
+      case Some("testnet")        => Right("testnet")
+      case Some("integrationnet") => Right("integrationnet")
+      case Some("dev")            => Right("testnet") // dev mirrors the testnet seedlist
+      case Some(other)            => Left(s"Unknown CL_APP_ENV='$other'; cannot select validator seedlist")
+      case None                   => Left("CL_APP_ENV is not set; cannot select validator seedlist")
+    }
+
+  private def resolveNetwork[F[_] : Async : Env]: F[String] =
+    Env[F].get("CL_APP_ENV").flatMap { value =>
+      networkFor(value).fold(message => Async[F].raiseError(new RuntimeException(message)), _.pure[F])
     }
 
   private def loadSeedlistAddresses[F[_] : Async : SecurityProvider](

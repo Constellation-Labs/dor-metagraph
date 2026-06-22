@@ -75,7 +75,7 @@ object LifecycleSharedFunctions {
     )
 
     if (updates.isEmpty) {
-      logger.debug("Snapshot without any check-ins, updating the state to empty updates").as(newState)
+      newState.pure[F]
     } else {
       for {
         nextEpoch <- getCurrentEpochProgress(oldState.calculated)

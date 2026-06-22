@@ -108,7 +108,6 @@ object Utils {
         logger.error(message) >> new Exception(message).raiseError[F, Array[Byte]]
       }
       decodedCheckIn = Cbor.decode(checkInCborData).to[DeviceCheckInInfo].value
-      _ <- logger.debug(s"Decoded check-in dts=${decodedCheckIn.dts}")
     } yield decodedCheckIn
   }
 

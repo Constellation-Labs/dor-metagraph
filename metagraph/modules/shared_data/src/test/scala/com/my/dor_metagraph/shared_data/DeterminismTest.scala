@@ -1,15 +1,18 @@
 package com.my.dor_metagraph.shared_data
 
 import cats.syntax.option._
+import com.my.dor_metagraph.shared_data.Utils.buildTransactionsSortedSet
 import com.my.dor_metagraph.shared_data.combiners.DeviceCheckIn.combineDeviceCheckIn
 import com.my.dor_metagraph.shared_data.deserializers.Deserializers
 import com.my.dor_metagraph.shared_data.serializers.Serializers
 import com.my.dor_metagraph.shared_data.types.Types._
 import eu.timepit.refined.auto._
+import eu.timepit.refined.types.numeric.PosLong
 import io.circe.parser.decode
 import io.constellationnetwork.currency.dataApplication.DataState
 import io.constellationnetwork.schema.address.Address
 import io.constellationnetwork.schema.epoch.EpochProgress
+import io.constellationnetwork.schema.transaction.{RewardTransaction, TransactionAmount}
 import weaver.SimpleIOSuite
 
 /**
@@ -71,5 +74,18 @@ object DeterminismTest extends SimpleIOSuite {
           expect.eql(1440L, state.devices(addrA).nextEpochProgressToReward)
       case Left(e) => failure(s"pre-upgrade calculated-state JSON must decode: $e")
     }
+  }
+
+  pureTest("buildTransactionsSortedSet is order-independent and aggregates per destination (anti-fork)") {
+    def tx(a: Address, amount: Long) = RewardTransaction(a, TransactionAmount(PosLong.unsafeFrom(amount)))
+    val a1 = tx(addrA, 100L)
+    val a2 = tx(addrA, 50L) // same destination -> must aggregate to 150
+    val b1 = tx(addrB, 200L)
+
+    val s1 = buildTransactionsSortedSet(List(a1, b1), List(a2))
+    val s2 = buildTransactionsSortedSet(List(a2, a1), List(b1))
+
+    expect(s1.toList == s2.toList) &&
+      expect(s1.toList.find(_.destination == addrA).map(_.amount.value.value).contains(150L))
   }
 }
