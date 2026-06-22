@@ -9,7 +9,7 @@ import com.my.dor_metagraph.l0.BalanceAdjustmentLoader.loadBalanceAdjustments
 import com.my.dor_metagraph.l0.custom_routes.CustomRoutes
 import com.my.dor_metagraph.l0.rewards.DorRewards
 import com.my.dor_metagraph.l0.rewards.bounties.{AnalyticsBountyRewards, DailyBountyRewards}
-import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodesAPI
+import com.my.dor_metagraph.l0.rewards.validators.ValidatorNodes
 import com.my.dor_metagraph.shared_data.LifecycleSharedFunctions
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
 import com.my.dor_metagraph.shared_data.decoders.Decoders
@@ -173,7 +173,7 @@ object Main extends CurrencyL0App(
   override def rewards(implicit sp: SecurityProvider[IO]): Option[Rewards[IO, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent]] = {
     val dailyBountyRewards = new DailyBountyRewards[IO]
     val analyticsBountyRewards = new AnalyticsBountyRewards[IO]
-    val validatorNodes = new ValidatorNodesAPI[IO]
+    val validatorNodes = ValidatorNodes.fromSeedlist[IO]
 
     DorRewards.make[IO](
       dailyBountyRewards,

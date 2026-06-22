@@ -6,6 +6,6 @@ class AnalyticsSubscriptionBounty extends Bounty {
   override def getBountyRewardAmount(
     deviceInfo  : DorAPIResponse,
     epochModulus: Long
-  ): Double =
-    deviceInfo.billedAmount.map(_ * 25.0).getOrElse(0.0)
+  ): Long =
+    deviceInfo.billedAmount.fold(0L)(billed => Math.multiplyExact(billed, 25L))
 }

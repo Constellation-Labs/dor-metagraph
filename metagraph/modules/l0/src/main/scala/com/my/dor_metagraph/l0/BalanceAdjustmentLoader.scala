@@ -26,26 +26,44 @@ object BalanceAdjustmentLoader {
     deduct: Option[Long] = None
   )
 
+  // Safe NonNegLong conversion: a negative/out-of-range value becomes a decode error instead of
+  // throwing (the former NonNegLong.unsafeFrom would crash; Math.abs(Long.MinValue) is still
+  // negative and would also crash). These values adjust balances that feed collateral/rewards.
+  private def toAmount(field: String, value: Long): Either[String, Amount] =
+    NonNegLong.from(value).left.map(_ => s"BalanceAdjustment $field must be non-negative, got $value").map(Amount(_))
+
+  private def toDeductAmount(value: Long): Either[String, Amount] =
+    if (value == Long.MinValue) Left("BalanceAdjustment deduct is out of range")
+    else toAmount("deduct", Math.abs(value))
+
   implicit val balanceAdjustmentDecoder: Decoder[BalanceAdjustment] = {
     val rawDecoder = implicitly[Decoder[RawBalanceAdjustment]]
 
     rawDecoder.emap { raw =>
-      val reasonResult = raw.reason match {
+      val reasonResult: Either[String, BalanceAdjustmentReason] = raw.reason match {
         case "SpendTransactionNotApplied"            => Right(SpendTransactionNotApplied)
         case "SpendTransactionSourceNotApplied"      => Right(SpendTransactionSourceNotApplied)
         case "SpendTransactionDestinationNotApplied" => Right(SpendTransactionDestinationNotApplied)
         case other                                   => Left(s"Unknown BalanceAdjustmentReason: $other")
       }
 
-      reasonResult.map { reason =>
-        BalanceAdjustment(
-          address = raw.address,
-          reason = reason,
-          reference = SortedSet(raw.reference: _*),
-          increase = raw.increase.map(increase => Amount(NonNegLong.unsafeFrom(increase))),
-          deduct = raw.deduct.map(deduct => Amount(NonNegLong.unsafeFrom(Math.abs(deduct))))
-        )
-      }
+      val increaseResult: Either[String, Option[Amount]] =
+        raw.increase.fold[Either[String, Option[Amount]]](Right(None))(v => toAmount("increase", v).map(Some(_)))
+
+      val deductResult: Either[String, Option[Amount]] =
+        raw.deduct.fold[Either[String, Option[Amount]]](Right(None))(v => toDeductAmount(v).map(Some(_)))
+
+      for {
+        reason   <- reasonResult
+        increase <- increaseResult
+        deduct   <- deductResult
+      } yield BalanceAdjustment(
+        address = raw.address,
+        reason = reason,
+        reference = SortedSet(raw.reference: _*),
+        increase = increase,
+        deduct = deduct
+      )
     }
   }
 

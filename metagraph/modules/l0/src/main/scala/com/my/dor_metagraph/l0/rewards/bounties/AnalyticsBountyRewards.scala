@@ -33,7 +33,7 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
 
       deviceInfo.analyticsBountyInformation.get.analyticsRewardAddress match {
         case None =>
-          logger.warn(s"[ANALYTICS] Device [publicId=$publicId, teamId=$teamId] doesn't have rewardAddress").as(acc)
+          logger.debug(s"[ANALYTICS] Device [publicId=$publicId, teamId=$teamId] doesn't have rewardAddress").as(acc)
 
         case Some(analyticsRewardAddress) =>
           for {
@@ -41,10 +41,10 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
 
             deviceTotalRewards <- getDeviceBountiesRewards(deviceInfo, currentEpochProgress, collateralMultiplierFactor)
 
-            deviceTaxToValidatorNodes = (deviceTotalRewards * ValidatorNodeTaxRate).toLong
+            deviceTaxToValidatorNodes = validatorNodeTaxOf(deviceTotalRewards)
             rewardValue = deviceTotalRewards - deviceTaxToValidatorNodes
 
-            _ <- logger.info(s"[ANALYTICS] Team representative device [publicId=$publicId, teamId=$teamId, rewardAddress=${analyticsRewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
+            _ <- logger.debug(s"[ANALYTICS] Team representative device [publicId=$publicId, teamId=$teamId, rewardAddress=${analyticsRewardAddress.value.value}] reward=$rewardValue validatorTax=$deviceTaxToValidatorNodes collateralMultiplier=$collateralMultiplierFactor")
 
             deviceReward = buildDeviceReward(rewardValue, acc.rewardTransactions, analyticsRewardAddress)
             taxesToValidatorNodesUpdated = acc.validatorsTaxes + deviceTaxToValidatorNodes
@@ -73,17 +73,14 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
             val analyticsBountyInformation = device.analyticsBountyInformation.get
             val devicePublicIds = teamDevices.flatMap(_.publicId).toList
             analyticsBountyInformation.analyticsRewardAddress match {
-              case None => logger.warn(s"[ANALYTICS] Team ${analyticsBountyInformation.teamId} doesn't have default rewardAddress, skipping Analytics rewards. Affected devices=${teamDevices.size}, publicIds=${devicePublicIds.mkString(",")}").as(acc)
+              case None => logger.debug(s"[ANALYTICS] Team ${analyticsBountyInformation.teamId} doesn't have default rewardAddress, skipping Analytics rewards. Affected devices=${teamDevices.size}, publicIds=${devicePublicIds.mkString(",")}").as(acc)
               case Some(analyticsRewardAddress) =>
                 val teamId = analyticsBountyInformation.teamId
                 val devicesCollateralAverage = getDevicesCollateralAverage(teamDevices, acc.lastBalances)
                 val newBalancesWithAverage = Map(analyticsRewardAddress -> Balance(devicesCollateralAverage.toNonNegLongUnsafe))
 
                 for {
-                  _ <- logger.info(s"[teamId: $teamId] Devices number: ${teamDevices.size}")
-                  _ <- logger.info(s"[teamId: $teamId] Device publicIds: ${devicePublicIds.mkString(",")}")
-                  _ <- logger.info(s"[teamId: $teamId] Collateral average: $devicesCollateralAverage")
-                  _ <- logger.info(s"[teamId: $teamId] Address to be rewarded: $analyticsRewardAddress")
+                  _ <- logger.debug(s"[teamId: $teamId] devices=${teamDevices.size} publicIds=${devicePublicIds.mkString(",")} collateralAverage=$devicesCollateralAverage rewardAddress=$analyticsRewardAddress")
                   rewardTransactionsInformation <- combine(acc, device, newBalancesWithAverage)
                 } yield rewardTransactionsInformation
             }
@@ -115,18 +112,14 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
   override def logAllDevicesRewards(
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
-    if (bountyRewards.rewardTransactions.isEmpty) {
-      logger.info(s"[ANALYTICS] No commissions to pay on this epochProgress").as(())
-    } else {
-      def logRewardTransaction: RewardTransaction => F[Unit] = rewardTransaction =>
-        logger.info(s"[ANALYTICS] Device Reward Address: ${rewardTransaction.destination}. Amount: ${rewardTransaction.amount}")
-
-      for {
-        _ <- logger.info("[ANALYTICS] All rewards to be distributed to devices")
-        _ <- bountyRewards.rewardTransactions.traverse_(logRewardTransaction)
-        _ <- logger.info(s"[ANALYTICS] Validators taxes to be distributed between validators: ${bountyRewards.validatorsTaxes}")
-      } yield ()
-    }
+    val totalReward = bountyRewards.rewardTransactions.foldLeft(0L)((acc, tx) => acc + tx.amount.value.value)
+    for {
+      // One aggregate INFO line per cycle; per-payout detail at DEBUG to avoid log spam.
+      _ <- logger.info(s"[ANALYTICS] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
+      _ <- bountyRewards.rewardTransactions.traverse_(tx =>
+        logger.debug(s"[ANALYTICS] reward destination=${tx.destination.value.value} amount=${tx.amount.value.value}")
+      )
+    } yield ()
   }
 
   private def getDevicesCollateralAverage(devices: Iterable[DeviceInfo], balances: Map[Address, Balance]): Long =

@@ -6,17 +6,17 @@ class CommercialLocationBounty extends Bounty {
   override def getBountyRewardAmount(
     deviceInfo  : DorAPIResponse,
     epochModulus: Long
-  ): Double = {
+  ): Long = {
     if (epochModulus != 1L) {
-      0D
+      0L
     } else {
       deviceInfo.locationType match {
-        case None => 0D
+        case None => 0L
         case Some(storeType) =>
           if (storeType != "Residential") {
-            50D
+            50L
           } else {
-            0D
+            0L
           }
       }
     }

@@ -17,11 +17,20 @@ object Validations {
     proofs       : NonEmptySet[SignatureProof],
     state        : CheckInDataCalculatedState
   )(implicit sp: SecurityProvider[F]): F[DataApplicationValidationErrorOr[Unit]] =
+    // NOTE: validateIfCheckInIsLowerThanOneDayFromCurrentDate is intentionally NOT applied here.
+    // It reads Instant.now (wall clock), and this path runs inside validateData during L0 consensus
+    // — every validator must reach the SAME verdict for the same update, but wall clocks differ
+    // across nodes, so a check-in near the now+1day boundary could be accepted by some validators
+    // and rejected by others, diverging the combine input set and forking the calculated-state hash.
+    // The future-dated-check-in guard is kept on the non-consensus L1 ingress path (validateUpdate)
+    // below, where per-node wall-clock use is harmless.
     getFirstAddressFromProofs(proofs).map { address =>
       validateCheckInTimestampIsGreaterThanLastCheckIn(state, checkInUpdate, address)
         .productR(validateIfCheckInIsGreaterThanLimitTimestamp(checkInUpdate))
-        .productR(validateIfCheckInIsLowerThanOneDayFromCurrentDate(checkInUpdate))
         .productR(validateIfDeviceIsRegisteredOnDORApi(checkInUpdate))
+        .productR(validateExactlyOneProof(proofs))
+        .productR(validateBilledAmountWithinBounds(checkInUpdate))
+        .productR(validateCheckInHashIsNotRepeated(state, checkInUpdate, address))
     }
 
 
@@ -31,6 +40,7 @@ object Validations {
     validateIfCheckInIsGreaterThanLimitTimestamp(checkInUpdate)
       .productR(validateIfCheckInIsLowerThanOneDayFromCurrentDate(checkInUpdate))
       .productR(validateIfDeviceIsRegisteredOnDORApi(checkInUpdate))
+      .productR(validateBilledAmountWithinBounds(checkInUpdate))
   }
 
 }
