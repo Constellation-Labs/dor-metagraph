@@ -11,7 +11,6 @@ import com.my.dor_metagraph.shared_data.bounties.AnalyticsSubscriptionBounty
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.constellationnetwork.schema.address.Address
 import io.constellationnetwork.schema.balance.Balance
-import io.constellationnetwork.schema.transaction.RewardTransaction
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -116,12 +115,13 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
     if (devices.isEmpty) {
       0L
     } else {
+      // addExact keeps the same fail-fast-on-overflow discipline as the rest of the reward path.
       val sumOfBalances: Long =
         devices
           .flatMap(_.dorAPIResponse.rewardAddress)
           .flatMap(balances.get)
           .map(_.value.value)
-          .sum
+          .foldLeft(0L)((acc, balance) => Math.addExact(acc, balance))
       sumOfBalances / devices.size
     }
 }
