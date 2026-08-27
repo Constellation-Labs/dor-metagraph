@@ -4,6 +4,7 @@ import cats.effect.Async
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import com.my.dor_metagraph.shared_data.calculated_state.CalculatedStateService
+import com.my.dor_metagraph.shared_data.metrics.DorMetrics
 import com.my.dor_metagraph.shared_data.types.Types.CalculatedStateResponse
 import eu.timepit.refined.auto._
 import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
@@ -22,6 +23,7 @@ case class CustomRoutes[F[_] : Async](calculatedStateService: CalculatedStateSer
 
   private val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root / "calculated-state" / "latest" => getLatestCalculatedState
+    case GET -> Root / "dor-metrics"                 => Ok(DorMetrics.renderPrometheus)
   }
 
   val public: HttpRoutes[F] =
