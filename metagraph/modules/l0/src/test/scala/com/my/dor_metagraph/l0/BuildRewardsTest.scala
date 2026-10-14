@@ -88,14 +88,16 @@ object BuildRewardsTest extends SimpleIOSuite {
     )
 
   private def getRewards(
-    lastArtifactEpochProgress: Long,
-    calculatedState          : CheckInDataCalculatedState,
-    balances                 : SortedMap[Address, Balance]
+    lastArtifactEpochProgress : Long,
+    calculatedState           : CheckInDataCalculatedState,
+    balances                  : SortedMap[Address, Balance],
+    rewardsDisabledFromOrdinal: SnapshotOrdinal = DorRewards.RewardsDisabledFromOrdinal
   ): IO[SortedSet[RewardTransaction]] = {
     DorRewards.make[IO](
       new DailyBountyRewards[IO],
       new AnalyticsBountyRewards[IO],
-      getValidatorNodesService
+      getValidatorNodesService,
+      rewardsDisabledFromOrdinal
     ).distribute(
       getCurrencyIncrementalSnapshot(Hash.empty, lastArtifactEpochProgress),
       balances,
@@ -265,5 +267,40 @@ object BuildRewardsTest extends SimpleIOSuite {
       expect.eql(rewardAddress, analyticsReward.get.destination) &&
       expect.eql(validatorsRewards.size, 6) &&
       expect.eql(416666667L, validatorsRewards.toList(1).amount.value.value)
+  }
+
+  // getCurrencyIncrementalSnapshot uses ordinal 56, so rewards are computed for ordinal 57.
+  private def unitDeployedScenario: (Address, CheckInDataCalculatedState, SortedMap[Address, Balance]) = {
+    val currentAddress = Address("DAG0DQPuvVThrCnz66S4V6cocrtpg59oesAWyRMb")
+    val currentDeviceInfoAPIResponse = DorAPIResponse(currentAddress.some, isInstalled = true, "Retail".some, none, none, none, none, none)
+    val calculatedState = CheckInDataCalculatedState(Map(currentAddress -> DeviceInfo(123L, currentDeviceInfoAPIResponse, 1439L, none)))
+    val balances = SortedMap(currentAddress -> Balance(NonNegLong.unsafeFrom(toTokenAmountFormat(200000))))
+    (currentAddress, calculatedState, balances)
+  }
+
+  test("Rewards disabled - no rewards at the cutoff ordinal") {
+    val (_, calculatedState, balances) = unitDeployedScenario
+
+    for {
+      rewards <- getRewards(1439L, calculatedState, balances, SnapshotOrdinal(NonNegLong(57L)))
+    } yield expect.eql(0, rewards.size)
+  }
+
+  test("Rewards disabled - no rewards after the cutoff ordinal") {
+    val (_, calculatedState, balances) = unitDeployedScenario
+
+    for {
+      rewards <- getRewards(1439L, calculatedState, balances, SnapshotOrdinal(NonNegLong(10L)))
+    } yield expect.eql(0, rewards.size)
+  }
+
+  test("Rewards disabled - rewards still paid before the cutoff ordinal") {
+    val (currentAddress, calculatedState, balances) = unitDeployedScenario
+
+    for {
+      rewards <- getRewards(1439L, calculatedState, balances, SnapshotOrdinal(NonNegLong(58L)))
+      reward = rewards.find(reward => reward.destination == currentAddress)
+    } yield expect.eql(7, rewards.size) &&
+      expect.eql(5400000000L, reward.get.amount.value.value)
   }
 }
