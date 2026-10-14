@@ -24,10 +24,16 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object DorRewards {
+  // From this ordinal onward the metagraph stops paying ALL rewards (daily/analytics bounties, validator
+  // nodes and one-time rewards). Earlier ordinals keep the original behavior.
+  // TODO(before release): set to the agreed mainnet cutoff ordinal. Long.MaxValue keeps the switch inert.
+  val RewardsDisabledFromOrdinal: SnapshotOrdinal = SnapshotOrdinal.unsafeApply(Long.MaxValue)
+
   def make[F[_] : Async](
-    dailyBountyRewards    : DailyBountyRewards[F],
-    analyticsBountyRewards: AnalyticsBountyRewards[F],
-    validatorNodes        : ValidatorNodes[F]
+    dailyBountyRewards        : DailyBountyRewards[F],
+    analyticsBountyRewards    : AnalyticsBountyRewards[F],
+    validatorNodes            : ValidatorNodes[F],
+    rewardsDisabledFromOrdinal: SnapshotOrdinal = RewardsDisabledFromOrdinal
   ): Rewards[F, CurrencySnapshotStateProof, CurrencyIncrementalSnapshot, CurrencySnapshotEvent] =
     (
       lastArtifact        : Signed[CurrencyIncrementalSnapshot],
@@ -75,22 +81,28 @@ object DorRewards {
           validatorNodesTransactions <- getValidatorNodesTransactions(l0ValidatorNodes, l1ValidatorNodes, rewardsInfo.validatorsTaxes)
         } yield buildTransactionsSortedSet(rewardsInfo.rewardTransactions, validatorNodesTransactions)
 
-      for {
-        regularTransactions <- trigger match {
-          case EventTrigger => noRewards
-          case TimeTrigger =>
-            maybeCalculatedState match {
-              case None => noRewards
-              case Some(dataCalculatedState) =>
-                for {
-                  checkInDataCalculatedState <- toCheckInDataCalculatedState(dataCalculatedState)
-                  dailyRewards <- distributeDailyRewards(checkInDataCalculatedState)
-                  analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState)
-                } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
-            }
-        }
-        oneTimeTransactions = buildOneTimeRewards(currentOrdinal)
-      } yield buildTransactionsSortedSet(regularTransactions.toList, oneTimeTransactions.toList)
+      def distributeAllRewards: F[SortedSet[RewardTransaction]] =
+        for {
+          regularTransactions <- trigger match {
+            case EventTrigger => noRewards
+            case TimeTrigger =>
+              maybeCalculatedState match {
+                case None => noRewards
+                case Some(dataCalculatedState) =>
+                  for {
+                    checkInDataCalculatedState <- toCheckInDataCalculatedState(dataCalculatedState)
+                    dailyRewards <- distributeDailyRewards(checkInDataCalculatedState)
+                    analyticsRewards <- distributeAnalyticsRewards(checkInDataCalculatedState)
+                  } yield buildTransactionsSortedSet(dailyRewards.toList, analyticsRewards.toList)
+              }
+          }
+          oneTimeTransactions = buildOneTimeRewards(currentOrdinal)
+        } yield buildTransactionsSortedSet(regularTransactions.toList, oneTimeTransactions.toList)
+
+      if (currentOrdinal.value.value >= rewardsDisabledFromOrdinal.value.value)
+        noRewards
+      else
+        distributeAllRewards
 
     }
 }
