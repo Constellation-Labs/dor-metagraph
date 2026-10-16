@@ -24,10 +24,9 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 object DorRewards {
-  // From this ordinal onward the metagraph stops paying ALL rewards (daily/analytics bounties, validator
-  // nodes and one-time rewards). Earlier ordinals keep the original behavior.
-  // TODO(before release): set to the agreed mainnet cutoff ordinal. Long.MaxValue keeps the switch inert.
-  val RewardsDisabledFromOrdinal: SnapshotOrdinal = SnapshotOrdinal.unsafeApply(Long.MaxValue)
+  // From this mainnet ordinal onward the metagraph stops paying ALL rewards (daily/analytics bounties,
+  // validator nodes and one-time rewards). Earlier ordinals keep the original behavior.
+  val RewardsDisabledFromOrdinal: SnapshotOrdinal = SnapshotOrdinal.unsafeApply(29075760L)
 
   def make[F[_] : Async](
     dailyBountyRewards        : DailyBountyRewards[F],
