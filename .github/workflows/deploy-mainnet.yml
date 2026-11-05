@@ -4,16 +4,22 @@ on:
   push:
     branches:
       - "deploy/mainnet"
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   deploy-mainnet:
     runs-on: ubuntu-latest
+    # The AWS role trusts only jobs in this environment, and the environment only allows deploy/mainnet.
+    environment: mainnet
     steps:
       - uses: actions/checkout@v3
       - name: Deploy Mainnet
         uses: "./.github/templates/deploy"
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_MAINNET }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_MAINNET }}
+          AWS_ROLE_ARN: arn:aws:iam::340301842845:role/github-deploy-dor-metagraph-mainnet
           AWS_REGION: ${{ secrets.AWS_REGION_MAINNET }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NETWORK: mainnet
