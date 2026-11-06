@@ -7,6 +7,7 @@ import cats.syntax.foldable._
 import cats.syntax.functor.toFunctorOps
 import com.my.dor_metagraph.l0.rewards.collateral.Collateral.getDeviceCollateral
 import com.my.dor_metagraph.shared_data.Utils._
+import com.my.dor_metagraph.shared_data.metrics.DorMetrics
 import com.my.dor_metagraph.shared_data.bounties.AnalyticsSubscriptionBounty
 import com.my.dor_metagraph.shared_data.types.Types._
 import io.constellationnetwork.schema.address.Address
@@ -107,8 +108,13 @@ class AnalyticsBountyRewards[F[_] : Async] extends BountyRewards {
     bountyRewards: RewardTransactionsAndValidatorsTaxes
   ): F[Unit] = {
     val totalReward = bountyRewards.rewardTransactions.foldLeft(0L)((acc, tx) => acc + tx.amount.value.value)
-    // One aggregate line per reward cycle (no per-payout spam, INFO level only).
-    logger.info(s"[ANALYTICS] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
+    // One aggregate line per reward cycle (no per-payout spam, INFO level only) + per-node metrics.
+    for {
+      _ <- DorMetrics.inc[F](DorMetrics.analyticsRewardCycles)
+      _ <- DorMetrics.addTo[F](DorMetrics.datolitesDistributed, totalReward + bountyRewards.validatorsTaxes)
+      _ <- DorMetrics.addTo[F](DorMetrics.validatorTaxDistributed, bountyRewards.validatorsTaxes)
+      _ <- logger.info(s"[ANALYTICS] Rewards distributed: payouts=${bountyRewards.rewardTransactions.size} totalReward=$totalReward validatorTax=${bountyRewards.validatorsTaxes}")
+    } yield ()
   }
 
   private def getDevicesCollateralAverage(devices: Iterable[DeviceInfo], balances: Map[Address, Balance]): Long =

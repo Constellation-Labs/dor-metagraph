@@ -5,6 +5,7 @@ import cats.effect.Async
 import cats.syntax.all._
 import com.my.dor_metagraph.shared_data.Utils.getFirstAddressFromProofs
 import com.my.dor_metagraph.shared_data.combiners.DeviceCheckIn.combineDeviceCheckIn
+import com.my.dor_metagraph.shared_data.metrics.DorMetrics
 import com.my.dor_metagraph.shared_data.types.Types.{CheckInDataCalculatedState, CheckInStateOnChain, CheckInUpdate}
 import com.my.dor_metagraph.shared_data.validations.Validations.{deviceCheckInValidationsL0, deviceCheckInValidationsL1}
 import io.constellationnetwork.currency.dataApplication.dataApplication.DataApplicationValidationErrorOr
@@ -32,7 +33,13 @@ object LifecycleSharedFunctions {
     implicit val sp: SecurityProvider[F] = context.securityProvider
     updates.traverse { signedUpdate =>
       deviceCheckInValidationsL0(signedUpdate.value, signedUpdate.proofs, oldState.calculated)
-    }.map(_.reduce)
+    }.map(_.reduce).flatTap { result =>
+      result.fold(
+        errors =>
+          logger.warn(s"[L0 VALIDATION] block of ${updates.size} update(s) had validation errors: ${errors.toChain.toList.mkString(", ")}"),
+        _ => Async[F].unit
+      )
+    }
   }
 
   /**
@@ -79,10 +86,14 @@ object LifecycleSharedFunctions {
     } else {
       for {
         nextEpoch <- getCurrentEpochProgress(oldState.calculated)
+        _ <- logger.info(s"[L0 COMBINE] processing check-ins=${updates.size} | devicesInState=${oldState.calculated.devices.size} | epoch=${nextEpoch.value.value}")
         result <- updates.foldLeftM(newState) { (acc, signedUpdate) =>
           getFirstAddressFromProofs(signedUpdate.proofs)
             .map(address => combineDeviceCheckIn(acc, signedUpdate, address, nextEpoch))
         }
+        _ <- DorMetrics.inc[F](DorMetrics.blocksCombined)
+        _ <- DorMetrics.addTo[F](DorMetrics.checkInsCombined, updates.size.toLong)
+        _ <- DorMetrics.setDevicesInState[F](result.calculated.devices.size.toLong)
       } yield result.copy(calculated = result.calculated.copy(lastEpochProgress = nextEpoch.some))
     }
   }
